@@ -50,6 +50,7 @@ from maasserver.testing.testcase import (
     MAASServerTestCase,
     MAASTransactionServerTestCase,
 )
+from maastesting import get_testing_timeout
 from maastesting.matchers import MockCalledOnce, MockNotCalled
 from maastesting.testcase import MAASTestCase
 from maastesting.twisted import extract_result
@@ -62,6 +63,8 @@ from provisioningserver.refresh.node_info_scripts import (
     COMMISSIONING_OUTPUT_NAME,
 )
 from provisioningserver.utils.twisted import asynchronous
+
+TIMEOUT = get_testing_timeout()
 
 
 class TestMAASStats(MAASServerTestCase):
@@ -1034,7 +1037,7 @@ class TestStatsServiceAsync(MAASTransactionServerTestCase):
         maybe_make_stats_request = asynchronous(
             service.maybe_make_stats_request
         )
-        maybe_make_stats_request().wait(5)
+        maybe_make_stats_request().wait(TIMEOUT)
 
         self.assertThat(mock_call, MockCalledOnce())
 
@@ -1048,6 +1051,6 @@ class TestStatsServiceAsync(MAASTransactionServerTestCase):
         maybe_make_stats_request = asynchronous(
             service.maybe_make_stats_request
         )
-        maybe_make_stats_request().wait(5)
+        maybe_make_stats_request().wait(TIMEOUT)
 
         self.assertThat(mock_call, MockNotCalled())

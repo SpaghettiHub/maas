@@ -12,6 +12,7 @@ from testtools.matchers import Equals, Is, IsInstance, MatchesStructure
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
 
+from maastesting import get_testing_timeout
 from maastesting.factory import factory
 from maastesting.fixtures import MAASRootFixture
 from maastesting.matchers import (
@@ -27,6 +28,8 @@ from provisioningserver.rpc import clusterservice, common, exceptions, region
 from provisioningserver.rpc.testing import MockLiveClusterToRegionRPCFixture
 from provisioningserver.service_monitor import service_monitor
 from provisioningserver.utils.service_monitor import SERVICE_STATE
+
+TIMEOUT = get_testing_timeout()
 
 
 def prepareRegion(
@@ -118,7 +121,7 @@ class StubClusterClientService:
 class TestRackExternalService(MAASTestCase):
     """Tests for `RackExternalService`."""
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5000)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def setUp(self):
         super().setUp()
@@ -201,7 +204,7 @@ class TestRackExternalService(MAASTestCase):
 class TestRackNTP(MAASTestCase):
     """Tests for `RackNTP` in `RackExternalService`."""
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5000)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def setUp(self):
         super().setUp()
@@ -350,7 +353,7 @@ class TestRackNTP(MAASTestCase):
 class TestRackNetworkTimeProtocolService_Errors(MAASTestCase):
     """Tests for error handing in `RackExternalService`."""
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     scenarios = (
         ("_getConfiguration", dict(method="_getConfiguration")),
@@ -407,7 +410,7 @@ class TestRackNetworkTimeProtocolService_Errors(MAASTestCase):
 class TestRackDNS(MAASTestCase):
     """Tests for `RackDNS` for `RackExternalService`."""
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5000)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def setUp(self):
         super().setUp()
@@ -633,7 +636,7 @@ class TestRackDNS(MAASTestCase):
 class TestRackProxy(MAASTestCase):
     """Tests for `RackProxy` for `RackExternalService`."""
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5000)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def setUp(self):
         super().setUp()
@@ -806,7 +809,7 @@ class TestRackProxy(MAASTestCase):
 class TestRackSyslog(MAASTestCase):
     """Tests for `RackSyslog` for `RackExternalService`."""
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5000)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def setUp(self):
         super().setUp()

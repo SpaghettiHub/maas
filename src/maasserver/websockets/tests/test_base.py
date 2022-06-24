@@ -33,10 +33,13 @@ from maasserver.websockets.base import (
     HandlerPermissionError,
     HandlerValidationError,
 )
+from maastesting import get_testing_timeout
 from maastesting.matchers import MockCalledOnceWith, MockNotCalled
 from maastesting.testcase import MAASTestCase
 from provisioningserver.prometheus.metrics import PROMETHEUS_METRICS
 from provisioningserver.utils.twisted import asynchronous
+
+TIMEOUT = get_testing_timeout()
 
 
 def make_handler(name, **kwargs):
@@ -420,12 +423,12 @@ class TestHandler(MAASServerTestCase, FakeNodesHandlerMixin):
     def test_execute_only_allows_meta_allowed_methods(self):
         handler = self.make_nodes_handler(allowed_methods=["list"])
         with ExpectedException(HandlerNoSuchMethodError):
-            handler.execute("get", {}).wait(30)
+            handler.execute("get", {}).wait(TIMEOUT)
 
     def test_execute_raises_HandlerNoSuchMethodError(self):
         handler = self.make_nodes_handler(allowed_methods=["extra_method"])
         with ExpectedException(HandlerNoSuchMethodError):
-            handler.execute("extra_method", {}).wait(30)
+            handler.execute("extra_method", {}).wait(TIMEOUT)
 
     def test_execute_calls_in_database_thread_with_params(self):
         # Methods are assumed by default to be synchronous and are called in a
@@ -433,7 +436,7 @@ class TestHandler(MAASServerTestCase, FakeNodesHandlerMixin):
         handler = self.make_nodes_handler()
         params = {"system_id": factory.make_name("system_id")}
         self.patch(base, "deferToDatabase").return_value = sentinel.thing
-        result = handler.execute("get", params).wait(30)
+        result = handler.execute("get", params).wait(TIMEOUT)
         self.assertThat(result, Is(sentinel.thing))
         self.assertThat(base.deferToDatabase, MockCalledOnceWith(ANY, params))
 
@@ -443,7 +446,7 @@ class TestHandler(MAASServerTestCase, FakeNodesHandlerMixin):
         handler = self.make_nodes_handler()
         params = {"system_id": factory.make_name("system_id")}
         self.patch(base, "deferToDatabase").return_value = sentinel.thing
-        result = handler.execute("get", params).wait(30)
+        result = handler.execute("get", params).wait(TIMEOUT)
         self.assertIs(result, sentinel.thing)
         mock_metrics.assert_called_with(
             "maas_websocket_call_latency",
@@ -877,7 +880,7 @@ class TestHandlerTransaction(
         handler = self.make_nodes_handler()
         handler.get = asynchronous(lambda params: succeed(sentinel.thing))
         params = {"system_id": factory.make_name("system_id")}
-        result = handler.execute("get", params).wait(30)
+        result = handler.execute("get", params).wait(TIMEOUT)
         self.assertIs(result, sentinel.thing)
 
     def test_execute_calls_coroutine_method_with_params(self):
@@ -888,5 +891,5 @@ class TestHandlerTransaction(
         handler = self.make_nodes_handler()
         handler.get = my_get
         params = {"system_id": factory.make_name("system_id")}
-        result = handler.execute("get", params).wait(30)
+        result = handler.execute("get", params).wait(TIMEOUT)
         self.assertIs(result, sentinel.thing)

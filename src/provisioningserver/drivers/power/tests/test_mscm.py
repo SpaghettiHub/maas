@@ -19,6 +19,7 @@ from testtools.testcase import ExpectedException
 from twisted.internet.defer import inlineCallbacks
 from twisted.internet.threads import deferToThread
 
+from maastesting import get_testing_timeout
 from maastesting.factory import factory
 from maastesting.matchers import MockCalledOnceWith, MockCallsMatch
 from maastesting.testcase import MAASTestCase, MAASTwistedRunTest
@@ -34,6 +35,8 @@ from provisioningserver.drivers.power.mscm import (
     probe_and_enlist_mscm,
 )
 from provisioningserver.utils.twisted import asynchronous
+
+TIMEOUT = get_testing_timeout()
 
 
 def make_node_id():
@@ -239,7 +242,7 @@ class TestMSCMPowerDriver(MAASTestCase):
 
 class TestMSCMProbeAndEnlist(MAASTestCase):
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     scenarios = [
         (key, dict(product_name=key, arch=value))
@@ -295,7 +298,7 @@ class TestMSCMProbeAndEnlist(MAASTestCase):
 
 class TestMSCMProbeAndEnlistCrashesNoMatch(MAASTestCase):
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     @inlineCallbacks
     def test_probe_and_enlist_mscm_crashes_for_no_match(self):

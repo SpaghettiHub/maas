@@ -37,6 +37,7 @@ from maasserver.testing.listener import FakePostgresListenerService
 from maasserver.testing.testcase import MAASServerTestCase
 from maasserver.utils import dbtasks
 from maasserver.utils.orm import DisabledDatabaseConnection, transactional
+from maastesting import get_testing_timeout
 from maastesting.crochet import wait_for
 from maastesting.factory import factory
 from maastesting.matchers import MockCallsMatch
@@ -44,6 +45,7 @@ from maastesting.testcase import MAASTestCase
 from metadataserver import api_twisted
 from provisioningserver.utils.twisted import asynchronous
 
+TIMEOUT = get_testing_timeout()
 wait_for_reactor = wait_for()
 
 
@@ -106,7 +108,7 @@ class TestRegionEventLoop(MAASTestCase):
                 ValueError, an_eventloop.populateService, *args, **kwargs
             )
 
-        tryPopulate("web", master=True).wait(30)
+        tryPopulate("web", master=True).wait(TIMEOUT)
 
     def test_populateService_prevent_master_service_on_worker(self):
         self.patch(eventloop.services, "getServiceNamed")
@@ -118,7 +120,7 @@ class TestRegionEventLoop(MAASTestCase):
                 ValueError, an_eventloop.populateService, *args, **kwargs
             )
 
-        tryPopulate("workers", master=False).wait(30)
+        tryPopulate("workers", master=False).wait(TIMEOUT)
 
     def test_populateService_prevent_service_on_all_in_one(self):
         self.patch(eventloop.services, "getServiceNamed")
@@ -130,7 +132,7 @@ class TestRegionEventLoop(MAASTestCase):
                 ValueError, an_eventloop.populateService, *args, **kwargs
             )
 
-        tryPopulate("workers", master=True, all_in_one=True).wait(30)
+        tryPopulate("workers", master=True, all_in_one=True).wait(TIMEOUT)
 
     def test_populate_on_worker_without_import_services(self):
         self.patch(eventloop.services, "getServiceNamed")
@@ -140,7 +142,7 @@ class TestRegionEventLoop(MAASTestCase):
             set(), {service.name for service in an_eventloop.services}
         )
         # populate() creates a service with each factory.
-        an_eventloop.populate(master=False).wait(30)
+        an_eventloop.populate(master=False).wait(TIMEOUT)
         self.assertEqual(
             {
                 name
@@ -169,7 +171,7 @@ class TestRegionEventLoop(MAASTestCase):
             set(), {service.name for service in an_eventloop.services}
         )
         # populate() creates a service with each factory.
-        an_eventloop.populate(master=False, import_services=True).wait(30)
+        an_eventloop.populate(master=False, import_services=True).wait(TIMEOUT)
         self.assertEqual(
             {
                 name
@@ -196,7 +198,7 @@ class TestRegionEventLoop(MAASTestCase):
             set(), {service.name for service in an_eventloop.services}
         )
         # populate() creates a service with each factory.
-        an_eventloop.populate(master=True).wait(30)
+        an_eventloop.populate(master=True).wait(TIMEOUT)
         self.assertEqual(
             {
                 name
@@ -225,7 +227,7 @@ class TestRegionEventLoop(MAASTestCase):
         # populate() creates a service with each factory.
         an_eventloop.populate(
             master=True, all_in_one=True, import_services=True
-        ).wait(30)
+        ).wait(TIMEOUT)
         self.assertEqual(
             {
                 name
@@ -260,8 +262,8 @@ class TestRegionEventLoop(MAASTestCase):
         )
         # After starting the loop, the services list is populated, and
         # the services are started too.
-        eventloop.loop.start().wait(5)
-        self.addCleanup(lambda: eventloop.loop.reset().wait(5))
+        eventloop.loop.start().wait(TIMEOUT)
+        self.addCleanup(lambda: eventloop.loop.reset().wait(TIMEOUT))
         self.assertTrue(eventloop.loop.services.running)
         self.assertTrue(eventloop.loop.running)
         self.assertEqual(
@@ -276,7 +278,7 @@ class TestRegionEventLoop(MAASTestCase):
         )
         # After stopping the loop, the services list remains populated,
         # but the services are all stopped.
-        eventloop.loop.stop().wait(5)
+        eventloop.loop.stop().wait(TIMEOUT)
         self.assertFalse(eventloop.loop.services.running)
         self.assertFalse(eventloop.loop.running)
         self.assertEqual(
@@ -295,8 +297,8 @@ class TestRegionEventLoop(MAASTestCase):
         self.patch(eventloop.loop, "prepare").return_value = defer.succeed(
             None
         )
-        eventloop.loop.start().wait(5)
-        eventloop.loop.reset().wait(5)
+        eventloop.loop.start().wait(TIMEOUT)
+        eventloop.loop.reset().wait(TIMEOUT)
         # After stopping the loop, the services list is also emptied.
         self.assertFalse(eventloop.loop.services.running)
         self.assertFalse(eventloop.loop.running)
@@ -306,7 +308,7 @@ class TestRegionEventLoop(MAASTestCase):
 
     def test_reset_clears_factories(self):
         eventloop.loop.factories = ((factory.make_name("service"), None),)
-        eventloop.loop.reset().wait(5)
+        eventloop.loop.reset().wait(TIMEOUT)
         # The loop's factories are also reset.
         self.assertEqual(
             eventloop.loop.__class__.factories, eventloop.loop.factories

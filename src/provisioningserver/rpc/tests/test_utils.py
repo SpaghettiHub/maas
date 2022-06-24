@@ -11,6 +11,7 @@ from random import choice
 
 from twisted.internet import defer
 
+from maastesting import get_testing_timeout
 from maastesting.factory import factory
 from maastesting.matchers import MockCalledOnceWith
 from maastesting.testcase import MAASTestCase, MAASTwistedRunTest
@@ -24,10 +25,12 @@ import provisioningserver.rpc.utils
 from provisioningserver.rpc.utils import commission_node, create_node
 import provisioningserver.utils
 
+TIMEOUT = get_testing_timeout()
+
 
 class TestCreateNode(MAASTestCase):
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def setUp(self):
         super().setUp()
@@ -191,7 +194,7 @@ class TestCreateNode(MAASTestCase):
 
 class TestCommissionNode(MAASTestCase):
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def setUp(self):
         super().setUp()
