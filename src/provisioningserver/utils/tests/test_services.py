@@ -34,6 +34,7 @@ from twisted.internet.task import Clock
 from twisted.python import threadable
 from twisted.python.failure import Failure
 
+from maastesting import get_testing_timeout
 from maastesting.factory import factory
 from maastesting.testcase import MAASTestCase, MAASTwistedRunTest
 from maastesting.twisted import TwistedLoggerFixture
@@ -61,6 +62,8 @@ from provisioningserver.utils.services import (
     ProtocolForObserveBeacons,
     SingleInstanceService,
 )
+
+TIMEOUT = get_testing_timeout()
 
 
 class FakeScriptRun:
@@ -190,7 +193,7 @@ class SampleSingleInstanceService(SingleInstanceService):
 
 
 class TestSingleInstanceService(MAASTestCase):
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def test_init(self):
         clock = Clock()
@@ -316,7 +319,7 @@ class StubNetworksMonitoringService(NetworksMonitoringService):
 
 
 class TestNetworksMonitoringService(MAASTestCase):
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def setUp(self):
         super().setUp()
@@ -643,7 +646,7 @@ class TestNetworksMonitoringService(MAASTestCase):
 class TestJSONPerLineProtocol(MAASTestCase):
     """Tests for `JSONPerLineProtocol`."""
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     @inlineCallbacks
     def test_propagates_exit_errors(self):
@@ -732,7 +735,7 @@ class TestJSONPerLineProtocol(MAASTestCase):
 class TestProtocolForObserveARP(MAASTestCase):
     """Tests for `ProtocolForObserveARP`."""
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def test_adds_interface(self):
         callback = Mock()
@@ -746,7 +749,7 @@ class TestProtocolForObserveARP(MAASTestCase):
 class TestProtocolForObserveBeacons(MAASTestCase):
     """Tests for `ProtocolForObserveBeacons`."""
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def test_adds_interface(self):
         callback = Mock()
@@ -796,7 +799,7 @@ class MockJSONProtocol(JSONPerLineProtocol):
 class TestProcessProtocolService(MAASTestCase):
     """Tests for `JSONPerLineProtocol`."""
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=15)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def setUp(self):
         super().setUp()
@@ -901,7 +904,7 @@ class TestProcessProtocolService(MAASTestCase):
 class TestNeighbourDiscoveryService(MAASTestCase):
     """Tests for `NeighbourDiscoveryService`."""
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def test_returns_expected_arguments(self):
         ifname = factory.make_name("eth")
@@ -958,7 +961,7 @@ class TestNeighbourDiscoveryService(MAASTestCase):
 class TestBeaconingService(MAASTestCase):
     """Tests for `BeaconingService`."""
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def test_returns_expected_arguments(self):
         ifname = factory.make_name("eth")
@@ -1015,7 +1018,7 @@ class TestBeaconingService(MAASTestCase):
 class TestMDNSResolverService(MAASTestCase):
     """Tests for `MDNSResolverService`."""
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def test_returns_expected_arguments(self):
         service = MDNSResolverService(Mock())
@@ -1088,7 +1091,7 @@ class FakeBeaconPayload(BeaconPayload):
 class TestBeaconingSocketProtocol(SharedSecretTestCase):
     """Tests for `BeaconingSocketProtocol`."""
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=15)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     @inlineCallbacks
     def test_creates_listen_port_when_run_with_IReactorMulticast(self):

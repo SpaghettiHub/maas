@@ -44,6 +44,7 @@ from zope.interface.verify import verifyObject
 
 from apiclient.creds import convert_tuple_to_string
 from apiclient.utils import ascii_url
+from maastesting import get_testing_timeout
 from maastesting.factory import factory
 from maastesting.matchers import (
     IsUnfiredDeferred,
@@ -129,10 +130,12 @@ from provisioningserver.utils.twisted import (
 )
 from provisioningserver.utils.version import get_running_version
 
+TIMEOUT = get_testing_timeout()
+
 
 class TestClusterProtocol_Identify(MAASTestCase):
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def test_identify_is_registered(self):
         protocol = Cluster()
@@ -152,7 +155,7 @@ class TestClusterProtocol_Identify(MAASTestCase):
 
 class TestClusterProtocol_Authenticate(MAASTestCase):
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def test_authenticate_is_registered(self):
         protocol = Cluster()
@@ -177,7 +180,7 @@ class TestClusterProtocol_Authenticate(MAASTestCase):
 
 class TestClusterProtocol_StartTLS(MAASTestCase):
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def test_StartTLS_is_registered(self):
         protocol = Cluster()
@@ -209,7 +212,7 @@ class TestClusterProtocol_StartTLS(MAASTestCase):
 
 class TestClusterProtocol_ListBootImages(MAASTestCase):
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def test_list_boot_images_is_registered(self):
         protocol = Cluster()
@@ -291,7 +294,7 @@ class TestClusterProtocol_ListBootImages(MAASTestCase):
 
 class TestClusterProtocol_ImportBootImages(MAASTestCase):
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def test_import_boot_images_is_registered(self):
         protocol = Cluster()
@@ -385,7 +388,7 @@ class TestClusterProtocol_ImportBootImages(MAASTestCase):
 
 class TestClusterProtocol_IsImportBootImagesRunning(MAASTestCase):
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def test_is_import_boot_images_running_is_registered(self):
         protocol = Cluster()
@@ -419,7 +422,7 @@ class TestClusterProtocol_IsImportBootImagesRunning(MAASTestCase):
 
 class TestClusterProtocol_DescribePowerTypes(MAASTestCase):
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def test_describe_power_types_is_registered(self):
         protocol = Cluster()
@@ -453,7 +456,7 @@ def make_inert_client_service():
 
 class TestClusterClientService(MAASTestCase):
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def fakeAgentResponse(self, data="", code=200):
         self.patch(clusterservice, "readBody").return_value = succeed(data)
@@ -1369,7 +1372,7 @@ class TestClusterClientServiceIntervals(MAASTestCase):
         ),
     )
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def test_calculate_interval(self):
         service = make_inert_client_service()
@@ -1385,7 +1388,7 @@ class TestClusterClientServiceIntervals(MAASTestCase):
 
 class TestClusterClient(MAASTestCase):
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def setUp(self):
         super().setUp()
@@ -1971,7 +1974,7 @@ class TestClusterClient(MAASTestCase):
 
 class TestClusterClientCheckerService(MAASTestCase):
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def make_client(self):
         client = Mock()
@@ -2034,7 +2037,7 @@ class TestClusterClientCheckerService(MAASTestCase):
 
 class TestClusterProtocol_ListSupportedArchitectures(MAASTestCase):
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def test_is_registered(self):
         protocol = Cluster()
@@ -2058,7 +2061,7 @@ class TestClusterProtocol_ListSupportedArchitectures(MAASTestCase):
 
 class TestClusterProtocol_ListOperatingSystems(MAASTestCase):
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def test_is_registered(self):
         protocol = Cluster()
@@ -2101,7 +2104,7 @@ class TestClusterProtocol_ListOperatingSystems(MAASTestCase):
 
 class TestClusterProtocol_GetOSReleaseTitle(MAASTestCase):
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def test_is_registered(self):
         protocol = Cluster()
@@ -2151,7 +2154,7 @@ class TestClusterProtocol_GetOSReleaseTitle(MAASTestCase):
 
 class TestClusterProtocol_ValidateLicenseKey(MAASTestCase):
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def test_is_registered(self):
         protocol = Cluster()
@@ -2204,7 +2207,7 @@ class TestClusterProtocol_ValidateLicenseKey(MAASTestCase):
 
 class TestClusterProtocol_GetPreseedData(MAASTestCase):
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def make_arguments(self):
         return {
@@ -2277,7 +2280,7 @@ class TestClusterProtocol_GetPreseedData(MAASTestCase):
 
 class TestClusterProtocol_PowerOn_PowerOff_PowerCycle(MAASTestCase):
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     scenarios = (
         (
@@ -2433,7 +2436,7 @@ class TestClusterProtocol_PowerOn_PowerOff_PowerCycle(MAASTestCase):
 
 class TestClusterProtocol_PowerQuery(MAASTestCase):
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def test_is_registered(self):
         protocol = Cluster()
@@ -2516,7 +2519,7 @@ class TestClusterProtocol_PowerQuery(MAASTestCase):
 
 class TestClusterProtocol_SetBootOrder(MAASTestCase):
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def test_is_registered(self):
         protocol = Cluster()
@@ -2655,7 +2658,7 @@ class TestClusterProtocol_ConfigureDHCP(MAASTestCase):
         ),
     )
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def test_is_registered(self):
         self.assertIsNotNone(
@@ -2818,7 +2821,7 @@ class TestClusterProtocol_ValidateDHCP(MAASTestCase):
         ),
     )
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def setUp(self):
         super().setUp()
@@ -2918,7 +2921,7 @@ class TestClusterProtocol_ValidateDHCP(MAASTestCase):
 
 class TestClusterProtocol_EvaluateTag(MAASTestCase):
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def test_is_registered(self):
         protocol = Cluster()
@@ -3018,7 +3021,7 @@ class MAASTestCaseThatWaitsForDeferredThreads(MAASTestCase):
 
     # Subclasses can override this, but they MUST choose a runner that runs
     # the test itself and all clean-up functions in the Twisted reactor.
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def setUp(self):
         super().setUp()
@@ -3035,7 +3038,7 @@ class TestClusterProtocol_ScanNetworks(
     MAASTestCaseThatWaitsForDeferredThreads
 ):
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def test_is_registered(self):
         protocol = Cluster()
@@ -3238,7 +3241,7 @@ class TestClusterProtocol_ScanNetworks(
 
 class TestClusterProtocol_AddChassis(MAASTestCase):
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def test_is_registered(self):
         protocol = Cluster()
@@ -4000,7 +4003,7 @@ class TestClusterProtocol_AddChassis(MAASTestCase):
 
 class TestClusterProtocol_DiscoverPodProjects(MAASTestCase):
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def test_is_registered(self):
         protocol = Cluster()
@@ -4042,7 +4045,7 @@ class TestClusterProtocol_DiscoverPodProjects(MAASTestCase):
 
 class TestClusterProtocol_DiscoverPod(MAASTestCase):
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def test_is_registered(self):
         protocol = Cluster()
@@ -4091,7 +4094,7 @@ class TestClusterProtocol_DiscoverPod(MAASTestCase):
 
 class TestClusterProtocol_SendPodCommissioningResults(MAASTestCase):
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def test_is_registered(self):
         protocol = Cluster()
@@ -4211,7 +4214,7 @@ class TestClusterProtocol_ComposeMachine(MAASTestCase):
 
 class TestClusterProtocol_DecomposeMachine(MAASTestCase):
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def test_is_registered(self):
         protocol = Cluster()
@@ -4252,7 +4255,7 @@ class TestClusterProtocol_DecomposeMachine(MAASTestCase):
 
 class TestClusterProtocol_DisableAndShutoffRackd(MAASTestCase):
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def test_is_registered(self):
         protocol = Cluster()
@@ -4329,7 +4332,7 @@ class TestClusterProtocol_DisableAndShutoffRackd(MAASTestCase):
 
 class TestClusterProtocol_CheckIPs(MAASTestCaseThatWaitsForDeferredThreads):
 
-    run_tests_with = MAASTwistedRunTest.make_factory(timeout=5)
+    run_tests_with = MAASTwistedRunTest.make_factory(timeout=TIMEOUT)
 
     def test_is_registered(self):
         protocol = Cluster()
