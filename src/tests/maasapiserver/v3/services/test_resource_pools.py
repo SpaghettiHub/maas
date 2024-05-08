@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 from unittest.mock import AsyncMock, Mock
 
 import pytest
@@ -23,6 +24,24 @@ class TestResourcePoolsService:
     async def test_create(
         self, db_connection: AsyncConnection, fixture: Fixture
     ) -> None:
+        class ResourcePoolMatcher(ResourcePool):
+            def __init__(self, **kwargs: Any) -> None:
+                kwargs["created"] = datetime.now()
+                kwargs["updated"] = datetime.now()
+                super().__init__(**kwargs)
+
+            def __eq__(self, other: Any) -> bool:
+                if not isinstance(other, ResourcePool):
+                    return False
+                return (
+                    self.id == other.id
+                    and self.name == other.name
+                    and self.description == other.description
+                    and self.created >= other.created
+                    and self.updated  # The matcher is created after the actual resource
+                    >= other.updated
+                )
+
         now = datetime.utcnow()
         resource_pool = ResourcePool(
             id=1,
@@ -35,6 +54,7 @@ class TestResourcePoolsService:
         resource_pool_repository_mock.create = AsyncMock(
             return_value=resource_pool
         )
+        resource_pool_repository_mock.get_next_id = AsyncMock(return_value=1)
         resource_pools_service = ResourcePoolsService(
             connection=db_connection,
             resource_pools_repository=resource_pool_repository_mock,
@@ -43,7 +63,13 @@ class TestResourcePoolsService:
             name=resource_pool.name, description=resource_pool.description
         )
         created_resource_pool = await resource_pools_service.create(request)
-        resource_pool_repository_mock.create.assert_called_once_with(request)
+        resource_pool_repository_mock.create.assert_called_once_with(
+            ResourcePoolMatcher(
+                id=1,
+                name=resource_pool.name,
+                description=resource_pool.description,
+            )
+        )
         assert created_resource_pool is not None
 
     async def test_list(

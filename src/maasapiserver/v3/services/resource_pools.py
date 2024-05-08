@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncConnection
@@ -34,9 +35,16 @@ class ResourcePoolsService(Service):
     async def create(
         self, resource_pool_request: ResourcePoolRequest
     ) -> ResourcePool:
-        return await self.resource_pools_repository.create(
-            resource_pool_request
+        now = datetime.utcnow()
+        resource_pool_id = await self.resource_pools_repository.get_next_id()
+        resource_pool = ResourcePool(
+            id=resource_pool_id,
+            name=resource_pool_request.name,
+            description=resource_pool_request.description,
+            updated=now,
+            created=now,
         )
+        return await self.resource_pools_repository.create(resource_pool)
 
     async def get_by_id(self, id: int) -> Optional[ResourcePool]:
         return await self.resource_pools_repository.find_by_id(id)
