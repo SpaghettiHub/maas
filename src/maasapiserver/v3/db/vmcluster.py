@@ -3,14 +3,16 @@ from sqlalchemy.sql.operators import eq
 
 from maasapiserver.common.db.tables import VmClusterTable
 from maasapiserver.v3.api.models.requests.query import PaginationParams
-from maasapiserver.v3.api.models.requests.vmcluster import VmClusterRequest
 from maasapiserver.v3.db.base import BaseRepository
 from maasapiserver.v3.models.base import ListResult
 from maasapiserver.v3.models.vmcluster import VmCluster
 
 
-class VmClustersRepository(BaseRepository[VmCluster, VmClusterRequest]):
-    async def create(self, request: VmClusterRequest) -> VmCluster:
+class VmClustersRepository(BaseRepository[VmCluster]):
+    async def get_next_id(self) -> int:
+        raise Exception("Not implemented yet.")
+
+    async def create(self, resource: VmCluster) -> VmCluster:
         raise Exception("Not implemented yet.")
 
     async def find_by_id(self, id: int) -> VmCluster | None:

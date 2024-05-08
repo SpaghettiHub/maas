@@ -8,15 +8,21 @@ from maasapiserver.v3.models.base import ListResult
 
 T = TypeVar("T")
 
-K = TypeVar("K")
 
-
-class BaseRepository(ABC, Generic[T, K]):
+class BaseRepository(ABC, Generic[T]):
     def __init__(self, connection: AsyncConnection):
         self.connection = connection
 
     @abstractmethod
-    async def create(self, request: K) -> T:
+    async def get_next_id(self) -> int:
+        """
+        Get the next ID for a new resource. Usually, this is useful because the ID comes from a sequence defined in the
+        database.
+        """
+        pass
+
+    @abstractmethod
+    async def create(self, request: T) -> T:
         pass
 
     @abstractmethod
