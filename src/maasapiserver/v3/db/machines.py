@@ -11,7 +11,6 @@ from maasapiserver.common.db.tables import (
     NodeTable,
     UserTable,
 )
-from maasapiserver.v3.api.models.requests.machines import MachineRequest
 from maasapiserver.v3.api.models.requests.query import PaginationParams
 from maasapiserver.v3.db.base import BaseRepository
 from maasapiserver.v3.models.base import ListResult
@@ -19,8 +18,11 @@ from maasapiserver.v3.models.machines import Machine
 from maasserver.enum import NODE_TYPE
 
 
-class MachinesRepository(BaseRepository[Machine, MachineRequest]):
-    async def create(self, request: MachineRequest) -> Machine:
+class MachinesRepository(BaseRepository[Machine]):
+    async def get_next_id(self) -> int:
+        raise Exception("Not implemented yet.")
+
+    async def create(self, machine: Machine) -> Machine:
         raise Exception("Not implemented yet.")
 
     async def find_by_id(self, id: int) -> Machine | None:
