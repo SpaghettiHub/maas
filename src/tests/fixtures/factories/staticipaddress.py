@@ -14,7 +14,8 @@ async def create_test_staticipaddress_entry(
     fixture: Fixture,
     subnet: dict[str, Any] | None = None,
     **extra_details: dict[str, Any]
-) -> dict[str, Any]:
+) -> list[dict[str, Any]]:
+    """We return a list, as DHCP ips need to create discovered ips also."""
     created_at = datetime.utcnow().astimezone()
     updated_at = datetime.utcnow().astimezone()
     staticipaddress = {
@@ -51,9 +52,23 @@ async def create_test_staticipaddress_entry(
             ip = ip + 1
         staticipaddress["ip"] = str(ip)
 
-    [created_staticipaddress] = await fixture.create(
+        if staticipaddress["alloc_type"] == IPADDRESS_TYPE.DHCP:
+            # create a new discovered ip
+            [discovered_ip] = await create_test_staticipaddress_entry(
+                fixture,
+                alloc_type=IPADDRESS_TYPE.DISCOVERED,
+                ip=staticipaddress["ip"],
+                subnet_id=staticipaddress["subnet_id"],
+            )
+            staticipaddress["ip"] = None
+
+    created_staticipaddresses = await fixture.create(
         "maasserver_staticipaddress",
         [staticipaddress],
     )
 
-    return created_staticipaddress
+    # let the test know about the discovered ip
+    if subnet and staticipaddress["alloc_type"] == IPADDRESS_TYPE.DHCP:
+        created_staticipaddresses.append(discovered_ip)
+
+    return created_staticipaddresses
