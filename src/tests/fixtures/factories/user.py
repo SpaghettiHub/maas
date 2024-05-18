@@ -5,11 +5,10 @@ from maasapiserver.v3.models.users import User
 from tests.maasapiserver.fixtures.db import Fixture
 
 
-async def create_test_user(
+async def create_test_user_entry(
     fixture: Fixture, **extra_details: dict[str, Any]
-) -> User:
+) -> dict[str, Any]:
     date_joined = datetime.utcnow().astimezone()
-
     user = {
         "username": "myusername",
         "password": "pbkdf2_sha256$260000$f1nMJPH4Z5Wc8QxkTsZ1p6$ylZBpgGE3FNlP2zOU21cYiLtvxwtkglsPKUETtXhzDw=",  # hash('test')
@@ -26,4 +25,9 @@ async def create_test_user(
         "auth_user",
         [user],
     )
-    return User(**created_user)
+    return created_user
+
+
+async def create_test_user(fixture: Fixture, **extra_details: Any):
+    entry = await create_test_user_entry(fixture, **extra_details)
+    return User(**entry)

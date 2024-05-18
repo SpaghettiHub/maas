@@ -27,12 +27,12 @@ import (
 
 // CheckIPParam is a workflow parameter for the CheckIP workflow
 type CheckIPParam struct {
-	IPs []netip.Addr `json:"ips"`
+	IPs []*netip.Addr `json:"ips"`
 }
 
 // CheckIPResult is a value returned by the CheckIP workflow
 type CheckIPResult struct {
-	IPs map[netip.Addr]net.HardwareAddr `json:"ips"`
+	IPs map[*netip.Addr]net.HardwareAddr `json:"ips"`
 }
 
 // CheckIP is a Temporal workflow for checking available IP addresses
@@ -42,7 +42,7 @@ func CheckIP(ctx workflow.Context, param CheckIPParam) (CheckIPResult, error) {
 	}
 	ctx = workflow.WithLocalActivityOptions(ctx, ao)
 
-	var scanned map[netip.Addr]net.HardwareAddr
+	var scanned map[*netip.Addr]net.HardwareAddr
 
 	err := workflow.ExecuteLocalActivity(ctx, netmon.Scan, param.IPs).Get(ctx, &scanned)
 	if err != nil {

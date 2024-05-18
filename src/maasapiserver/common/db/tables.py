@@ -142,7 +142,7 @@ BlockDeviceTable = Table(
     Column("id_path", String(4096), nullable=True),
     Column("size", BigInteger, nullable=False),
     Column("block_size", Integer, nullable=False),
-    Column("tags", Text, nullable=True),
+    Column("tags", ARRAY(Text), nullable=True),
     Column(
         "node_config_id",
         BigInteger,
@@ -628,11 +628,148 @@ VmClusterTable = Table(
     ),
 )
 
+FileSystemTable = Table(
+    "maasserver_filesystem",
+    METADATA,
+    Column("id", BigInteger, primary_key=True, unique=True),
+    Column("created", DateTime(timezone=True), nullable=False),
+    Column("updated", DateTime(timezone=True), nullable=False),
+    Column("uuid", Text, nullable=True),
+    Column("fstype", String(20), nullable=True),
+    Column("label", String(256), nullable=True),
+    Column("create_params", String(256), nullable=True),
+    Column("mount_point", String(256), nullable=True),
+    Column("mount_options", String(256), nullable=True),
+    Column("acquired", Boolean, nullable=False),
+    Column(
+        "block_device_id",
+        BigInteger,
+        ForeignKey("maasserver_blockdevice.id"),
+        nullable=True,
+    ),
+    Column(
+        "cache_set_id",
+        BigInteger,
+        ForeignKey("maasserver_cacheset.id"),
+        nullable=True,
+    ),
+    Column(
+        "filesystem_group_id",
+        BigInteger,
+        ForeignKey("maasserver_filesystemgroup.id"),
+        nullable=True,
+    ),
+    Column(
+        "partition_id",
+        BigInteger,
+        ForeignKey("maasserver_partition.id"),
+        nullable=True,
+    ),
+    Column(
+        "node_config_id",
+        BigInteger,
+        ForeignKey("maasserver_nodeconfig.id"),
+        nullable=False,
+    ),
+)
+
+InterfaceRelationshipTable = Table(
+    "maasserver_interfacerelationship",
+    METADATA,
+    Column("id", BigInteger, primary_key=True, unique=True),
+    Column("created", DateTime(timezone=True), nullable=True),
+    Column("updated", DateTime(timezone=True), nullable=True),
+    Column(
+        "child_id",
+        BigInteger,
+        ForeignKey("maasserver_interface.id"),
+        nullable=False,
+    ),
+    Column(
+        "parent_id",
+        BigInteger,
+        ForeignKey("maasserver_interface.id"),
+        nullable=False,
+    ),
+)
+
+BootResourceTable = Table(
+    "maasserver_bootresource",
+    METADATA,
+    Column("id", BigInteger, primary_key=True, unique=True),
+    Column("created", DateTime(timezone=True), nullable=True),
+    Column("updated", DateTime(timezone=True), nullable=True),
+    Column("rtype", Integer, nullable=False),
+    Column("name", String(256), nullable=False),
+    Column("architecture", String(256), nullable=False),
+    Column("extra", JSONB, nullable=False),
+    Column("base_image", String(256), nullable=False),
+    Column("bootloader_type", String(33), nullable=True),
+    Column("kflavor", String(33), nullable=True),
+    Column("rolling", Boolean, nullable=False),
+)
+
+BootResourceSetTable = Table(
+    "maasserver_bootresourceset",
+    METADATA,
+    Column("id", BigInteger, primary_key=True, unique=True),
+    Column("created", DateTime(timezone=True), nullable=True),
+    Column("updated", DateTime(timezone=True), nullable=True),
+    Column("version", String(256), nullable=False),
+    Column("label", String(256), nullable=False),
+    Column(
+        "resource_id",
+        BigInteger,
+        ForeignKey("maasserver_bootresource.id"),
+        nullable=False,
+    ),
+)
+
+BootResourceFileTable = Table(
+    "maasserver_bootresourcefile",
+    METADATA,
+    Column("id", BigInteger, primary_key=True, unique=True),
+    Column("created", DateTime(timezone=True), nullable=True),
+    Column("updated", DateTime(timezone=True), nullable=True),
+    Column("filename", String(256), nullable=False),
+    Column("filetype", String(21), nullable=False),
+    Column("extra", JSONB, nullable=False),
+    Column("sha256", String(65), nullable=False),
+    Column("size", BigInteger, nullable=False),
+    Column(
+        "resource_set_id",
+        BigInteger,
+        ForeignKey("maasserver_bootresourceset.id"),
+        nullable=False,
+    ),
+)
+
+BootResourceFileSyncTable = Table(
+    "maasserver_bootresourcefilesync",
+    METADATA,
+    Column("id", BigInteger, primary_key=True, unique=True),
+    Column("created", DateTime(timezone=True), nullable=True),
+    Column("updated", DateTime(timezone=True), nullable=True),
+    Column("size", BigInteger, nullable=False),
+    Column(
+        "file_id",
+        BigInteger,
+        ForeignKey("maasserver_bootresourcefile.id"),
+        nullable=False,
+    ),
+    Column(
+        "region_id",
+        BigInteger,
+        ForeignKey("maasserver_node.id"),
+        nullable=False,
+    ),
+)
+
 ConfigTable = Table(
     "maasserver_config",
     METADATA,
     Column("id", BigInteger, primary_key=True, unique=True),
-    Column("name", String(255), nullable=False, unique=True),
+    Column("name", String(256), nullable=False, unique=True),
     Column("value", JSONB, nullable=True),
 )
 
@@ -650,4 +787,49 @@ VaultSecretTable = Table(
     METADATA,
     Column("path", Text, primary_key=True, unique=True),
     Column("deleted", Boolean, nullable=False),
+)
+
+NodeKeyTable = Table(
+    "maasserver_nodekey",
+    METADATA,
+    Column("id", BigInteger, primary_key=True, unique=True),
+    Column(
+        "node_id", BigInteger, ForeignKey("maasserver_node.id"), nullable=False
+    ),
+    Column(
+        "token_id", BigInteger, ForeignKey("piston3_token.id"), nullable=False
+    ),
+)
+
+TokenTable = Table(
+    "piston3_token",
+    METADATA,
+    Column("id", BigInteger, primary_key=True, unique=True),
+    Column("key", String(18), nullable=False),
+    Column("secret", String(32), nullable=False),
+    Column("verifier", String(10), nullable=True),
+    Column("token_type", Integer, nullable=False),
+    Column("timestamp", Integer, nullable=False),
+    Column("is_approved", Boolean, nullable=False),
+    Column("user_id", BigInteger, ForeignKey("auth_user.id"), nullable=True),
+    Column(
+        "consumer_id",
+        BigInteger,
+        ForeignKey("piston3_consumer.id"),
+        nullable=True,
+    ),
+    Column("callback", String(255), nullable=True),
+    Column("callback_confirmed", Boolean, nullable=False),
+)
+
+ConsumerTable = Table(
+    "piston3_consumer",
+    METADATA,
+    Column("id", BigInteger, primary_key=True, unique=True),
+    Column("name", String(255), nullable=False),
+    Column("description", Text, nullable=False),
+    Column("key", String(18), nullable=False),
+    Column("secret", String(32), nullable=False),
+    Column("status", String(16), nullable=False),
+    Column("user_id", BigInteger, ForeignKey("auth_user.id"), nullable=True),
 )

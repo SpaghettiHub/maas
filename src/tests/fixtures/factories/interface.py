@@ -26,7 +26,7 @@ async def create_test_interface_ip_addresses_entry(
 async def create_test_interface_entry(
     fixture: Fixture,
     node: dict[str, Any] | None = None,
-    ips: list[dict[str, Any]] | None = None,
+    ips: list[dict[str, Any]] | None = [],
     **extra_details: dict[str, Any],
 ) -> dict[str, Any]:
     created_at = datetime.utcnow().astimezone()

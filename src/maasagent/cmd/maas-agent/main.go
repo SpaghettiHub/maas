@@ -34,6 +34,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"maas.io/core/src/maasagent/internal/cache"
+	"maas.io/core/src/maasagent/internal/deploy"
 	"maas.io/core/src/maasagent/internal/httpproxy"
 	"maas.io/core/src/maasagent/internal/power"
 	wflog "maas.io/core/src/maasagent/internal/workflow/log"
@@ -151,11 +152,13 @@ func Run() int {
 	}
 
 	powerService := power.NewPowerService(cfg.SystemID, &workerPool)
+	deployService := deploy.NewDeployService(cfg.SystemID, &workerPool)
 	httpProxyService := httpproxy.NewHTTPProxyService(getRunDir(), cache)
 
 	workerPool = *worker.NewWorkerPool(cfg.SystemID, temporalClient,
 		worker.WithMainWorkerTaskQueueSuffix("agent:main"),
 		worker.WithConfigurator(powerService),
+		worker.WithConfigurator(deployService),
 		worker.WithConfigurator(httpProxyService),
 	)
 
