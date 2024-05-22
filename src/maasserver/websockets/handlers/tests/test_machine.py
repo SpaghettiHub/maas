@@ -2509,6 +2509,30 @@ class TestMachineHandler(MAASServerTestCase):
             },
         )
 
+    def test_update_raises_validation_error_for_invalid_ip_address(self):
+        user = factory.make_admin()
+        handler = MachineHandler(user, {}, None)
+        node = factory.make_Node(interface=True, power_type="ipmi")
+        node_data = TestMachineHandlerUtils.dehydrate_node(node, handler)
+        arch = make_usable_architecture(self)
+        power_address = "123"
+        node_data["architecture"] = arch
+        node_data["power_parameters"] = {
+            "power_address": power_address,
+        }
+
+        error = self.assertRaises(
+            HandlerValidationError, handler.update, node_data
+        )
+        self.assertEqual(
+            error.message_dict,
+            {
+                "power_parameters": [
+                    "IP address: Enter a valid IPv4 or IPv6 address."
+                ]
+            },
+        )
+
     def test_update_updates_node(self):
         user = factory.make_admin()
         handler = MachineHandler(user, {}, None)

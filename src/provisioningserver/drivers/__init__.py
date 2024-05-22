@@ -128,7 +128,8 @@ def make_setting_field(
     :param label: The label to be presented to the user for this field.
     :type label: string
     :param field_type: The type of field to create. Can be one of
-        (string, choice, mac_address). Defaults to string.
+        (string, choice, multiple_choice, password, ip_address, mac_address).
+        Defaults to string.
     :type field_type: string.
     :param choices: The collection of choices to present to the user.
         Needs to be structured as a list of lists, otherwise
@@ -151,6 +152,7 @@ def make_setting_field(
         "choice",
         "multiple_choice",
         "password",
+        "ip_address",
     ):
         field_type = "string"
     if choices is None:

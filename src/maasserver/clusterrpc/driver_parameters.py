@@ -52,6 +52,7 @@ FIELD_TYPE_MAPPINGS = {
     "multiple_choice": forms.MultipleChoiceField,
     # This is used on the API so a password field is just a char field.
     "password": forms.CharField,
+    "ip_address": forms.GenericIPAddressField,
 }
 
 
