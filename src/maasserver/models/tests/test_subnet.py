@@ -18,7 +18,7 @@ from maasserver.enum import (
     RDNS_MODE_CHOICES,
 )
 from maasserver.exceptions import StaticIPAddressExhaustion
-from maasserver.models import Config, Notification, Space
+from maasserver.models import Config, Notification, ReservedIP, Space
 from maasserver.models.subnet import (
     create_cidr,
     get_allocated_ips,
@@ -998,6 +998,31 @@ class TestRenderJSONForRelatedIPs(MAASServerTestCase):
         self.assertEqual(json[0]["ip"], "10.0.0.1")
         self.assertEqual(json[1]["ip"], "10.0.0.2")
         self.assertEqual(json[2]["ip"], "10.0.0.154")
+
+    def test_render_reserved_ips(self):
+        subnet = factory.make_Subnet(cidr="10.0.0.0/24")
+        ReservedIP(
+            ip="10.0.0.53",
+            subnet=subnet,
+        ).save()
+        ReservedIP(
+            ip="10.0.0.67",
+            mac_address="00:11:22:33:44:55",
+            subnet=subnet,
+        ).save()
+
+        result = subnet.render_json_for_related_reserved_ips()
+
+        assert (
+            result[0]["ip"],
+            result[0]["mac"],
+            result[0]["node_summary"],
+        ) == ("10.0.0.53", None, {})
+        assert (
+            result[1]["ip"],
+            result[1]["mac"],
+            result[1]["node_summary"],
+        ) == ("10.0.0.67", "00:11:22:33:44:55", {})
 
     def test_returns_expected_json(self):
         subnet = factory.make_Subnet(cidr="10.0.0.0/24")
