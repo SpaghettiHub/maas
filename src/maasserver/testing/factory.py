@@ -1338,7 +1338,7 @@ class Factory(maastesting.factory.Factory):
         completed_intro=True,
         is_local=None,
         groups=(),
-    ):
+    ) -> User:
         if username is None:
             username = self.make_username()
         if email is None:
@@ -1450,7 +1450,7 @@ class Factory(maastesting.factory.Factory):
         description="",
         disabled_boot_architectures=None,
         **kwargs,
-    ):
+    ) -> Subnet:
         if name is None:
             name = factory.make_name("name")
         space = self._maybe_make_Space(space)
