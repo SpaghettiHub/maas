@@ -9,7 +9,11 @@ jobs:
     if: ${{ github.event.label.name == 'test' }}
     runs-on: [self-hosted, quantagrid] 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        ref: "refs/pull/${{ github.event.number }}/merge"
+        fetch-depth: 0
     - name: Generate env
       id: generate_env
       run: |
@@ -35,7 +39,11 @@ jobs:
     if: ${{ github.event.label.name == 'test' }}
     runs-on: [self-hosted, quantagrid] 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        ref: "refs/pull/${{ github.event.number }}/merge"
+        fetch-depth: 0
     - name: Generate env
       id: generate_env
       run: |

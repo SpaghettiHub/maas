@@ -9,7 +9,11 @@ jobs:
     if: ${{ github.event.label.name == 'test' }}
     runs-on: [self-hosted, quantagrid] 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        ref: "refs/pull/${{ github.event.number }}/merge"
+        fetch-depth: 0
     - name: create lxd container
       run: lxc launch ubuntu:22.04 maas-ci-tester-${{ github.sha }}
     - name: Sleep 10 seconds and wait for container to get up
