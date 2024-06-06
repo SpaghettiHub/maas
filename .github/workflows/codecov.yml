@@ -10,30 +10,49 @@ on:
 jobs:
   run:  
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event.label.name == 'coverage'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, quantagrid] 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Install
-        run: | 
-          make install-dependencies clean build cleandb syncdb
-          source .ve/bin/activate && pip install coverage gevent
-      - name: Region coverage
-        run: bin/test.region --with-coverage --cover-xml --cover-xml-file=./coverage-region.xml
-      - name: Rack coverage
-        run: bin/test.rack --with-coverage --cover-xml --cover-xml-file=./coverage-rack.xml
-      - name: pytest coverage
-        run: |
-          source .ve/bin/activate 
-          coverage run -a --source=. --concurrency=gevent --data-file=./coverage-pytest -m pytest 
-          coverage xml -i --data-file coverage-pytest
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          flags: smart-tests
-          verbose: true
-          files: ./coverage.xml, ./coverage-region.xml, ./coverage-rack.xml
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    - uses: actions/checkout@v4
+    - name: Prepare env
+      run: |
+        echo "TMPDIR=$(mktemp -d)" >> $GITHUB_ENV
+    - name: create lxd container
+      run: lxc launch ubuntu:22.04 maas-coverage-tester-${{ github.sha }}
+    - name: Sleep 10 seconds and wait for container to get up
+      run: sleep 10 
+    - name: Set proxy
+      run: lxc exec maas-ci-tester-${{ github.sha }} --user 0 -- sh -c "echo 'Acquire::http::Proxy \"http://172.0.2.15:3129\";' | sudo tee /etc/apt/apt.conf.d/99proxy"
+    - name: Copy repository to lxd container
+      run: |
+        lxc file push -r ./ maas-coverage-tester-${{ github.sha }}/home/ubuntu > /dev/null
+        lxc exec maas-coverage-tester-${{ github.sha }} --cwd /home/ubuntu --user 0 -- chown -R ubuntu:ubuntu maas
+    - name: Install make
+      run: lxc exec maas-coverage-tester-${{ github.sha }} --user 0 -- sh -c "apt-get update && apt-get install make" 
+    - name: Configure git repo
+      run: lxc exec maas-coverage-tester-${{ github.sha }} --user 0 -- git config --global --add safe.directory /home/ubuntu/maas
+    - name: Install deps
+      run: |
+        lxc exec maas-coverage-tester-${{ github.sha }} --user 0 --cwd /home/ubuntu/maas/ -- make install-dependencies clean build cleandb syncdb
+        lxc exec maas-coverage-tester-${{ github.sha }} --user 0 --cwd /home/ubuntu/maas/ -- source .ve/bin/activate && pip install coverage gevent
+    - name: Region coverage
+      run: lxc exec maas-coverage-tester-${{ github.sha }} --user 0 --cwd /home/ubuntu/maas/ -- bin/test.region --with-coverage --cover-xml --cover-xml-file=./coverage-region.xml
+    - name: Rack coverage
+      run: lxc exec maas-coverage-tester-${{ github.sha }} --user 0 --cwd /home/ubuntu/maas/ -- bin/test.rack --with-coverage --cover-xml --cover-xml-file=./coverage-rack.xml
+    - name: pytest coverage
+      run: lxc exec maas-coverage-tester-${{ github.sha }} --user 0 --cwd /home/ubuntu/maas/ -- sh -c "source .ve/bin/activate && coverage run -a --source=. --concurrency=gevent --data-file=./coverage-pytest -m pytest && coverage xml -i --data-file coverage-pytest" 
+    - name: Copy artifacts
+      run: |
+        lxc file pull -r maas-coverage-tester-${{ github.sha }}/home/ubuntu/maas/coverage.xml $TMPDIR
+        lxc file pull -r maas-coverage-tester-${{ github.sha }}/home/ubuntu/maas/coverage-region.xml $TMPDIR
+        lxc file pull -r maas-coverage-tester-${{ github.sha }}/home/ubuntu/maas/coverage-rack.xml $TMPDIR        
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        flags: smart-tests
+        verbose: true
+        files: $TMPDIR/coverage.xml, $TMPDIR/coverage-region.xml, $TMPDIR/coverage-rack.xml
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    - name: cleanup
+      if: always()
+      run: lxc delete -f maas-coverage-tester-${{ github.sha }}

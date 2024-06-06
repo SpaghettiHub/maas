@@ -2,20 +2,22 @@ name: "AutoPR Manager"
 on:
   schedule:
     - cron: '0 0 * * *'
+  workflow_dispatch:
 
+permissions:
+  contents: write
+  issues: write 
+  pull-requests: write
+  
 jobs:
   stale:
-    permissions:
-      contents: read
-      pull-requests: write
     runs-on: ubuntu-latest
     steps:
       - name: Process stale PRs
-        uses: Sonia-corporation/stale@2.5.0
+        uses: actions/stale@v9
         with:
-          issue-processing: false
-          pull-request-days-before-stale: 1
-          pull-request-days-before-close: 1
-          pull-request-ignore-draft: true
-          pull-request-ignore-all-milestones: true
-          pull-request-stale-label: 'autoclose'
+          stale-issue-label: stale
+          stale-pr-label: stale
+          days-before-stale: 1 # Mark stale after 8 weeks (56 days) of inactivity
+          days-before-close: 1 # Disable auto-closing
+          exempt-all-milestones: true # Any issue/PR within a milestone will be omitted
