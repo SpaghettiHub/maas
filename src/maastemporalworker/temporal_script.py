@@ -13,7 +13,11 @@ from maastemporalworker.workflow.configure import (
     ConfigureAgentActivity,
     ConfigureAgentWorkflow,
 )
-from maastemporalworker.workflow.deploy import DeployNWorkflow
+from maastemporalworker.workflow.deploy import (
+    DeployActivity,
+    DeployNWorkflow,
+    DeployWorkflow,
+)
 from maastemporalworker.workflow.msm import (
     MSMConnectorActivity,
     MSMEnrolSiteWorkflow,
@@ -48,6 +52,7 @@ async def main() -> None:
 
     configure_activity = ConfigureAgentActivity(db)
     msm_activity = MSMConnectorActivity(db)
+    deploy_activity = DeployActivity(db)
 
     temporal_workers = [
         # All regions listen to a shared task queue. The first to pick up a task will execute it.
@@ -58,6 +63,7 @@ async def main() -> None:
                 ConfigureAgentWorkflow,
                 # Lifecycle workflows
                 DeployNWorkflow,
+                DeployWorkflow,
                 CommissionNWorkflow,
                 # MSM Connector service
                 MSMEnrolSiteWorkflow,
@@ -68,6 +74,9 @@ async def main() -> None:
                 # Configuration activities
                 configure_activity.get_rack_controller_vlans,
                 configure_activity.get_region_controller_endpoints,
+                # Deploy activities
+                deploy_activity.set_node_status,
+                deploy_activity.get_boot_order,
                 # MSM connector activities
                 msm_activity.send_enrol,
                 msm_activity.check_enrol,

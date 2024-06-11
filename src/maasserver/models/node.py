@@ -168,8 +168,13 @@ from maasserver.utils.orm import (
 )
 from maasserver.utils.threads import callOutToDatabase, deferToDatabase
 from maasserver.worker_user import get_worker_user
-from maasserver.workflow import execute_workflow
-from maasserver.workflow.power import convert_power_action_to_power_workflow
+from maasserver.workflow import execute_workflow, start_workflow
+from maasserver.workflow.power import (
+    convert_power_action_to_power_workflow,
+    get_temporal_task_queue_for_bmc,
+    PowerParam,
+)
+from maastemporalworker.workflow.deploy import DeployNParam, DeployParam
 from metadataserver.enum import (
     RESULT_TYPE,
     SCRIPT_STATUS,
@@ -1756,7 +1761,7 @@ class Node(CleanSave, TimestampedModel):
                     return True
         return False
 
-    def _start_deployment(self):
+    def _start_deployment(self, experimental_deploy=False):
         """Mark a node as being deployed."""
         from maasserver.models.event import Event
         from maasserver.models.scriptset import ScriptSet
@@ -1770,7 +1775,7 @@ class Node(CleanSave, TimestampedModel):
             raise ValidationError({"storage": storage_layout_issues})
         # Ephemeral deployments need to be re-deployed on a power cycle
         # and will already be in a DEPLOYED state.
-        if self.status == NODE_STATUS.ALLOCATED:
+        if self.status == NODE_STATUS.ALLOCATED and not experimental_deploy:
             self.update_status(NODE_STATUS.DEPLOYING)
         if self.ephemeral_deploy is False:
             script_set = ScriptSet.objects.create_installation_script_set(self)
@@ -5589,6 +5594,7 @@ class Node(CleanSave, TimestampedModel):
         bridge_stp=None,
         bridge_fd=None,
         enable_hw_sync=None,
+        experimental_deploy=False,
     ):
         if not user.has_perm(NodePermission.edit, self):
             # You can't start a node you don't own unless you're an admin.
@@ -5697,7 +5703,10 @@ class Node(CleanSave, TimestampedModel):
             user, event, action="start", comment=comment
         )
         return self._start(
-            user, user_data, allow_power_cycle=allow_power_cycle
+            user,
+            user_data,
+            allow_power_cycle=allow_power_cycle,
+            experimental_deploy=experimental_deploy,
         )
 
     def _get_bmc_client_connection_info(self, *args, **kwargs):
@@ -5770,42 +5779,8 @@ class Node(CleanSave, TimestampedModel):
             status__in=SCRIPT_STATUS_RUNNING_OR_PENDING
         ).update(status=SCRIPT_STATUS.ABORTED, updated=now())
 
-    @transactional
-    def _start(
-        self,
-        user: User,
-        user_data: bytes | None = None,
-        old_status=None,
-        allow_power_cycle: bool = False,
-        config=None,
-    ) -> Deferred | None:
-        """Request on given user's behalf that the node be started up.
-
-        :param user: Requesting user.
-        :type user: User_
-        :param user_data: Optional blob of user-data to be made available to
-            the node through the metadata service. If not given, any previous
-            user data is used.
-        :type user_data: unicode
-
-        :raise StaticIPAddressExhaustion: if there are not enough IP addresses
-            left in the static range for this node to get all the addresses it
-            needs.
-        :raise PermissionDenied: If `user` does not have permission to
-            start this node.
-
-        :return: a `Deferred` which contains the post-commit tasks that are
-            required to run to start the node. This is already registered as a
-            post-commit hook; it should not be added a second time. If it has
-            not been possible to start the node because the power controller
-            does not support it, `None` will be returned. The node must be
-            powered on manually.
-        """
-        from maasserver.models import BootResource, NodeUserData
-
-        if not user.has_perm(NodePermission.edit, self):
-            # You can't start a node you don't own unless you're an admin.
-            raise PermissionDenied()
+    def validate_bootresource_exists_for_action(self, config=None):
+        from maasserver.models import BootResource
 
         # Validate that the operating system being booted and deployed are
         # available before booting. Checks for the allocated and deployed
@@ -5859,10 +5834,82 @@ class Node(CleanSave, TimestampedModel):
                         f"for {arch}/{platform} is unavailable."
                     )
 
+    def set_user_data(self, user_data: bytes | None = None) -> None:
+        from maasserver.models import NodeUserData
+
         # Record the user data for the node. Note that we do this
         # whether or not we can actually send power commands to the
         # node; the user may choose to start it manually.
         NodeUserData.objects.set_user_data(self, user_data)
+
+    def _temporal_deploy(self, d: Deferred) -> Deferred:
+        power_info = self.get_effective_power_info()
+        dd = start_workflow(
+            "deploy-n",
+            param=DeployNParam(
+                params=[
+                    DeployParam(
+                        system_id=str(self.system_id),
+                        power_params=PowerParam(
+                            system_id=str(self.system_id),
+                            driver_type=str(power_info.power_type),
+                            driver_opts=dict(power_info.power_parameters),
+                            task_queue=str(
+                                get_temporal_task_queue_for_bmc(self)
+                            ),
+                        ),
+                        ephemeral_deploy=bool(self.ephemeral_deploy),
+                        can_set_boot_order=bool(power_info.can_set_boot_order),
+                        task_queue="region",
+                    ),
+                ],
+            ),
+            task_queue="region",
+        )
+        if not dd.called:
+            d.chainDeferred(dd)
+        return d
+
+    @transactional
+    def _start(
+        self,
+        user: User,
+        user_data: bytes | None = None,
+        old_status=None,
+        allow_power_cycle: bool = False,
+        config=None,
+        experimental_deploy: bool = False,
+    ) -> Deferred | None:
+        """Request on given user's behalf that the node be started up.
+
+        :param user: Requesting user.
+        :type user: User_
+        :param user_data: Optional blob of user-data to be made available to
+            the node through the metadata service. If not given, any previous
+            user data is used.
+        :type user_data: unicode
+
+        :raise StaticIPAddressExhaustion: if there are not enough IP addresses
+            left in the static range for this node to get all the addresses it
+            needs.
+        :raise PermissionDenied: If `user` does not have permission to
+            start this node.
+
+        :return: a `Deferred` which contains the post-commit tasks that are
+            required to run to start the node. This is already registered as a
+            post-commit hook; it should not be added a second time. If it has
+            not been possible to start the node because the power controller
+            does not support it, `None` will be returned. The node must be
+            powered on manually.
+        """
+
+        if not user.has_perm(NodePermission.edit, self):
+            # You can't start a node you don't own unless you're an admin.
+            raise PermissionDenied()
+
+        self.validate_bootresource_exists_for_action(config=config)
+
+        self.set_user_data(user_data=user_data)
 
         # Auto IP allocation and power on action are attached to the
         # post commit of the transaction.
@@ -5873,61 +5920,71 @@ class Node(CleanSave, TimestampedModel):
         def claim_auto_ips(_):
             yield self._claim_auto_ips()
 
-        if self.status == NODE_STATUS.ALLOCATED:
+        if self.status == NODE_STATUS.ALLOCATED and experimental_deploy:
             old_status = self.status
-            # Claim AUTO IP addresses for the node if it's ALLOCATED.
-            # The current state being ALLOCATED is our indication that the node
-            # is being deployed for the first time.
+            set_deployment_timeout = False  # handled by temporal
             d.addCallback(claim_auto_ips)
-            set_deployment_timeout = True
-            self._start_deployment()
+            self._start_deployment(experimental_deploy=experimental_deploy)
             claimed_ips = True
-        elif self.status in COMMISSIONING_LIKE_STATUSES:
-            if old_status is None:
+
+            d = self._temporal_deploy(d)
+
+        else:
+            if self.status == NODE_STATUS.ALLOCATED:
                 old_status = self.status
-            from maasserver.models import ScriptResult
-
-            # Claim AUTO IP addresses if a script will be running in the
-            # ephemeral environment which needs network configuration applied.
-            if ScriptResult.objects.filter(
-                script_set__in=[
-                    self.current_commissioning_script_set,
-                    self.current_testing_script_set,
-                ],
-                script__apply_configured_networking=True,
-            ).exists():
+                # Claim AUTO IP addresses for the node if it's ALLOCATED.
+                # The current state being ALLOCATED is our indication that the node
+                # is being deployed for the first time.
                 d.addCallback(claim_auto_ips)
+                set_deployment_timeout = True
+                self._start_deployment()
                 claimed_ips = True
-            set_deployment_timeout = False
-        elif self.status == NODE_STATUS.DEPLOYED and self.ephemeral_deploy:
-            # Ephemeral deployments need to be re-deployed on a power cycle
-            # and will already be in a DEPLOYED state.
-            set_deployment_timeout = True
-            self._start_deployment()
-        else:
-            set_deployment_timeout = False
+            elif self.status in COMMISSIONING_LIKE_STATUSES:
+                if old_status is None:
+                    old_status = self.status
+                from maasserver.models import ScriptResult
 
-        power_info = self.get_effective_power_info()
-        if not power_info.can_be_started:
-            # The node can't be powered on by MAAS, so return early.
-            # Everything we've done up to this point is still valid;
-            # this is not an error state.
-            return None
+                # Claim AUTO IP addresses if a script will be running in the
+                # ephemeral environment which needs network configuration applied.
+                if ScriptResult.objects.filter(
+                    script_set__in=[
+                        self.current_commissioning_script_set,
+                        self.current_testing_script_set,
+                    ],
+                    script__apply_configured_networking=True,
+                ).exists():
+                    d.addCallback(claim_auto_ips)
+                    claimed_ips = True
+                set_deployment_timeout = False
+            elif self.status == NODE_STATUS.DEPLOYED and self.ephemeral_deploy:
+                # Ephemeral deployments need to be re-deployed on a power cycle
+                # and will already be in a DEPLOYED state.
+                set_deployment_timeout = True
+                self._start_deployment()
+            else:
+                set_deployment_timeout = False
 
-        if power_info.can_set_boot_order:
-            boot_order = self._get_boot_order()
-        else:
-            boot_order = []
+            power_info = self.get_effective_power_info()
+            if not power_info.can_be_started:
+                # The node can't be powered on by MAAS, so return early.
+                # Everything we've done up to this point is still valid;
+                # this is not an error state.
+                return None
 
-        # Request that the node be powered on post-commit.
-        if self.power_state == POWER_STATE.ON and allow_power_cycle:
-            d = self._power_control_node(
-                d, POWER_WORKFLOW_ACTIONS.CYCLE, power_info, boot_order
-            )
-        else:
-            d = self._power_control_node(
-                d, POWER_WORKFLOW_ACTIONS.ON, power_info, boot_order
-            )
+            if power_info.can_set_boot_order:
+                boot_order = self._get_boot_order()
+            else:
+                boot_order = []
+
+            # Request that the node be powered on post-commit.
+            if self.power_state == POWER_STATE.ON and allow_power_cycle:
+                d = self._power_control_node(
+                    d, POWER_WORKFLOW_ACTIONS.CYCLE, power_info, boot_order
+                )
+            else:
+                d = self._power_control_node(
+                    d, POWER_WORKFLOW_ACTIONS.ON, power_info, boot_order
+                )
 
         # Set the deployment timeout so the node is marked failed after
         # a period of time.
@@ -5951,6 +6008,7 @@ class Node(CleanSave, TimestampedModel):
         # auto IP addresses.
         if claimed_ips:
             d.addErrback(callOutToDatabase, self.release_interface_config)
+
         return d
 
     @transactional
