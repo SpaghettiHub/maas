@@ -64,9 +64,12 @@ jobs:
       with:
         flags: smart-tests
         verbose: true
-        files: $TMPDIR/coverage.xml, $TMPDIR/coverage-region.xml, $TMPDIR/coverage-rack.xml
+        directory: ${{ env.TMPDIR }}
+        files: coverage.xml, coverage-region.xml, coverage-rack.xml
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     - name: cleanup
       if: always()
-      run: lxc delete -f maas-coverage-tester-$CONTAINER_ID
+      run: |
+        lxc delete -f maas-coverage-tester-$CONTAINER_ID
+        rm -rf $TMPDIR
