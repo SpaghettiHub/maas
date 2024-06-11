@@ -51,7 +51,7 @@ jobs:
     - name: Region coverage
       run: lxc exec maas-coverage-tester-$CONTAINER_ID --user 1000 --cwd /home/ubuntu/maas/ -- bin/test.region --with-coverage --cover-xml --cover-xml-file=./coverage-region.xml
     - name: Rack coverage
-      run: lxc exec maas-coverage-tester-$CONTAINER_ID} --user 1000 --cwd /home/ubuntu/maas/ -- bin/test.rack --with-coverage --cover-xml --cover-xml-file=./coverage-rack.xml
+      run: lxc exec maas-coverage-tester-$CONTAINER_ID --user 1000 --cwd /home/ubuntu/maas/ -- bin/test.rack --with-coverage --cover-xml --cover-xml-file=./coverage-rack.xml
     - name: pytest coverage
       run: lxc exec maas-coverage-tester-$CONTAINER_ID --user 1000 --cwd /home/ubuntu/maas/ -- sh -c ". .ve/bin/activate && coverage run -a --source=. --concurrency=gevent --data-file=./coverage-pytest -m pytest && coverage xml -i --data-file coverage-pytest" 
     - name: Copy artifacts
