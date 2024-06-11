@@ -97,10 +97,11 @@ func (s *PowerService) configure(ctx tworkflow.Context, systemID string) error {
 	}
 
 	activities := map[string]interface{}{
-		"power-on":    s.PowerOn,
-		"power-off":   s.PowerOff,
-		"power-query": s.PowerQuery,
-		"power-cycle": s.PowerCycle,
+		"power-on":       s.PowerOn,
+		"power-off":      s.PowerOff,
+		"power-query":    s.PowerQuery,
+		"power-cycle":    s.PowerCycle,
+		"set-boot-order": s.SetBootOrder,
 	}
 
 	// TODO: register workflows once they are moved to the Agent
@@ -173,6 +174,12 @@ type PowerQueryResult struct {
 	State string `json:"state"`
 }
 
+// PowerParam is a generic activity parameter for power management of a host
+type PowerParam struct {
+	DriverOpts map[string]interface{} `json:"driver_opts"`
+	DriverType string                 `json:"driver_type"`
+}
+
 func (s *PowerService) PowerOn(ctx context.Context, param PowerOnParam) (*PowerOnResult, error) {
 	out, err := powerCommand(ctx, "on", param.DriverType, param.DriverOpts)
 	if err != nil {
@@ -225,6 +232,22 @@ func (s *PowerService) PowerQuery(ctx context.Context, param PowerQueryParam) (*
 	out = strings.TrimSpace(out)
 
 	return &PowerQueryResult{State: out}, nil
+}
+
+type SetBootOrderParam struct {
+	SystemID    string                   `json:"system_id"`
+	PowerParams PowerParam               `json:"power_param"`
+	Order       []map[string]interface{} `json:"order"`
+}
+
+func (s *PowerService) SetBootOrder(ctx context.Context, param SetBootOrderParam) error {
+	log := activity.GetLogger(ctx)
+
+	log.Info("setting boot order of " + param.SystemID)
+
+	_, err := powerCommand(ctx, "set-boot-order", param.PowerParams.DriverType, param.PowerParams.DriverOpts)
+
+	return err
 }
 
 func powerCommand(ctx context.Context, action, driver string, opts map[string]interface{}) (string, error) {
