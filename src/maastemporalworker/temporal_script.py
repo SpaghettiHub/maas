@@ -18,6 +18,7 @@ from maastemporalworker.workflow.msm import (
     MSMConnectorActivity,
     MSMEnrolSiteWorkflow,
     MSMHeartbeatWorkflow,
+    MSMTokenRefreshWorkflow,
     MSMWithdrawWorkflow,
 )
 
@@ -41,7 +42,7 @@ async def _stop_temporal_workers(workers: list[TemporalWorker]) -> None:
 async def main() -> None:
     # TODO check that Temporal is active
     log.info("starting region temporal-worker process")
-    config = read_config()
+    config = await read_config()
     log.debug("connecting to MAAS DB")
     db = Database(config.db, echo=config.debug_queries)
     log.debug("connecting to Temporal server")
@@ -63,6 +64,7 @@ async def main() -> None:
                 MSMEnrolSiteWorkflow,
                 MSMWithdrawWorkflow,
                 MSMHeartbeatWorkflow,
+                MSMTokenRefreshWorkflow,
             ],
             activities=[
                 # Configuration activities
@@ -72,8 +74,10 @@ async def main() -> None:
                 msm_activity.send_enrol,
                 msm_activity.check_enrol,
                 msm_activity.set_enrol,
+                msm_activity.get_enrol,
                 msm_activity.get_heartbeat_data,
                 msm_activity.send_heartbeat,
+                msm_activity.refresh_token,
             ],
         ),
     ]
