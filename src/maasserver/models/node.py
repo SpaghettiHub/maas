@@ -4933,7 +4933,7 @@ class Node(CleanSave, TimestampedModel):
             ip_address.subnet for ip_address in discovered_addresses
         }
         for subnet in subnets_to_link:
-            boot_interface.link_subnet(INTERFACE_LINK_TYPE.AUTO, subnet)
+            boot_interface.link_subnet(Config.objects.get_config("default_boot_interface_link_type"), subnet)
             auto_set = True
         if not auto_set:
             # Failed to set AUTO mode on the boot interface. Lets force an
