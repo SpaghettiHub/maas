@@ -10,7 +10,7 @@ on:
 jobs:
   run:  
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event.label.name == 'coverage'
-    runs-on: [self-hosted, quantagrid] 
+    runs-on: [self-hosted, tester] 
     steps:
     - uses: actions/checkout@v4
       if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'

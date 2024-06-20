@@ -7,7 +7,7 @@ on:
 jobs:
   run:
     if: ${{ github.event.label.name == 'test' }}
-    runs-on: [self-hosted, quantagrid] 
+    runs-on: [self-hosted, tester] 
     steps:
     - name: Checkout
       uses: actions/checkout@v3
