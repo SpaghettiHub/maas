@@ -1891,7 +1891,7 @@ class Factory(maastesting.factory.Factory):
         comment=None,
         user=None,
         alloc_type=None,
-    ):
+    ) -> IPRange:
         if alloc_type is None:
             alloc_type = (
                 IPRANGE_TYPE.RESERVED if user else IPRANGE_TYPE.DYNAMIC

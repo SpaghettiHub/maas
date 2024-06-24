@@ -11,6 +11,8 @@ The IP:
 - if the subnet and vlan are not provided, the model will try to identify the
   best fit for the given IP.
 """
+from __future__ import annotations
+
 from ipaddress import ip_address, ip_network
 
 from django.core.exceptions import ValidationError
@@ -29,15 +31,41 @@ from maasserver.fields import MAC_VALIDATOR
 from maasserver.models.cleansave import CleanSave
 from maasserver.models.subnet import Subnet
 from maasserver.models.timestampedmodel import TimestampedModel
-from maasserver.utils.orm import transactional
+from maasserver.utils.orm import MAASQueriesMixin, transactional
 
 
-class ReservedIPManager(Manager):
+class ReservedIPManager(Manager, MAASQueriesMixin):
     """Manager of the ReservedIP model.
 
     As (Django) manager, this class interfaces with the ReservedIp model in the
     database.
     """
+
+    def get_specifiers_q(self, specifiers, separator=":", **kwargs):
+        # Circular imports.
+
+        # This dict is used by the constraints code to identify objects
+        # with particular properties. Please note that changing the keys here
+        # can impact backward compatibility, so use caution.
+        specifier_types = {
+            None: self._add_default_query,
+        }
+        return super().get_specifiers_q(
+            specifiers,
+            specifier_types=specifier_types,
+            separator=separator,
+            **kwargs,
+        )
+
+    def get_reserved_ip_or_404(self, reserved_ip_id: str | None) -> ReservedIP:
+        """Gets a reserved IP using the given it is ID.
+
+        If the ID is not provided ("" or None), raises HTTP 400.
+        If multiple objects are returned, raises HTTP 403.
+        If the reserved IP cannot be found, raises HTTP 404.
+        """
+        reserved_ip = self.get_object_by_specifiers_or_raise(reserved_ip_id)
+        return reserved_ip
 
 
 class ReservedIP(CleanSave, TimestampedModel):
@@ -68,7 +96,6 @@ class ReservedIP(CleanSave, TimestampedModel):
         blank=False,
         unique=True,
         verbose_name="IP address",
-        validators=[],
     )
 
     mac_address = TextField(
@@ -102,10 +129,7 @@ class ReservedIP(CleanSave, TimestampedModel):
                     if ip not in ip_network(self.subnet.cidr):
                         raise ValidationError(
                             {
-                                (
-                                    "ip",
-                                    "subnet",
-                                ): "The provided IP is not part of any available subnet."
+                                "ip": "The provided IP is not part of the subnet."
                             }
                         )
                     if ip == net.network_address:
@@ -122,7 +146,7 @@ class ReservedIP(CleanSave, TimestampedModel):
                         )
             except ValueError:
                 # if IP is None, a validation error is raised by Django because
-                # the "ip" field because field is defined such that `null=True`
+                # the "ip" field is defined such that `null=True`
                 pass
 
     def clean_fields(self, exclude=None) -> None:
@@ -137,23 +161,27 @@ class ReservedIP(CleanSave, TimestampedModel):
         subnet and vlan and populate the model with them. If no subnet or vlan
         are found, a ValidationError is raised.
 
-        The population of both fields only happens one even if the method is
-        invoked several times.
+        The population of both fields only happens the first time the method is
+        used.
         """
-        ip = self.ip
+        if ip := self.ip:
+            if not hasattr(self, "subnet"):
+                if (
+                    subnet := Subnet.objects.get_best_subnet_for_ip(ip)
+                ) is None:
+                    raise ValidationError(
+                        {
+                            "subnet": "There is no suitable subnet for the IP provided."
+                        }
+                    )
+                else:
+                    self.subnet = subnet
 
-        if not hasattr(self, "subnet"):
-            if (subnet := Subnet.objects.get_best_subnet_for_ip(ip)) is None:
-                raise ValidationError(
-                    {
-                        "subnet": "There is no suitable subnet for the IP provided."
-                    }
-                )
-            else:
-                self.subnet = subnet
+            if not hasattr(self, "vlan"):
+                self.vlan = self.subnet.vlan
 
-        if not hasattr(self, "vlan"):
-            self.vlan = self.subnet.vlan
+            if not hasattr(self, "vlan"):
+                self.vlan = self.subnet.vlan
 
     def __str__(self) -> str:
         self._populate_subnet_and_vlan()

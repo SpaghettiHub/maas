@@ -82,6 +82,7 @@ class TestReservedIP(MAASServerTestCase):
 
     def test_create_requires_a_valid_ip_address(self):
         subnet = factory.make_Subnet(cidr="192.168.0.0/24")
+        vlan = subnet.vlan
 
         msgs = (
             "This field cannot be null.",
@@ -94,6 +95,7 @@ class TestReservedIP(MAASServerTestCase):
             reserved_ip = ReservedIP(
                 ip=value,
                 subnet=subnet,
+                vlan=vlan,
                 mac_address="00:11:22:33:44:55",
                 comment="Test: creating a reserved IP",
             )
@@ -183,11 +185,7 @@ class TestReservedIP(MAASServerTestCase):
             reserved_ip.full_clean()
         self.assertEqual(
             exc_info.value.message_dict,
-            {
-                ("ip", "subnet"): [
-                    "The provided IP is not part of any available subnet."
-                ]
-            },
+            {"ip": ["The provided IP is not part of the subnet."]},
         )
 
     def test_create_requires_ip_not_to_be_network_address_ipv4(self):
@@ -304,11 +302,7 @@ class TestReservedIP(MAASServerTestCase):
 
         self.assertEqual(
             exc_info.value.message_dict,
-            {
-                ("ip", "subnet"): [
-                    "The provided IP is not part of any available subnet."
-                ]
-            },
+            {"ip": ["The provided IP is not part of the subnet."]},
         )
 
     def test_reserved_ip_to_str(self):
