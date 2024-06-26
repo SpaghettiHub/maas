@@ -1,3 +1,6 @@
+# Copyright 2024 Canonical Ltd.  This software is licensed under the
+# GNU Affero General Public License version 3 (see the file LICENSE).
+
 from fastapi import Depends, Response
 
 from maasapiserver.common.api.base import Handler, handler
@@ -6,27 +9,25 @@ from maasapiserver.common.api.models.responses.errors import (
 )
 from maasapiserver.v3.api import services
 from maasapiserver.v3.api.models.requests.query import TokenPaginationParams
-from maasapiserver.v3.api.models.responses.interfaces import (
-    InterfaceListResponse,
-)
+from maasapiserver.v3.api.models.responses.fabrics import FabricsListResponse
 from maasapiserver.v3.auth.base import check_permissions
 from maasapiserver.v3.auth.jwt import UserRole
 from maasapiserver.v3.constants import V3_API_PREFIX
 from maasapiserver.v3.services import ServiceCollectionV3
 
 
-class InterfacesHandler(Handler):
-    """Interface API handler."""
+class FabricsHandler(Handler):
+    """Fabrics API handler."""
 
-    TAGS = ["Machine"]
+    TAGS = ["Fabrics"]
 
     @handler(
-        path="/machines/{node_id}/interfaces",
+        path="/fabrics",
         methods=["GET"],
         tags=TAGS,
         responses={
             200: {
-                "model": InterfaceListResponse,
+                "model": FabricsListResponse,
             },
             422: {"model": ValidationErrorBodyResponse},
         },
@@ -36,26 +37,22 @@ class InterfacesHandler(Handler):
             Depends(check_permissions(required_roles={UserRole.USER}))
         ],
     )
-    async def list_interfaces(
+    async def list_fabrics(
         self,
-        node_id: int,
         token_pagination_params: TokenPaginationParams = Depends(),
         services: ServiceCollectionV3 = Depends(services),
     ) -> Response:
-        interfaces = await services.interfaces.list(
-            node_id=node_id,
+        fabrics = await services.fabrics.list(
             token=token_pagination_params.token,
             size=token_pagination_params.size,
         )
-        return InterfaceListResponse(
+        return FabricsListResponse(
             items=[
-                interface.to_response(
-                    f"{V3_API_PREFIX}/machines/{node_id}/interfaces"
-                )
-                for interface in interfaces.items
+                fabric.to_response(f"{V3_API_PREFIX}/fabrics")
+                for fabric in fabrics.items
             ],
-            next=f"{V3_API_PREFIX}/machines/{node_id}/interfaces?"
-            f"{TokenPaginationParams.to_href_format(interfaces.next_token, token_pagination_params.size)}"
-            if interfaces.next_token
+            next=f"{V3_API_PREFIX}/fabrics?"
+            f"{TokenPaginationParams.to_href_format(fabrics.next_token, token_pagination_params.size)}"
+            if fabrics.next_token
             else None,
         )

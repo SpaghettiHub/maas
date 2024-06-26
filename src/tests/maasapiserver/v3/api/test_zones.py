@@ -84,21 +84,18 @@ class TestZonesApi(ApiCommonTests):
             )
 
         next_page_link = f"{V3_API_PREFIX}/zones?size=2"
-        last_page = 4
         for page in range(5):  # There should be 5 pages
             response = await authenticated_user_api_client_v3.get(
                 next_page_link
             )
-            print(response)
             zones_response = ZonesListResponse(**response.json())
             assert zones_response.kind == "ZonesList"
             assert len(zones_response.items) == 2
             self._assert_zone_in_list(created_zones.pop(), zones_response)
             self._assert_zone_in_list(created_zones.pop(), zones_response)
-            if last_page == page:
-                assert zones_response.next is None
-            else:
-                next_page_link = zones_response.next
+            next_page_link = zones_response.next
+        # There was no next page
+        assert next_page_link is None
 
     # GET /zones/{zone_id}
     async def test_get_default(

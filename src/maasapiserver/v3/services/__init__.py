@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncConnection
 from maasapiserver.v3.services.auth import AuthService
 from maasapiserver.v3.services.bmc import BmcService
 from maasapiserver.v3.services.configurations import ConfigurationsService
+from maasapiserver.v3.services.fabrics import FabricsService
 from maasapiserver.v3.services.interfaces import InterfacesService
 from maasapiserver.v3.services.machines import MachinesService
 from maasapiserver.v3.services.nodes import NodesService
@@ -11,6 +12,7 @@ from maasapiserver.v3.services.secrets import (
     SecretsService,
     SecretsServiceFactory,
 )
+from maasapiserver.v3.services.spaces import SpacesService
 from maasapiserver.v3.services.users import UsersService
 from maasapiserver.v3.services.vmcluster import VmClustersService
 from maasapiserver.v3.services.zones import ZonesService
@@ -20,7 +22,7 @@ class ServiceCollectionV3:
     """Provide all v3 services."""
 
     nodes: NodesService
-    vmcluster: VmClustersService
+    vmclusters: VmClustersService
     bmc: BmcService
     zones: ZonesService
     secrets: SecretsService
@@ -29,6 +31,9 @@ class ServiceCollectionV3:
     auth: AuthService
     machines: MachinesService
     interfaces: InterfacesService
+    fabrics: FabricsService
+    spaces: SpacesService
+    users: UsersService
 
     @classmethod
     async def produce(
@@ -57,4 +62,6 @@ class ServiceCollectionV3:
         services.resource_pools = ResourcePoolsService(connection=connection)
         services.machines = MachinesService(connection=connection)
         services.interfaces = InterfacesService(connection=connection)
+        services.fabrics = FabricsService(connection=connection)
+        services.spaces = SpacesService(connection=connection)
         return services
