@@ -1,6 +1,8 @@
+from datetime import datetime
 from typing import Any, AsyncIterator, Iterator
 from unittest.mock import AsyncMock, Mock
 
+from django.core import signing
 from fastapi import FastAPI, Request
 from httpx import AsyncClient
 import pytest
@@ -18,10 +20,14 @@ from maasapiserver.v3.auth.jwt import InvalidToken, JWT, UserRole
 from maasapiserver.v3.constants import V3_API_PREFIX
 from maasapiserver.v3.middlewares.auth import (
     AuthenticationProvidersCache,
+    DjangoSessionAuthenticationProvider,
     LocalAuthenticationProvider,
     V3AuthenticationMiddleware,
 )
 from maasapiserver.v3.middlewares.services import ServicesMiddleware
+from maasapiserver.v3.models.users import User
+from tests.fixtures.factories.user import create_test_session, create_test_user
+from tests.maasapiserver.fixtures.db import Fixture
 
 
 @pytest.fixture
@@ -35,7 +41,8 @@ def auth_app(
     app.add_middleware(
         V3AuthenticationMiddleware,
         providers_cache=AuthenticationProvidersCache(
-            [LocalAuthenticationProvider()]
+            jwt_authentication_providers=[LocalAuthenticationProvider()],
+            session_authentication_provider=DjangoSessionAuthenticationProvider(),
         ),
     )
     app.add_middleware(ServicesMiddleware)
@@ -142,16 +149,48 @@ class TestV3AuthenticationMiddleware:
         assert authenticated_user.username == "test"
         assert authenticated_user.roles == {UserRole.USER}
 
+    async def test_authentication_with_sessionid(
+        self, fixture: Fixture, auth_client: AsyncClient
+    ) -> None:
+        # invalid session_id
+        invalid_token_response = await auth_client.get(
+            f"{V3_API_PREFIX}/users/me",
+            headers={"Cookie": "sessionid=invalid"},
+        )
+        assert invalid_token_response.status_code == 401
+
+        # valid session_id
+        user = await create_test_user(fixture)
+        session_id = "mysession"
+        await create_test_session(
+            fixture=fixture, user_id=user.id, session_id=session_id
+        )
+        authenticated_v3_response = await auth_client.get(
+            f"{V3_API_PREFIX}/users/me",
+            headers={"Cookie": f"sessionid={session_id}"},
+        )
+        assert authenticated_v3_response.status_code == 200
+        authenticated_user = AuthenticatedUser(
+            **authenticated_v3_response.json()
+        )
+        assert authenticated_user.username == "myusername"
+        assert authenticated_user.roles == {UserRole.USER}
+
 
 class TestAuthenticationProvidersCache:
     def test_constructor(self) -> None:
         cache = AuthenticationProvidersCache()
         assert cache.size() == 0
+        assert cache.get_session_provider() is None
 
-        cache = AuthenticationProvidersCache([LocalAuthenticationProvider()])
+        session_provider = DjangoSessionAuthenticationProvider()
+        cache = AuthenticationProvidersCache(
+            jwt_authentication_providers=[LocalAuthenticationProvider()],
+            session_authentication_provider=session_provider,
+        )
         assert cache.size() == 1
-
         assert cache.get(LocalAuthenticationProvider.get_issuer()) is not None
+        assert cache.get_session_provider() is session_provider
 
     def test_get(self):
         provider = LocalAuthenticationProvider()
@@ -176,6 +215,46 @@ class TestAuthenticationProvidersCache:
         assert id(replacement) == id(
             cache.get(LocalAuthenticationProvider.get_issuer())
         )
+
+
+class TestDjangoSessionAuthenticationProvider:
+    def _make_user(self) -> User:
+        return User(
+            id=0,
+            username="test",
+            password="password",
+            is_superuser=False,
+            first_name="name",
+            last_name="last_name",
+            is_staff=False,
+            is_active=True,
+            date_joined=datetime.utcnow(),
+        )
+
+    async def test_dispatch(self) -> None:
+        sessionid = "test"
+
+        user = self._make_user()
+        request = Mock(Request)
+        request.state.services.users.get_by_session_id = AsyncMock(
+            return_value=user
+        )
+
+        provider = DjangoSessionAuthenticationProvider()
+        authenticated_user = await provider.authenticate(request, sessionid)
+
+        assert authenticated_user.username == user.username
+        assert authenticated_user.roles == {UserRole.USER}
+
+    async def test_dispatch_unauthenticated(self) -> None:
+        request = Mock(Request)
+        request.state.services.users.get_by_session_id = AsyncMock(
+            return_value=None
+        )
+
+        provider = DjangoSessionAuthenticationProvider()
+        with pytest.raises(UnauthorizedException):
+            await provider.authenticate(request, "")
 
 
 class TestLocalAuthenticationProvider:
