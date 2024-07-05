@@ -1,6 +1,10 @@
+import logging
+
 from pydantic import BaseModel
 
 from maasapiserver.common.api.base import Handler, handler
+
+logger = logging.getLogger()
 
 
 class RootGetResponse(BaseModel):
