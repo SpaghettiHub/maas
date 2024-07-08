@@ -148,6 +148,7 @@ Considering MAAS for your next project? [Get in touch](/t/how-to-contact-us/5448
 | 2     | reference-bmc-drivers                   | [BMC drivers](/t/reference-bmc-drivers/7883)                                   |
 | 2     | reference-maas-storage                  | [Storage reference](/t/reference-maas-storage/7898)                            |
 | 2     | reference-release-notes                 | [Release notes and version details](/t/reference-release-notes/5292)           |
+| 3     | reference-release-notes-maas-3-5        | [MAAS 3.5 release notes](/t/-/8086)                                            |
 | 3     | reference-release-notes-maas-3-4        | [MAAS 3.4 release notes](/t/reference-release-notes-maas-3-4/7071)             |
 | 3     | reference-release-notes-maas-3-3        | [MAAS 3.3 release notes](/t/-/6346)                                            |
 | 3     | reference-release-notes-maas-3-2        | [MAAS 3.2 release notes](/t/-/5962)                                            |
