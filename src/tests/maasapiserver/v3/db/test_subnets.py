@@ -34,3 +34,13 @@ class TestSubnetsRepository(RepositoryCommonTests[Subnet]):
             for i in range(subnets_count)
         ][::-1]
         return created_subnets, subnets_count
+
+    @pytest.fixture
+    async def _created_instance(self, fixture: Fixture) -> Subnet:
+        return Subnet(
+            **(
+                await create_test_subnet_entry(
+                    fixture, name="name", description="description"
+                )
+            )
+        )
