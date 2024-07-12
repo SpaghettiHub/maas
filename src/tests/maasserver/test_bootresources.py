@@ -142,15 +142,18 @@ class TestExportImagesFromDB:
         )
         export_images_from_db(controller, image_store_dir)
         assert list_files(image_store_dir) == {
-            sha256(content1).hexdigest(),
-            sha256(content2).hexdigest(),
+            sha256(content1).hexdigest()[0:16],
+            sha256(content2).hexdigest()[0:16],
         }
 
     def test_export_overwrite_changed(
         self, controller, image_store_dir, factory
     ):
         content = b"ubuntu-jammy"
-        image = image_store_dir / sha256(content).hexdigest()
+        filename = sha256(content).hexdigest()[
+            0:16
+        ]  # LP:2069059 - Reduce file name length.
+        image = image_store_dir / filename
         image.write_bytes(b"old")
 
         resource = factory.make_BootResource(

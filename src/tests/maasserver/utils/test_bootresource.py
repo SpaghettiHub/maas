@@ -91,7 +91,8 @@ class TestLocalBootResourceFile:
     def test_valid(
         self, image_store_dir: Path, file_content: bytes, file_sha256: str
     ):
-        with open(image_store_dir / file_sha256, "wb") as stream:
+        filename = file_sha256[0:16]  # LP:2069059 - Reduce file name length.
+        with open(image_store_dir / filename, "wb") as stream:
             stream.write(file_content)
         f = LocalBootResourceFile(sha256=file_sha256, total_size=FILE_SIZE)
         assert f.valid

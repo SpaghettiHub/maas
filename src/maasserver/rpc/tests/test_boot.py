@@ -1701,7 +1701,9 @@ class TestGetBootFilenames(MAASServerTestCase):
         osystem, series = bres.name.split("/", maxsplit=1)
         return "/".join(
             [
-                bfile.sha256,
+                bfile.sha256[
+                    0:16
+                ],  # Use only first 16 characters from checksum LP:2069059
                 osystem,
                 arch,
                 subarch,

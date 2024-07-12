@@ -103,7 +103,9 @@ def _get_files_map(osystem, oseries, arch, subarch, exclude=None):
         return {
             bfile.filetype: "/".join(
                 [
-                    bfile.sha256,
+                    bfile.sha256[
+                        0:16
+                    ],  # Use only first 16 characters from checksum LP:2069059
                     osystem,
                     arch,
                     subarch,

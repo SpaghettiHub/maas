@@ -92,7 +92,9 @@ class LocalBootResourceFile:
         self.sha256 = sha256
         self.total_size = total_size
         self._size = size
-        self._base_path = get_bootresource_store_path() / self.sha256
+        self._base_path = (
+            get_bootresource_store_path() / self.sha256[0:16]
+        )  # Use only first 16 characters from checksum LP:2069059
         self._lock_fd: int | None = None
 
     def __repr__(self):
