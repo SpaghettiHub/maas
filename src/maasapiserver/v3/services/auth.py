@@ -3,6 +3,7 @@ import os
 from sqlalchemy.ext.asyncio import AsyncConnection
 
 from maasapiserver.common.models.constants import (
+    NOT_AUTHENTICATED_VIOLATION_TYPE,
     UNEXISTING_USER_OR_INVALID_CREDENTIALS_VIOLATION_TYPE,
 )
 from maasapiserver.common.models.exceptions import (
@@ -10,6 +11,7 @@ from maasapiserver.common.models.exceptions import (
     UnauthorizedException,
 )
 from maasapiserver.common.services._base import Service
+from maasapiserver.v3.auth.base import AuthenticatedUser
 from maasapiserver.v3.auth.jwt import JWT, UserRole
 from maasapiserver.v3.services.secrets import SecretNotFound, SecretsService
 from maasapiserver.v3.services.users import UsersService
@@ -53,6 +55,25 @@ class AuthService(Service):
         )
         jwt_key = await self._get_or_create_cached_jwt_key()
         return JWT.create(jwt_key, user.username, roles)
+
+    async def access_token(
+        self, authenticated_user: AuthenticatedUser | None
+    ) -> JWT:
+        if not authenticated_user:
+            raise UnauthorizedException(
+                details=[
+                    BaseExceptionDetail(
+                        type=NOT_AUTHENTICATED_VIOLATION_TYPE,
+                        message="The endpoint requires authentication.",
+                    )
+                ]
+            )
+        jwt_key = await self._get_or_create_cached_jwt_key()
+        return JWT.create(
+            jwt_key,
+            authenticated_user.username,
+            list(authenticated_user.roles),
+        )
 
     async def decode_and_verify_token(self, token: str) -> JWT:
         jwt_key = await self._get_or_create_cached_jwt_key()
