@@ -1,5 +1,89 @@
 > *Errors or typos? Topics missing? Hard to read? <a href="https://docs.google.com/forms/d/e/1FAIpQLScIt3ffetkaKW3gDv6FDk7CfUTNYP_HGmqQotSTtj2htKkVBw/viewform?usp=pp_url&entry.1739714854=https://maas.io/docs/troubleshooting-common-maas-issues" target = "_blank">Let us know.</a>*
 
+## Controller interface/network issues
+
+**Problem:**
+Users experience issues with MAAS using unintended network interfaces, particularly in multi-homed environments with Docker running on the same system. Specific challenges include unwanted interface detection, persistent subnets, and network discovery on unselected subnets.
+
+**Solution:**
+To address these issues and better manage network interfaces and subnets in MAAS, follow these steps:
+
+1. **Bind MAAS to a single interface:**
+   - While MAAS does not support binding to a single interface out of the box, you can control which interfaces MAAS services use by configuring individual components such as nginx, squid, and rsyslogd.
+
+2. **Remove unwanted interfaces:**
+   - Unfortunately, MAAS does not provide a direct way to remove interfaces through the GUI or CLI if they keep reappearing. However, you can take steps to ignore certain interfaces like `docker0`.
+
+3. **Ignore certain interfaces:**
+   - To ignore specific interfaces, you can use custom scripts or configuration files to exclude them from MAAS management.
+
+4. **Configure network services:**
+   - Customize the `named.conf` file to control DNS behavior and prevent unwanted DNS resolution on specific subnets.
+
+5. **Detailed steps:**
+
+   **a. Exclude Docker interface:**
+   - Prevent MAAS from using the `docker0` interface by configuring the system to exclude it. Create a script to modify the network configuration.
+
+   **Example script:**
+   ```bash
+   #!/bin/bash
+   # Exclude docker0 interface from MAAS management
+   INTERFACE="docker0"
+   IP_ADDR=$(ip addr show $INTERFACE | grep "inet\b" | awk '{print $2}' | cut -d/ -f1)
+
+   if [ -n "$IP_ADDR" ]; then
+     echo "Exclude $INTERFACE ($IP_ADDR) from MAAS"
+     ip link set $INTERFACE down
+     ip addr flush dev $INTERFACE
+   fi
+   ```
+
+   **b. Customize `named.conf`:**
+   - Modify the `named.conf` file to prevent `named` from using specific subnets.
+
+   **Example configuration:**
+   ```bash
+   options {
+     ...
+     listen-on { 127.0.0.1; <your-desired-interface-ip>; };
+     ...
+   };
+   ```
+
+   **c. Modify network configuration:**
+   - Adjust the network configuration files to ensure MAAS services bind only to the desired interface.
+
+   **Example for `nginx`:**
+   ```bash
+   server {
+       listen <your-desired-interface-ip>:80;
+       server_name maas.local;
+       ...
+   }
+   ```
+
+   **d. Disable unwanted subnet management:**
+   - Use MAAS CLI to disable subnet management features on undesired subnets.
+
+   **Example CLI commands:**
+   ```bash
+   maas admin subnet update <subnet-id> manage_allocation=false
+   maas admin subnet update <subnet-id> manage_discovery=false
+   maas admin subnet update <subnet-id> allow_dns=false
+   ```
+
+6. **Review and restart services:**
+   - After making these changes, restart the MAAS services to apply the new configuration.
+
+   **Restart MAAS services:**
+   ```bash
+   sudo systemctl restart maas-regiond
+   sudo systemctl restart maas-rackd
+   ```
+
+By following these steps, users can better control which network interfaces and subnets are managed by MAAS, addressing issues related to unwanted interface usage and persistent subnets. This approach ensures that MAAS operates within the desired network configuration parameters.
+
 ## Adding VLAN interfaces to LXD VMs
 
 **Problem:**
