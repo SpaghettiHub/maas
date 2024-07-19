@@ -1,5 +1,58 @@
 > *Errors or typos? Topics missing? Hard to read? <a href="https://docs.google.com/forms/d/e/1FAIpQLScIt3ffetkaKW3gDv6FDk7CfUTNYP_HGmqQotSTtj2htKkVBw/viewform?usp=pp_url&entry.1739714854=https://maas.io/docs/troubleshooting-common-maas-issues" target = "_blank">Let us know.</a>*
 
+## Pre-registering Machine with IPMI Address as FQDN
+
+**Problem:**
+Users encounter issues when trying to set the IPMI IP address field as an FQDN in MAAS. The machine gets registered with an IPv4 address associated with the FQDN, and the commissioning process does not complete.
+
+**Solution:**
+To address this issue and implement workarounds, follow these steps:
+
+1. **Direct FQDN Usage:**
+   - Currently, MAAS does not support using FQDN directly for the `power_address` field. The `power_address` must be an IPv4 or IPv6 address as per the BMC enlistment documentation.
+
+2. **Workarounds:**
+
+   **a. Use Unique Hostnames in the Cluster:**
+   - Ensure each machine in the cluster has a unique hostname. This can help in distinguishing and managing machines more effectively.
+
+   **b. Assign FQDN Management Hostnames:**
+   - Assign a unique management FQDN to the BMC/IPMI IP of each machine. For example, use `[hostname]-mgmt` as the FQDN for the IPMI address.
+
+   **c. Update BMC IP using Python Script:**
+   - Write a Python script that updates the BMC IP address for each machine using the MAAS API. Schedule this script to run periodically (e.g., every 5 minutes) using `cron`.
+
+   Example Python script:
+   ```python
+   import maas.client
+   from maas.client import login
+   from maas.client.enum import NodeStatus
+
+   MAAS_API_URL = 'http://<MAAS_SERVER>/MAAS/'
+   API_KEY = '<YOUR_API_KEY>'
+   FQDN_SUFFIX = '-mgmt'
+
+   def update_bmc_ips():
+       client = login(MAAS_API_URL, API_KEY)
+       nodes = client.machines.list(status=NodeStatus.READY)
+       for node in nodes:
+           hostname = node.hostname
+           fqdn = f"{hostname}{FQDN_SUFFIX}"
+           ip_address = socket.gethostbyname(fqdn)
+           node.power_address = ip_address
+           node.save()
+
+   if __name__ == "__main__":
+       update_bmc_ips()
+   ```
+
+   - Add the script to `crontab` to run every 5 minutes:
+     ```bash
+     */5 * * * * /usr/bin/python3 /path/to/update_bmc_ips.py
+     ```
+
+By following these steps, users can manage their MAAS setup more effectively, even when direct FQDN usage is not supported for IPMI addresses. The provided workarounds ensure that the IPMI addresses are updated and managed correctly using the MAAS API and periodic scripts.
+
 ## Automating Initial Configuration Settings for New Machines
 
 **Problem:**
