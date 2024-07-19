@@ -54,7 +54,7 @@ Considering MAAS for your next project? [Get in touch](/t/how-to-contact-us/5448
 | 2     | tutorial-get-fancy-cli-output           | [Get fancy CLI output](/t/-/6027)                                              |
 | 0     |                                         |                                                                                |
 | 1     | how-to-guides                           | [How-to guides](/t/-/6663)                                                     |
-| 2     |                                         | Learn the basics                                                               |
+| 2     |                                         | Core configuration                                                               |
 | 3     | how-to-install-maas                     | [Install MAAS](/t/-/5128)                                                      |
 | 3     | how-to-connect-maas-networks            | [Connect networks](/t/-/5164)                                                  |
 | 3     | how-to-enable-dhcp                      | [Enable DHCP](/t/-/5132)                                                       |
@@ -67,7 +67,7 @@ Considering MAAS for your next project? [Get in touch](/t/how-to-contact-us/5448
 | 3     | how-to-locate-machines                  | [Locate machines](/t/how-to-locate-machines/5192)                              |
 | 3     | how-to-monitor-maas                     | [Monitor MAAS](/t/how-to-monitor-maas/5204)                                    |
 | 3     | how-to-troubleshoot-common-issues       | [Troubleshoot issues](/t/how-to-troubleshoot-common-issues/5333)               |
-| 2     |                                         | Fine-tune your instance                                                        |
+| 2     |                                         | Special-case configuration                                                        |
 | 3     | how-to-manage-ip-ranges                 | [Manage IP ranges](/t/-/5136)                                                  |
 | 3     | how-to-mirror-maas-images               | [Mirror MAAS images](/t/-/5927)                                                |
 | 3     | how-to-enable-high-availability         | [Enable high availability](/t/-/5120)                                          |
@@ -80,7 +80,18 @@ Considering MAAS for your next project? [Get in touch](/t/how-to-contact-us/5448
 | 3     | how-to-enhance-maas-security            | [Enhance MAAS security](/t/how-to-enhance-maas-security/5196)                  |
 | 3     | how-to-manage-user-access               | [Manage user access](/t/how-to-manage-user-access/5184)                        |
 | 3     | how-to-change-maas-settings             | [Change MAAS settings](/t/how-to-change-maas-settings/8035)                    |
-| 2     |                                         | Customise MAAS                                                                 |
+| 3     | how-to-use-network-tags                 | [Use network tags](/t/how-to-use-network-tags/5228)                            |
+| 3     | how-to-implement-tls                    | [Implement TLS](/t/how-to-implement-tls/5116)                                  |
+| 3     | how-to-integrate-vault                  | [Integrate Vault](/t/how-to-integrate-vault/6942)                              |
+| 3     | how-to-use-virtual-machines             | [Use virtual machines](/t/-/6500)                                              |
+| 3     | how-to-set-up-external-lxd              | [Set up external LXD](/t/how-to-set-up-external-lxd/5208)                      |
+| 3     | how-to-use-external-lxd                 | [Use external LXD](/t/how-to-use-external-lxd/5140)                            |
+| 3     | how-to-use-lxd-projects                 | [Use LXD projects](/t/how-to-use-lxd-projects/7871)                            |
+| 3     | how-to-manage-virtual-machines          | [Manage virtual machines](/t/how-to-manage-virtual-machines/5148)              |
+| 3     | how-to-set-up-power-drivers             | [Set up power drivers](/t/-/5246)                                              |
+| 3     | how-to-deploy-vms-on-ibm-z              | [Deploy VMs on IBM Z](/t/how-to-deploy-vms-on-ibm-z/7885)                      |
+| 3     | how-to-configure-an-air-gapped-maas     | [Set up air-gapped MAAS](/t/how-to-configure-an-air-gapped-maas/5212)          |
+| 2     |                                         | Custom images, kernels, and tags                                                                 |
 | 3     | how-to-customise-images                 | [Customise images](/t/-/5104)                                                  |
 | 3     | how-to-build-maas-images                | [Build MAAS images](/t/-/7872)                                                 |
 | 3     | how-to-build-an-ubuntu-image            | [Build Ubuntu](/t/-/7873)                                                      |
@@ -97,22 +108,10 @@ Considering MAAS for your next project? [Get in touch](/t/how-to-contact-us/5448
 | 3     | how-to-use-machine-tags                 | [Use machine tags](/t/how-to-use-machine-tags/5224)                            |
 | 3     | how-to-use-controller-tags              | [Use controller tags](/t/how-to-use-controller-tags/5216)                      |
 | 3     | how-to-use-storage-tags                 | [Use storage tags](/t/how-to-use-storage-tags/5232)                            |
-| 3     | how-to-use-network-tags                 | [Use network tags](/t/how-to-use-network-tags/5228)                            |
-| 3     | how-to-implement-tls                    | [Implement TLS](/t/how-to-implement-tls/5116)                                  |
-| 3     | how-to-integrate-vault                  | [Integrate Vault](/t/how-to-integrate-vault/6942)                              |
-| 3     | how-to-use-virtual-machines             | [Use virtual machines](/t/-/6500)                                              |
-| 3     | how-to-set-up-external-lxd              | [Set up external LXD](/t/how-to-set-up-external-lxd/5208)                      |
-| 3     | how-to-use-external-lxd                 | [Use external LXD](/t/how-to-use-external-lxd/5140)                            |
-| 3     | how-to-use-lxd-projects                 | [Use LXD projects](/t/how-to-use-lxd-projects/7871)                            |
-| 3     | how-to-manage-virtual-machines          | [Manage virtual machines](/t/how-to-manage-virtual-machines/5148)              |
-| 2     |                                         | Automate with scripting                                                        |
+| 2     |                                         | Scripting MAAS                                                     |
 | 3     | how-to-authenticate-to-the-maas-api     | [Login to the MAAS API](/t/how-to-authenticate-to-the-maas-api/5060)           |
 | 3     | how-to-use-the-python-api-client        | [Use the Python API client](/t/how-to-use-the-python-api-client/5404)          |
-| 2     |                                         | Rig custom setups                                                              |
-| 3     | how-to-set-up-power-drivers             | [Set up power drivers](/t/-/5246)                                              |
-| 3     | how-to-deploy-vms-on-ibm-z              | [Deploy VMs on IBM Z](/t/how-to-deploy-vms-on-ibm-z/7885)                      |
-| 3     | how-to-configure-an-air-gapped-maas     | [Set up air-gapped MAAS](/t/how-to-configure-an-air-gapped-maas/5212)          |
-| 2     |                                         | Maintain MAAS                                                                  |
+| 2     |                                         | Maintenance and validation                                                                  |
 | 3     | how-to-back-up-maas                     | [Back up MAAS](/t/-/5096)                                                      |
 | 3     | how-to-use-logging                      | [Use logging](/t/how-to-use-logging/6956)                                      |
 | 3     | how-to-read-event-logs                  | [Read event logs](/t/how-to-read-event-logs/5252)                              |
