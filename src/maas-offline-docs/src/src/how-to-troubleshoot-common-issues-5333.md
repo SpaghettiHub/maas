@@ -1,6 +1,66 @@
 > *Errors or typos? Topics missing? Hard to read? <a href="https://docs.google.com/forms/d/e/1FAIpQLScIt3ffetkaKW3gDv6FDk7CfUTNYP_HGmqQotSTtj2htKkVBw/viewform?usp=pp_url&entry.1739714854=https://maas.io/docs/troubleshooting-common-maas-issues" target = "_blank">Let us know.</a>*
 
-## Pre-registering Machine with IPMI Address as FQDN
+## Netplan configuration ignored when deploying a machine
+
+**Problem:**
+The Netplan configuration provided in the `cloud-init` script is being ignored, resulting in static IP settings instead of the desired DHCP configuration.
+
+**Solution:**
+To ensure the network configuration is correctly applied during deployment, follow these steps:
+
+1. **Edit machine's interfaces in MAAS:**
+   - Before deploying the machine, edit the machine's network interfaces in MAAS to set the IP mode to DHCP. This avoids the need for `cloud-init` to handle network configuration.
+
+2. **Default DHCP for future machines:**
+   - While it's not currently possible to make DHCP the default for all future machines in MAAS, you can include this configuration as part of your deployment automation.
+
+3. **Custom `cloud-init` script:**
+   - If you still prefer to use a `cloud-init` script, ensure it correctly sets up the network interfaces. However, due to current limitations, you may need a workaround to apply Netplan configuration.
+
+4. **Workaround with bash script:**
+   - Use a bash script within `cloud-init` to manually write the Netplan configuration and apply it. This can be done using the `runcmd` section of the `cloud-init` script.
+
+   Example `cloud-init` script with bash workaround:
+   ```yaml
+   #cloud-config
+   packages:
+     - qemu-guest-agent
+     - openssh-server
+
+   users:
+     - default
+     - name: untouchedwagons
+       gecos: untouchedwagons
+       primary_group: untouchedwagons
+       groups: sudo
+       sudo: ALL=(ALL) NOPASSWD:ALL
+       shell: /bin/bash
+       ssh_import_id:
+         - gh:UntouchedWagons
+
+   runcmd:
+     - [ systemctl, enable, --now, qemu-guest-agent ]
+     - [ systemctl, enable, --now, ssh ]
+     - |
+       cat <<EOF > /etc/netplan/01-netcfg.yaml
+       network:
+         version: 2
+         ethernets:
+           ens18:
+             match:
+               macaddress: 'bc:24:11:e5:41:b7'
+             dhcp4: true
+             dhcp-identifier: mac
+       EOF
+       netplan apply
+   ```
+
+5. **Automation integration:**
+   - Integrate these configurations into your existing automation framework (e.g., Ansible, Terraform) to ensure consistent and repeatable deployments.
+
+By following these steps, you can ensure that the network configuration is applied correctly during machine deployment in MAAS, avoiding the issues with ignored Netplan settings.
+
+## Pre-registering machine with IPMI address as FQDN
 
 **Problem:**
 Users encounter issues when trying to set the IPMI IP address field as an FQDN in MAAS. The machine gets registered with an IPv4 address associated with the FQDN, and the commissioning process does not complete.
@@ -8,18 +68,18 @@ Users encounter issues when trying to set the IPMI IP address field as an FQDN i
 **Solution:**
 To address this issue and implement workarounds, follow these steps:
 
-1. **Direct FQDN Usage:**
+1. **Direct FQDN usage:**
    - Currently, MAAS does not support using FQDN directly for the `power_address` field. The `power_address` must be an IPv4 or IPv6 address as per the BMC enlistment documentation.
 
 2. **Workarounds:**
 
-   **a. Use Unique Hostnames in the Cluster:**
+   **a. Use Unique hostnames in the cluster:**
    - Ensure each machine in the cluster has a unique hostname. This can help in distinguishing and managing machines more effectively.
 
-   **b. Assign FQDN Management Hostnames:**
+   **b. Assign FQDN management hostnames:**
    - Assign a unique management FQDN to the BMC/IPMI IP of each machine. For example, use `[hostname]-mgmt` as the FQDN for the IPMI address.
 
-   **c. Update BMC IP using Python Script:**
+   **c. Update BMC IP using Python script:**
    - Write a Python script that updates the BMC IP address for each machine using the MAAS API. Schedule this script to run periodically (e.g., every 5 minutes) using `cron`.
 
    Example Python script:
@@ -53,7 +113,7 @@ To address this issue and implement workarounds, follow these steps:
 
 By following these steps, users can manage their MAAS setup more effectively, even when direct FQDN usage is not supported for IPMI addresses. The provided workarounds ensure that the IPMI addresses are updated and managed correctly using the MAAS API and periodic scripts.
 
-## Automating Initial Configuration Settings for New Machines
+## Automating initial configuration settings for new machines
 
 **Problem:**
 Users need to manually configure network interfaces to DHCP and set power configurations to Manual for new machines added to MAAS, seeking a way to automate these settings.
@@ -61,10 +121,10 @@ Users need to manually configure network interfaces to DHCP and set power config
 **Solution:**
 To automate the initial configuration settings for new machines in MAAS, follow these steps:
 
-1. **Use Preseed Scripts:**
+1. **Use preseed scripts:**
    - Utilize MAAS preseed scripts to automate network and power configurations. Preseed scripts can run commands during different stages of machine deployment.
 
-2. **Curtin Userdata:**
+2. **Curtin userdata:**
    - Modify `curtin_userdata` to include early commands for setting network interfaces to DHCP and power configuration to Manual. Add these configurations to the preseed file.
 
    Example preseed configuration:
@@ -96,18 +156,18 @@ To automate the initial configuration settings for new machines in MAAS, follow 
    maas admin machine update $MACHINE_ID power_type=manual
    ```
 
-4. **Automate Through Hooks:**
+4. **Automate through hooks:**
    - Use MAAS hooks to trigger the script whenever a new machine is added. Hooks can be configured to execute scripts based on specific events.
 
-5. **Check Certified Hardware:**
+5. **Check certified hardware:**
    - Ensure that the hardware being added to MAAS is certified and recognized by MAAS. This helps in automatic detection and configuration.
 
-6. **Custom Automation:**
+6. **Custom automation:**
    - Integrate these steps into your existing automation framework if you have one. Tools like Ansible, Terraform, or custom scripts can be used to manage these configurations.
 
 By implementing these steps, users can automate the initial configuration settings for new machines in MAAS, reducing manual intervention and streamlining the deployment process.
 
-## VLAN Issues and Rack Controller Configuration
+## VLAN issues and rack controller configuration
 
 **Problem:**
 Users encounter issues with VLANs not being utilized on any rack controller, leading to problems with DHCP and network connectivity.
@@ -115,46 +175,46 @@ Users encounter issues with VLANs not being utilized on any rack controller, lea
 **Solution:**
 To troubleshoot and resolve VLAN issues in MAAS, follow these steps:
 
-1. **Configure VLAN Interfaces:**
+1. **Configure VLAN interfaces:**
    - Ensure that VLAN interfaces are correctly configured on the rack controller with proper IDs, links, and IP addresses. Use `netplan` to apply configurations:
      ```bash
      sudo netplan apply
      ```
 
-2. **Define Subnets Properly:**
+2. **Define subnets properly:**
    - Verify that subnets are defined correctly in MAAS for each VLAN. Check that the network, gateway, and DNS information are accurately entered.
 
-3. **Physical Connections:**
+3. **Physical connections:**
    - Confirm that the rack controller is physically connected to the appropriate networks and VLANs. If using a managed switch, ensure that ports are configured for the correct VLANs.
 
-4. **Check MAAS Logs:**
+4. **Check MAAS logs:**
    - Review rack controller logs for any errors related to VLANs or DHCP:
      ```bash
      tail -f /var/log/maas/*.log
      ```
 
-5. **Force Network Re-detection:**
+5. **Force network re-detection:**
    - Remove and re-add the rack controller in MAAS to force it to re-detect available networks and VLANs.
 
-6. **Test DHCP on Single VLAN:**
+6. **Test DHCP on single VLAN:**
    - Enable DHCP on one VLAN at a time to identify any working configurations.
 
-7. **Static IP Address:**
+7. **Static IP address:**
    - Consider setting a static IP address on the VLAN interface to avoid DHCP conflicts.
 
-8. **Restart Rack Controller:**
+8. **Restart rack controller:**
    - Restart the rack controller to ensure it reconnects correctly to MAAS and the VLANs.
 
-9. **Reinstall Rack Controller:**
+9. **Reinstall rack controller:**
    - As a last resort, reinstall the rack controller following the official documentation to resolve any networking issues:
      - Ensure the rack controller is not installed on the same machine as the region controller.
 
-10. **DHCP Forwarding Considerations:**
+10. **DHCP forwarding considerations:**
     - If using DHCP forwarding on the router, ensure that the rack servers on the VLAN can still communicate with the DHCP server.
 
 By following these steps, users can troubleshoot and resolve issues with VLAN utilization on rack controllers in MAAS, ensuring proper network configuration and connectivity.
 
-## Releasing Old DHCP Leases
+## Releasing old DHCP leases
 
 **Problem:**
 Deploying servers in MAAS results in an error stating "No more IPs available in subnet," despite having unused IP addresses.
@@ -162,7 +222,7 @@ Deploying servers in MAAS results in an error stating "No more IPs available in 
 **Solution:**
 To release old DHCP leases and resolve IP allocation issues, follow these steps:
 
-1. **Check for Orphaned IP Addresses:**
+1. **Check for orphaned IP addresses:**
    - Run the following SQL query to identify orphaned IP addresses in the MAAS database:
      ```sql
      sudo -u postgres psql -d maasdb -c "
@@ -177,19 +237,19 @@ To release old DHCP leases and resolve IP allocation issues, follow these steps:
      ```
    - This will help you identify any orphaned addresses that are not properly allocated.
 
-2. **Clean Neighbor Discoveries:**
+2. **Clean neighbor discoveries:**
    - Use the MAAS CLI to clear discovered neighbors, which might be causing IP conflicts:
      ```bash
      maas admin discoveries clear all=True -k
      ```
 
-3. **Verify Cleared Discoveries:**
+3. **Verify cleared discoveries:**
    - After clearing, check if the discoveries were successfully removed:
      ```bash
      maas admin discoveries read -k
      ```
 
-4. **Clear ARP Table (Optional):**
+4. **Clear ARP table (optional):**
    - If necessary, clear the ARP table on the Rack server to ensure no stale entries exist:
      ```bash
      arp -d [IP address]
@@ -200,7 +260,7 @@ To release old DHCP leases and resolve IP allocation issues, follow these steps:
      arp -d 172.21.68.69
      ```
 
-5. **Run Deployment Again:**
+5. **Run deployment again:**
    - Attempt to deploy the server again to check if the issue persists. If the error still occurs, check the discoveries once more without cleaning:
      ```bash
      maas admin discoveries read -k
@@ -216,21 +276,21 @@ Configuring the loopback interface (lo) using MAAS is not straightforward, espec
 **Solution:**
 To configure loopback addresses in MAAS, follow these steps:
 
-1. **Understand Loopback Interface:**
+1. **Understand loopback interface:**
    - Loopback interfaces do not require MAC addresses since they are used for internal routing within the node itself.
 
-2. **Manually Add Loopback Interface:**
+2. **Manually add loopback interface:**
    - After commissioning a node, manually add the loopback interface in MAAS.
    - If the MAAS web UI requires a MAC address for the loopback interface, use a placeholder value like `00:00:00:00:00:00` but ensure it does not conflict with other nodes.
 
-3. **Avoid Duplicate MAC Addresses:**
+3. **Avoid duplicate MAC addresses:**
    - Since MAAS does not support duplicate MAC addresses, manually configure the loopback interface on each node with a unique identifier or find a way to bypass the MAC address requirement.
 
-4. **Alternative Methods:**
+4. **Alternative methods:**
    - If manually adding the loopback interface in MAAS is problematic, consider configuring the loopback interface outside of MAAS using post-deployment scripts.
    - Use MAAS to deploy the base configuration, then apply custom network configurations (including loopback interfaces) through cloud-init or other automation tools.
 
-5. **Feedback from Support:**
+5. **Feedback from support:**
    - Internal support teams may have additional methods or patches to address this issue. Reach out to MAAS support for the latest solutions or updates regarding loopback interface configuration.
 
 By following these steps, users can effectively configure loopback interfaces on nodes managed by MAAS, facilitating advanced network setups like L3 routing and BGP.
@@ -243,7 +303,7 @@ Users may encounter errors when attempting to shrink the dynamic IP address rang
 **Solution:**
 To troubleshoot and resolve this issue, follow these steps:
 
-1. **Check Current IP Ranges and Static Addresses:**
+1. **Check current IP ranges and static addresses:**
    - Use the following SQL queries to check the current IP ranges and static IP addresses in the MAAS database:
      ```sql
      SELECT * FROM maasserver_iprange;
@@ -251,17 +311,17 @@ To troubleshoot and resolve this issue, follow these steps:
      ```
    - Identify any existing IP addresses that may conflict with the desired new range.
 
-2. **Identify Sticky Addresses:**
+2. **Identify sticky addresses:**
    - Identify any sticky addresses within the current range that may cause conflicts. Sticky addresses are IP addresses allocated by MAAS DHCP that persist over reboots.
 
-3. **Adjust IP Range:**
+3. **Adjust IP range:**
    - Ensure that the new IP range does not overlap with any existing reserved or sticky addresses. Modify the start and end IP addresses to avoid conflicts.
    - Example: If the current range is 192.168.0.194 - 192.168.0.220 and sticky addresses occupy 192.168.0.195 - 192.168.0.211, adjust the range to avoid these addresses.
 
-4. **Update MAAS Configuration:**
+4. **Update MAAS configuration:**
    - After identifying a non-conflicting range, update the MAAS configuration to reflect the new IP range.
 
-5. **Database Updates:**
+5. **Database updates:**
    - If necessary, manually update the IP range in the MAAS database to ensure consistency. Make sure to backup the database before making any changes.
 
 By following these steps, users can effectively shrink the dynamic IP address range in MAAS without encountering conflicts with existing IP addresses or ranges.
