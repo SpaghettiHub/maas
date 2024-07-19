@@ -89,6 +89,10 @@ class TestRegionServer(MAASTransactionServerTestCase):
         super().setUp()
         load_builtin_scripts()
 
+    def test_auth_status(self):
+        protocol = RegionServer()
+        self.assertEqual(False, protocol.auth_status.is_authenticated)
+
     def test_interfaces(self):
         protocol = RegionServer()
         # transport.getHandle() is used by AMP._getPeerCertificate, which we
@@ -178,6 +182,27 @@ class TestRegionServer(MAASTransactionServerTestCase):
         self.assertDictEqual({}, service.connections)
         # The transport is instructed to lose the connection.
         self.assertThat(transport.loseConnection, MockCalledOnceWith())
+        # Connection is not trusted
+        self.assertEqual(False, protocol.auth_status.is_authenticated)
+
+    def test_connectionMade_trusts_connection_if_authentication_succeeds(self):
+        service = RegionService(sentinel.ipcWorker)
+        service.running = True  # Pretend it's running.
+        service.factory.protocol = HandshakingRegionServer
+        protocol = service.factory.buildProtocol(addr=None)  # addr is unused.
+        self.assertEqual(False, protocol.auth_status.is_authenticated)
+
+        transport = self.patch(protocol, "transport")
+        transport.getPeer.return_value = IPv4Address(
+            type="TCP", host="test", port=1337
+        )
+
+        self.assertEqual(False, protocol.auth_status.is_authenticated)
+        self.assertEqual({}, service.connections)
+        connectionMade = wait_for_reactor(protocol.connectionMade)
+        connectionMade()
+        # Connection is trusted
+        self.assertEqual(True, protocol.auth_status.is_authenticated)
 
     def test_connectionMade_drops_connections_if_authentication_errors(self):
         logger = self.useFixture(TwistedLoggerFixture())
