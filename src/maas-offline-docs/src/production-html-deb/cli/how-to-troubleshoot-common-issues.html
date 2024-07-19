@@ -641,6 +641,56 @@
       <blockquote>
       <p><em>Errors or typos? Topics missing? Hard to read? <a href="https://docs.google.com/forms/d/e/1FAIpQLScIt3ffetkaKW3gDv6FDk7CfUTNYP_HGmqQotSTtj2htKkVBw/viewform?usp=pp_url&entry.1739714854=https://maas.io/docs/troubleshooting-common-maas-issues" target = "_blank">Let us know.</a></em></p>
       </blockquote>
+      <h2 id="automating-initial-configuration-settings-for-new-machines">Automating Initial Configuration Settings for New Machines</h2>
+      <p><strong>Problem:</strong> Users need to manually configure network interfaces to DHCP and set power configurations to Manual for new machines added to MAAS, seeking a way to automate these settings.</p>
+      <p><strong>Solution:</strong> To automate the initial configuration settings for new machines in MAAS, follow these steps:</p>
+      <ol type="1">
+      <li><p><strong>Use Preseed Scripts:</strong></p>
+      <ul>
+      <li>Utilize MAAS preseed scripts to automate network and power configurations. Preseed scripts can run commands during different stages of machine deployment.</li>
+      </ul></li>
+      <li><p><strong>Curtin Userdata:</strong></p>
+      <ul>
+      <li>Modify <code>curtin_userdata</code> to include early commands for setting network interfaces to DHCP and power configuration to Manual. Add these configurations to the preseed file.</li>
+      </ul>
+      <p>Example preseed configuration:</p>
+      <div class="sourceCode" id="cb1"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="fu">early_commands</span><span class="kw">:</span></span>
+      <span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a><span class="fu">  10_dhcp</span><span class="kw">: </span><span class="ch">|</span></span>
+      <span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>    for nic in $(ls /sys/class/net/ | grep -v lo); do</span>
+      <span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a>      echo &quot;dhclient ${nic}&quot; &gt;&gt; /etc/network/interfaces.d/${nic};</span>
+      <span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a>      dhclient ${nic}</span>
+      <span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a>    done</span>
+      <span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a><span class="fu">  20_power</span><span class="kw">: </span><span class="ch">|</span></span>
+      <span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a>    echo &quot;manual&quot; &gt; /etc/maas/power.conf</span></code></pre></div></li>
+      <li><p><strong>MAAS CLI:</strong></p>
+      <ul>
+      <li>Use the MAAS CLI to automate the setting of DHCP and power configuration for newly added machines. Create a script to be run after the machine is added to MAAS.</li>
+      </ul>
+      <p>Example script:</p>
+      <div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="co">#!/bin/bash</span></span>
+      <span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a><span class="va">MACHINE_ID=$1</span></span>
+      <span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a></span>
+      <span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a><span class="co"># Set network interface to DHCP</span></span>
+      <span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a><span class="ex">maas</span> admin interface link-subnet <span class="va">$MACHINE_ID</span> <span class="kw">\</span></span>
+      <span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a>  <span class="va">$(</span><span class="ex">maas</span> admin interfaces read <span class="va">$MACHINE_ID</span> <span class="kw">|</span> <span class="ex">jq</span> <span class="st">&#39;.[0].id&#39;</span><span class="va">)</span> <span class="kw">\</span></span>
+      <span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a>  <span class="va">mode=</span>DHCP</span>
+      <span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a></span>
+      <span id="cb2-9"><a href="#cb2-9" aria-hidden="true"></a><span class="co"># Set power configuration to Manual</span></span>
+      <span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a><span class="ex">maas</span> admin machine update <span class="va">$MACHINE_ID</span> power_type=manual</span></code></pre></div></li>
+      <li><p><strong>Automate Through Hooks:</strong></p>
+      <ul>
+      <li>Use MAAS hooks to trigger the script whenever a new machine is added. Hooks can be configured to execute scripts based on specific events.</li>
+      </ul></li>
+      <li><p><strong>Check Certified Hardware:</strong></p>
+      <ul>
+      <li>Ensure that the hardware being added to MAAS is certified and recognized by MAAS. This helps in automatic detection and configuration.</li>
+      </ul></li>
+      <li><p><strong>Custom Automation:</strong></p>
+      <ul>
+      <li>Integrate these steps into your existing automation framework if you have one. Tools like Ansible, Terraform, or custom scripts can be used to manage these configurations.</li>
+      </ul></li>
+      </ol>
+      <p>By implementing these steps, users can automate the initial configuration settings for new machines in MAAS, reducing manual intervention and streamlining the deployment process.</p>
       <h2 id="vlan-issues-and-rack-controller-configuration">VLAN Issues and Rack Controller Configuration</h2>
       <p><strong>Problem:</strong> Users encounter issues with VLANs not being utilized on any rack controller, leading to problems with DHCP and network connectivity.</p>
       <p><strong>Solution:</strong> To troubleshoot and resolve VLAN issues in MAAS, follow these steps:</p>
@@ -648,7 +698,7 @@
       <li><strong>Configure VLAN Interfaces:</strong>
       <ul>
       <li><p>Ensure that VLAN interfaces are correctly configured on the rack controller with proper IDs, links, and IP addresses. Use <code>netplan</code> to apply configurations:</p>
-      <div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="fu">sudo</span> netplan apply</span></code></pre></div></li>
+      <div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="fu">sudo</span> netplan apply</span></code></pre></div></li>
       </ul></li>
       <li><strong>Define Subnets Properly:</strong>
       <ul>
@@ -661,7 +711,7 @@
       <li><strong>Check MAAS Logs:</strong>
       <ul>
       <li><p>Review rack controller logs for any errors related to VLANs or DHCP:</p>
-      <div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="fu">tail</span> -f /var/log/maas/*.log</span></code></pre></div></li>
+      <div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="fu">tail</span> -f /var/log/maas/*.log</span></code></pre></div></li>
       </ul></li>
       <li><strong>Force Network Re-detection:</strong>
       <ul>
@@ -699,39 +749,39 @@
       <li><strong>Check for Orphaned IP Addresses:</strong>
       <ul>
       <li><p>Run the following SQL query to identify orphaned IP addresses in the MAAS database:</p>
-      <div class="sourceCode" id="cb3"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a>sudo <span class="op">-</span>u postgres psql <span class="op">-</span>d maasdb <span class="op">-</span>c <span class="ot">&quot;</span></span>
-      <span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a><span class="kw">SELECT</span> <span class="fu">count</span>(<span class="op">*</span>)</span>
-      <span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a><span class="kw">FROM</span> maasserver_staticipaddress</span>
-      <span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a><span class="kw">LEFT</span> <span class="kw">JOIN</span> maasserver_interface_ip_addresses <span class="kw">ON</span> maasserver_staticipaddress.<span class="kw">id</span> <span class="op">=</span> maasserver_interface_ip_addresses.staticipaddress_id</span>
-      <span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a><span class="kw">LEFT</span> <span class="kw">JOIN</span> maasserver_interface <span class="kw">ON</span> maasserver_interface.<span class="kw">id</span> <span class="op">=</span> maasserver_interface_ip_addresses.interface_id</span>
-      <span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a><span class="kw">WHERE</span> maasserver_staticipaddress.ip <span class="kw">IS</span> <span class="kw">NULL</span> </span>
-      <span id="cb3-7"><a href="#cb3-7" aria-hidden="true"></a>  <span class="kw">AND</span> maasserver_interface.<span class="kw">type</span> <span class="op">=</span> <span class="st">&#39;unknown&#39;</span> </span>
-      <span id="cb3-8"><a href="#cb3-8" aria-hidden="true"></a>  <span class="kw">AND</span> maasserver_staticipaddress.alloc_type <span class="op">=</span> <span class="dv">6</span>;</span>
-      <span id="cb3-9"><a href="#cb3-9" aria-hidden="true"></a><span class="ot">&quot;</span></span></code></pre></div></li>
+      <div class="sourceCode" id="cb5"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a>sudo <span class="op">-</span>u postgres psql <span class="op">-</span>d maasdb <span class="op">-</span>c <span class="ot">&quot;</span></span>
+      <span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a><span class="kw">SELECT</span> <span class="fu">count</span>(<span class="op">*</span>)</span>
+      <span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a><span class="kw">FROM</span> maasserver_staticipaddress</span>
+      <span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a><span class="kw">LEFT</span> <span class="kw">JOIN</span> maasserver_interface_ip_addresses <span class="kw">ON</span> maasserver_staticipaddress.<span class="kw">id</span> <span class="op">=</span> maasserver_interface_ip_addresses.staticipaddress_id</span>
+      <span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a><span class="kw">LEFT</span> <span class="kw">JOIN</span> maasserver_interface <span class="kw">ON</span> maasserver_interface.<span class="kw">id</span> <span class="op">=</span> maasserver_interface_ip_addresses.interface_id</span>
+      <span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a><span class="kw">WHERE</span> maasserver_staticipaddress.ip <span class="kw">IS</span> <span class="kw">NULL</span> </span>
+      <span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a>  <span class="kw">AND</span> maasserver_interface.<span class="kw">type</span> <span class="op">=</span> <span class="st">&#39;unknown&#39;</span> </span>
+      <span id="cb5-8"><a href="#cb5-8" aria-hidden="true"></a>  <span class="kw">AND</span> maasserver_staticipaddress.alloc_type <span class="op">=</span> <span class="dv">6</span>;</span>
+      <span id="cb5-9"><a href="#cb5-9" aria-hidden="true"></a><span class="ot">&quot;</span></span></code></pre></div></li>
       <li><p>This will help you identify any orphaned addresses that are not properly allocated.</p></li>
       </ul></li>
       <li><strong>Clean Neighbor Discoveries:</strong>
       <ul>
       <li><p>Use the MAAS CLI to clear discovered neighbors, which might be causing IP conflicts:</p>
-      <div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="ex">maas</span> admin discoveries clear all=True -k</span></code></pre></div></li>
+      <div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="ex">maas</span> admin discoveries clear all=True -k</span></code></pre></div></li>
       </ul></li>
       <li><strong>Verify Cleared Discoveries:</strong>
       <ul>
       <li><p>After clearing, check if the discoveries were successfully removed:</p>
-      <div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="ex">maas</span> admin discoveries read -k</span></code></pre></div></li>
+      <div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="ex">maas</span> admin discoveries read -k</span></code></pre></div></li>
       </ul></li>
       <li><strong>Clear ARP Table (Optional):</strong>
       <ul>
       <li><p>If necessary, clear the ARP table on the Rack server to ensure no stale entries exist:</p>
-      <div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="ex">arp</span> -d [IP address]</span></code></pre></div></li>
+      <div class="sourceCode" id="cb8"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="ex">arp</span> -d [IP address]</span></code></pre></div></li>
       <li><p>Example to clear all entries:</p>
-      <div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="ex">arp</span> -d 172.21.68.79</span>
-      <span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a><span class="ex">arp</span> -d 172.21.68.69</span></code></pre></div></li>
+      <div class="sourceCode" id="cb9"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="ex">arp</span> -d 172.21.68.79</span>
+      <span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a><span class="ex">arp</span> -d 172.21.68.69</span></code></pre></div></li>
       </ul></li>
       <li><strong>Run Deployment Again:</strong>
       <ul>
       <li><p>Attempt to deploy the server again to check if the issue persists. If the error still occurs, check the discoveries once more without cleaning:</p>
-      <div class="sourceCode" id="cb8"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="ex">maas</span> admin discoveries read -k</span></code></pre></div></li>
+      <div class="sourceCode" id="cb10"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a><span class="ex">maas</span> admin discoveries read -k</span></code></pre></div></li>
       </ul></li>
       </ol>
       <p>By following these steps, users can release old DHCP leases and address IP exhaustion issues in MAAS, ensuring successful server deployment.</p>
@@ -770,8 +820,8 @@
       <li><strong>Check Current IP Ranges and Static Addresses:</strong>
       <ul>
       <li><p>Use the following SQL queries to check the current IP ranges and static IP addresses in the MAAS database:</p>
-      <div class="sourceCode" id="cb9"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="kw">SELECT</span> <span class="op">*</span> <span class="kw">FROM</span> maasserver_iprange;</span>
-      <span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a><span class="kw">SELECT</span> <span class="op">*</span> <span class="kw">FROM</span> maasserver_staticipaddress <span class="kw">WHERE</span> text(ip) <span class="kw">LIKE</span> <span class="st">&#39;192.168.0.%&#39;</span> <span class="kw">ORDER</span> <span class="kw">BY</span> ip;</span></code></pre></div></li>
+      <div class="sourceCode" id="cb11"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a><span class="kw">SELECT</span> <span class="op">*</span> <span class="kw">FROM</span> maasserver_iprange;</span>
+      <span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a><span class="kw">SELECT</span> <span class="op">*</span> <span class="kw">FROM</span> maasserver_staticipaddress <span class="kw">WHERE</span> text(ip) <span class="kw">LIKE</span> <span class="st">&#39;192.168.0.%&#39;</span> <span class="kw">ORDER</span> <span class="kw">BY</span> ip;</span></code></pre></div></li>
       <li><p>Identify any existing IP addresses that may conflict with the desired new range.</p></li>
       </ul></li>
       <li><strong>Identify Sticky Addresses:</strong>
