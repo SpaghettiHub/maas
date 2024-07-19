@@ -1,5 +1,59 @@
 > *Errors or typos? Topics missing? Hard to read? <a href="https://docs.google.com/forms/d/e/1FAIpQLScIt3ffetkaKW3gDv6FDk7CfUTNYP_HGmqQotSTtj2htKkVBw/viewform?usp=pp_url&entry.1739714854=https://maas.io/docs/troubleshooting-common-maas-issues" target = "_blank">Let us know.</a>*
 
+## Releasing Old DHCP Leases
+
+**Problem:**
+Deploying servers in MAAS results in an error stating "No more IPs available in subnet," despite having unused IP addresses.
+
+**Solution:**
+To release old DHCP leases and resolve IP allocation issues, follow these steps:
+
+1. **Check for Orphaned IP Addresses:**
+   - Run the following SQL query to identify orphaned IP addresses in the MAAS database:
+     ```sql
+     sudo -u postgres psql -d maasdb -c "
+     SELECT count(*)
+     FROM maasserver_staticipaddress
+     LEFT JOIN maasserver_interface_ip_addresses ON maasserver_staticipaddress.id = maasserver_interface_ip_addresses.staticipaddress_id
+     LEFT JOIN maasserver_interface ON maasserver_interface.id = maasserver_interface_ip_addresses.interface_id
+     WHERE maasserver_staticipaddress.ip IS NULL 
+       AND maasserver_interface.type = 'unknown' 
+       AND maasserver_staticipaddress.alloc_type = 6;
+     "
+     ```
+   - This will help you identify any orphaned addresses that are not properly allocated.
+
+2. **Clean Neighbor Discoveries:**
+   - Use the MAAS CLI to clear discovered neighbors, which might be causing IP conflicts:
+     ```bash
+     maas admin discoveries clear all=True -k
+     ```
+
+3. **Verify Cleared Discoveries:**
+   - After clearing, check if the discoveries were successfully removed:
+     ```bash
+     maas admin discoveries read -k
+     ```
+
+4. **Clear ARP Table (Optional):**
+   - If necessary, clear the ARP table on the Rack server to ensure no stale entries exist:
+     ```bash
+     arp -d [IP address]
+     ```
+   - Example to clear all entries:
+     ```bash
+     arp -d 172.21.68.79
+     arp -d 172.21.68.69
+     ```
+
+5. **Run Deployment Again:**
+   - Attempt to deploy the server again to check if the issue persists. If the error still occurs, check the discoveries once more without cleaning:
+     ```bash
+     maas admin discoveries read -k
+     ```
+
+By following these steps, users can release old DHCP leases and address IP exhaustion issues in MAAS, ensuring successful server deployment.
+
 ## Configuring loopback addresses
 
 **Problem:**
