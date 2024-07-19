@@ -1,5 +1,32 @@
 > *Errors or typos? Topics missing? Hard to read? <a href="https://docs.google.com/forms/d/e/1FAIpQLScIt3ffetkaKW3gDv6FDk7CfUTNYP_HGmqQotSTtj2htKkVBw/viewform?usp=pp_url&entry.1739714854=https://maas.io/docs/troubleshooting-common-maas-issues" target = "_blank">Let us know.</a>*
 
+## Configuring loopback addresses
+
+**Problem:**
+Configuring the loopback interface (lo) using MAAS is not straightforward, especially when deploying nodes for use with Free Range Routing (FRR) and BGP.
+
+**Solution:**
+To configure loopback addresses in MAAS, follow these steps:
+
+1. **Understand Loopback Interface:**
+   - Loopback interfaces do not require MAC addresses since they are used for internal routing within the node itself.
+
+2. **Manually Add Loopback Interface:**
+   - After commissioning a node, manually add the loopback interface in MAAS.
+   - If the MAAS web UI requires a MAC address for the loopback interface, use a placeholder value like `00:00:00:00:00:00` but ensure it does not conflict with other nodes.
+
+3. **Avoid Duplicate MAC Addresses:**
+   - Since MAAS does not support duplicate MAC addresses, manually configure the loopback interface on each node with a unique identifier or find a way to bypass the MAC address requirement.
+
+4. **Alternative Methods:**
+   - If manually adding the loopback interface in MAAS is problematic, consider configuring the loopback interface outside of MAAS using post-deployment scripts.
+   - Use MAAS to deploy the base configuration, then apply custom network configurations (including loopback interfaces) through cloud-init or other automation tools.
+
+5. **Feedback from Support:**
+   - Internal support teams may have additional methods or patches to address this issue. Reach out to MAAS support for the latest solutions or updates regarding loopback interface configuration.
+
+By following these steps, users can effectively configure loopback interfaces on nodes managed by MAAS, facilitating advanced network setups like L3 routing and BGP.
+
 ## Shrinking dynamic IP range
 
 **Problem:**
