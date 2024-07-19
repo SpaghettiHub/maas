@@ -1,5 +1,36 @@
 > *Errors or typos? Topics missing? Hard to read? <a href="https://docs.google.com/forms/d/e/1FAIpQLScIt3ffetkaKW3gDv6FDk7CfUTNYP_HGmqQotSTtj2htKkVBw/viewform?usp=pp_url&entry.1739714854=https://maas.io/docs/troubleshooting-common-maas-issues" target = "_blank">Let us know.</a>*
 
+## Shrinking dynamic IP range
+
+**Problem:**
+Users may encounter errors when attempting to shrink the dynamic IP address range in MAAS due to conflicts with existing IP addresses or ranges.
+
+**Solution:**
+To troubleshoot and resolve this issue, follow these steps:
+
+1. **Check Current IP Ranges and Static Addresses:**
+   - Use the following SQL queries to check the current IP ranges and static IP addresses in the MAAS database:
+     ```sql
+     SELECT * FROM maasserver_iprange;
+     SELECT * FROM maasserver_staticipaddress WHERE text(ip) LIKE '192.168.0.%' ORDER BY ip;
+     ```
+   - Identify any existing IP addresses that may conflict with the desired new range.
+
+2. **Identify Sticky Addresses:**
+   - Identify any sticky addresses within the current range that may cause conflicts. Sticky addresses are IP addresses allocated by MAAS DHCP that persist over reboots.
+
+3. **Adjust IP Range:**
+   - Ensure that the new IP range does not overlap with any existing reserved or sticky addresses. Modify the start and end IP addresses to avoid conflicts.
+   - Example: If the current range is 192.168.0.194 - 192.168.0.220 and sticky addresses occupy 192.168.0.195 - 192.168.0.211, adjust the range to avoid these addresses.
+
+4. **Update MAAS Configuration:**
+   - After identifying a non-conflicting range, update the MAAS configuration to reflect the new IP range.
+
+5. **Database Updates:**
+   - If necessary, manually update the IP range in the MAAS database to ensure consistency. Make sure to backup the database before making any changes.
+
+By following these steps, users can effectively shrink the dynamic IP address range in MAAS without encountering conflicts with existing IP addresses or ranges.
+
 ## Overlapping subnets can break deployments
 
 Ensure that your subnets don't overlap to avoid deployment failures. Check and delete any outdated or redundant subnets through the Web UI.
