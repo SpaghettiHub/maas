@@ -1,5 +1,52 @@
 > *Errors or typos? Topics missing? Hard to read? <a href="https://docs.google.com/forms/d/e/1FAIpQLScIt3ffetkaKW3gDv6FDk7CfUTNYP_HGmqQotSTtj2htKkVBw/viewform?usp=pp_url&entry.1739714854=https://maas.io/docs/troubleshooting-common-maas-issues" target = "_blank">Let us know.</a>*
 
+## VLAN Issues and Rack Controller Configuration
+
+**Problem:**
+Users encounter issues with VLANs not being utilized on any rack controller, leading to problems with DHCP and network connectivity.
+
+**Solution:**
+To troubleshoot and resolve VLAN issues in MAAS, follow these steps:
+
+1. **Configure VLAN Interfaces:**
+   - Ensure that VLAN interfaces are correctly configured on the rack controller with proper IDs, links, and IP addresses. Use `netplan` to apply configurations:
+     ```bash
+     sudo netplan apply
+     ```
+
+2. **Define Subnets Properly:**
+   - Verify that subnets are defined correctly in MAAS for each VLAN. Check that the network, gateway, and DNS information are accurately entered.
+
+3. **Physical Connections:**
+   - Confirm that the rack controller is physically connected to the appropriate networks and VLANs. If using a managed switch, ensure that ports are configured for the correct VLANs.
+
+4. **Check MAAS Logs:**
+   - Review rack controller logs for any errors related to VLANs or DHCP:
+     ```bash
+     tail -f /var/log/maas/*.log
+     ```
+
+5. **Force Network Re-detection:**
+   - Remove and re-add the rack controller in MAAS to force it to re-detect available networks and VLANs.
+
+6. **Test DHCP on Single VLAN:**
+   - Enable DHCP on one VLAN at a time to identify any working configurations.
+
+7. **Static IP Address:**
+   - Consider setting a static IP address on the VLAN interface to avoid DHCP conflicts.
+
+8. **Restart Rack Controller:**
+   - Restart the rack controller to ensure it reconnects correctly to MAAS and the VLANs.
+
+9. **Reinstall Rack Controller:**
+   - As a last resort, reinstall the rack controller following the official documentation to resolve any networking issues:
+     - Ensure the rack controller is not installed on the same machine as the region controller.
+
+10. **DHCP Forwarding Considerations:**
+    - If using DHCP forwarding on the router, ensure that the rack servers on the VLAN can still communicate with the DHCP server.
+
+By following these steps, users can troubleshoot and resolve issues with VLAN utilization on rack controllers in MAAS, ensuring proper network configuration and connectivity.
+
 ## Releasing Old DHCP Leases
 
 **Problem:**
