@@ -1,5 +1,59 @@
 > *Errors or typos? Topics missing? Hard to read? <a href="https://docs.google.com/forms/d/e/1FAIpQLScIt3ffetkaKW3gDv6FDk7CfUTNYP_HGmqQotSTtj2htKkVBw/viewform?usp=pp_url&entry.1739714854=https://maas.io/docs/troubleshooting-common-maas-issues" target = "_blank">Let us know.</a>*
 
+## Automating Initial Configuration Settings for New Machines
+
+**Problem:**
+Users need to manually configure network interfaces to DHCP and set power configurations to Manual for new machines added to MAAS, seeking a way to automate these settings.
+
+**Solution:**
+To automate the initial configuration settings for new machines in MAAS, follow these steps:
+
+1. **Use Preseed Scripts:**
+   - Utilize MAAS preseed scripts to automate network and power configurations. Preseed scripts can run commands during different stages of machine deployment.
+
+2. **Curtin Userdata:**
+   - Modify `curtin_userdata` to include early commands for setting network interfaces to DHCP and power configuration to Manual. Add these configurations to the preseed file.
+
+   Example preseed configuration:
+   ```yaml
+   early_commands:
+     10_dhcp: |
+       for nic in $(ls /sys/class/net/ | grep -v lo); do
+         echo "dhclient ${nic}" >> /etc/network/interfaces.d/${nic};
+         dhclient ${nic}
+       done
+     20_power: |
+       echo "manual" > /etc/maas/power.conf
+   ```
+
+3. **MAAS CLI:**
+   - Use the MAAS CLI to automate the setting of DHCP and power configuration for newly added machines. Create a script to be run after the machine is added to MAAS.
+
+   Example script:
+   ```bash
+   #!/bin/bash
+   MACHINE_ID=$1
+
+   # Set network interface to DHCP
+   maas admin interface link-subnet $MACHINE_ID \
+     $(maas admin interfaces read $MACHINE_ID | jq '.[0].id') \
+     mode=DHCP
+
+   # Set power configuration to Manual
+   maas admin machine update $MACHINE_ID power_type=manual
+   ```
+
+4. **Automate Through Hooks:**
+   - Use MAAS hooks to trigger the script whenever a new machine is added. Hooks can be configured to execute scripts based on specific events.
+
+5. **Check Certified Hardware:**
+   - Ensure that the hardware being added to MAAS is certified and recognized by MAAS. This helps in automatic detection and configuration.
+
+6. **Custom Automation:**
+   - Integrate these steps into your existing automation framework if you have one. Tools like Ansible, Terraform, or custom scripts can be used to manage these configurations.
+
+By implementing these steps, users can automate the initial configuration settings for new machines in MAAS, reducing manual intervention and streamlining the deployment process.
+
 ## VLAN Issues and Rack Controller Configuration
 
 **Problem:**
