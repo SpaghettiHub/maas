@@ -641,195 +641,253 @@
       <blockquote>
       <p><em>Errors or typos? Topics missing? Hard to read? <a href="https://docs.google.com/forms/d/e/1FAIpQLScIt3ffetkaKW3gDv6FDk7CfUTNYP_HGmqQotSTtj2htKkVBw/viewform?usp=pp_url&entry.1739714854=https://maas.io/docs/troubleshooting-common-maas-issues" target = "_blank">Let us know.</a></em></p>
       </blockquote>
-      <h2 id="pre-registering-machine-with-ipmi-address-as-fqdn">Pre-registering Machine with IPMI Address as FQDN</h2>
+      <h2 id="netplan-configuration-ignored-when-deploying-a-machine">Netplan configuration ignored when deploying a machine</h2>
+      <p><strong>Problem:</strong> The Netplan configuration provided in the <code>cloud-init</code> script is being ignored, resulting in static IP settings instead of the desired DHCP configuration.</p>
+      <p><strong>Solution:</strong> To ensure the network configuration is correctly applied during deployment, follow these steps:</p>
+      <ol type="1">
+      <li><p><strong>Edit machine’s interfaces in MAAS:</strong></p>
+      <ul>
+      <li>Before deploying the machine, edit the machine’s network interfaces in MAAS to set the IP mode to DHCP. This avoids the need for <code>cloud-init</code> to handle network configuration.</li>
+      </ul></li>
+      <li><p><strong>Default DHCP for future machines:</strong></p>
+      <ul>
+      <li>While it’s not currently possible to make DHCP the default for all future machines in MAAS, you can include this configuration as part of your deployment automation.</li>
+      </ul></li>
+      <li><p><strong>Custom <code>cloud-init</code> script:</strong></p>
+      <ul>
+      <li>If you still prefer to use a <code>cloud-init</code> script, ensure it correctly sets up the network interfaces. However, due to current limitations, you may need a workaround to apply Netplan configuration.</li>
+      </ul></li>
+      <li><p><strong>Workaround with bash script:</strong></p>
+      <ul>
+      <li>Use a bash script within <code>cloud-init</code> to manually write the Netplan configuration and apply it. This can be done using the <code>runcmd</code> section of the <code>cloud-init</code> script.</li>
+      </ul>
+      <p>Example <code>cloud-init</code> script with bash workaround:</p>
+      <div class="sourceCode" id="cb1"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="co">#cloud-config</span></span>
+      <span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a><span class="fu">packages</span><span class="kw">:</span></span>
+      <span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a><span class="at">  </span><span class="kw">-</span><span class="at"> qemu-guest-agent</span></span>
+      <span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a><span class="at">  </span><span class="kw">-</span><span class="at"> openssh-server</span></span>
+      <span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a></span>
+      <span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a><span class="fu">users</span><span class="kw">:</span></span>
+      <span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a><span class="at">  </span><span class="kw">-</span><span class="at"> default</span></span>
+      <span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> untouchedwagons</span></span>
+      <span id="cb1-9"><a href="#cb1-9" aria-hidden="true"></a><span class="at">    </span><span class="fu">gecos</span><span class="kw">:</span><span class="at"> untouchedwagons</span></span>
+      <span id="cb1-10"><a href="#cb1-10" aria-hidden="true"></a><span class="at">    </span><span class="fu">primary_group</span><span class="kw">:</span><span class="at"> untouchedwagons</span></span>
+      <span id="cb1-11"><a href="#cb1-11" aria-hidden="true"></a><span class="at">    </span><span class="fu">groups</span><span class="kw">:</span><span class="at"> sudo</span></span>
+      <span id="cb1-12"><a href="#cb1-12" aria-hidden="true"></a><span class="at">    </span><span class="fu">sudo</span><span class="kw">:</span><span class="at"> ALL=(ALL) NOPASSWD:ALL</span></span>
+      <span id="cb1-13"><a href="#cb1-13" aria-hidden="true"></a><span class="at">    </span><span class="fu">shell</span><span class="kw">:</span><span class="at"> /bin/bash</span></span>
+      <span id="cb1-14"><a href="#cb1-14" aria-hidden="true"></a><span class="at">    </span><span class="fu">ssh_import_id</span><span class="kw">:</span></span>
+      <span id="cb1-15"><a href="#cb1-15" aria-hidden="true"></a><span class="at">      </span><span class="kw">-</span><span class="at"> gh:UntouchedWagons</span></span>
+      <span id="cb1-16"><a href="#cb1-16" aria-hidden="true"></a></span>
+      <span id="cb1-17"><a href="#cb1-17" aria-hidden="true"></a><span class="fu">runcmd</span><span class="kw">:</span></span>
+      <span id="cb1-18"><a href="#cb1-18" aria-hidden="true"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="kw">[</span><span class="at"> systemctl</span><span class="kw">,</span><span class="at"> enable</span><span class="kw">,</span><span class="at"> --now</span><span class="kw">,</span><span class="at"> qemu-guest-agent </span><span class="kw">]</span></span>
+      <span id="cb1-19"><a href="#cb1-19" aria-hidden="true"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="kw">[</span><span class="at"> systemctl</span><span class="kw">,</span><span class="at"> enable</span><span class="kw">,</span><span class="at"> --now</span><span class="kw">,</span><span class="at"> ssh </span><span class="kw">]</span></span>
+      <span id="cb1-20"><a href="#cb1-20" aria-hidden="true"></a><span class="kw">  - </span><span class="ch">|</span></span>
+      <span id="cb1-21"><a href="#cb1-21" aria-hidden="true"></a>    cat &lt;&lt;EOF &gt; /etc/netplan/01-netcfg.yaml</span>
+      <span id="cb1-22"><a href="#cb1-22" aria-hidden="true"></a>    network:</span>
+      <span id="cb1-23"><a href="#cb1-23" aria-hidden="true"></a>      version: 2</span>
+      <span id="cb1-24"><a href="#cb1-24" aria-hidden="true"></a>      ethernets:</span>
+      <span id="cb1-25"><a href="#cb1-25" aria-hidden="true"></a>        ens18:</span>
+      <span id="cb1-26"><a href="#cb1-26" aria-hidden="true"></a>          match:</span>
+      <span id="cb1-27"><a href="#cb1-27" aria-hidden="true"></a>            macaddress: &#39;bc:24:11:e5:41:b7&#39;</span>
+      <span id="cb1-28"><a href="#cb1-28" aria-hidden="true"></a>          dhcp4: true</span>
+      <span id="cb1-29"><a href="#cb1-29" aria-hidden="true"></a>          dhcp-identifier: mac</span>
+      <span id="cb1-30"><a href="#cb1-30" aria-hidden="true"></a>    EOF</span>
+      <span id="cb1-31"><a href="#cb1-31" aria-hidden="true"></a>    netplan apply</span></code></pre></div></li>
+      <li><p><strong>Automation integration:</strong></p>
+      <ul>
+      <li>Integrate these configurations into your existing automation framework (e.g., Ansible, Terraform) to ensure consistent and repeatable deployments.</li>
+      </ul></li>
+      </ol>
+      <p>By following these steps, you can ensure that the network configuration is applied correctly during machine deployment in MAAS, avoiding the issues with ignored Netplan settings.</p>
+      <h2 id="pre-registering-machine-with-ipmi-address-as-fqdn">Pre-registering machine with IPMI address as FQDN</h2>
       <p><strong>Problem:</strong> Users encounter issues when trying to set the IPMI IP address field as an FQDN in MAAS. The machine gets registered with an IPv4 address associated with the FQDN, and the commissioning process does not complete.</p>
       <p><strong>Solution:</strong> To address this issue and implement workarounds, follow these steps:</p>
       <ol type="1">
-      <li><p><strong>Direct FQDN Usage:</strong></p>
+      <li><p><strong>Direct FQDN usage:</strong></p>
       <ul>
       <li>Currently, MAAS does not support using FQDN directly for the <code>power_address</code> field. The <code>power_address</code> must be an IPv4 or IPv6 address as per the BMC enlistment documentation.</li>
       </ul></li>
       <li><p><strong>Workarounds:</strong></p>
-      <p><strong>a. Use Unique Hostnames in the Cluster:</strong></p>
+      <p><strong>a. Use Unique hostnames in the cluster:</strong></p>
       <ul>
       <li>Ensure each machine in the cluster has a unique hostname. This can help in distinguishing and managing machines more effectively.</li>
       </ul>
-      <p><strong>b. Assign FQDN Management Hostnames:</strong></p>
+      <p><strong>b. Assign FQDN management hostnames:</strong></p>
       <ul>
       <li>Assign a unique management FQDN to the BMC/IPMI IP of each machine. For example, use <code>[hostname]-mgmt</code> as the FQDN for the IPMI address.</li>
       </ul>
-      <p><strong>c. Update BMC IP using Python Script:</strong></p>
+      <p><strong>c. Update BMC IP using Python script:</strong></p>
       <ul>
       <li>Write a Python script that updates the BMC IP address for each machine using the MAAS API. Schedule this script to run periodically (e.g., every 5 minutes) using <code>cron</code>.</li>
       </ul>
       <p>Example Python script:</p>
-      <div class="sourceCode" id="cb1"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="im">import</span> maas.client</span>
-      <span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a><span class="im">from</span> maas.client <span class="im">import</span> login</span>
-      <span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a><span class="im">from</span> maas.client.enum <span class="im">import</span> NodeStatus</span>
-      <span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a></span>
-      <span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a>MAAS_API_URL <span class="op">=</span> <span class="st">&#39;http://&lt;MAAS_SERVER&gt;/MAAS/&#39;</span></span>
-      <span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a>API_KEY <span class="op">=</span> <span class="st">&#39;&lt;YOUR_API_KEY&gt;&#39;</span></span>
-      <span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a>FQDN_SUFFIX <span class="op">=</span> <span class="st">&#39;-mgmt&#39;</span></span>
-      <span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a></span>
-      <span id="cb1-9"><a href="#cb1-9" aria-hidden="true"></a><span class="kw">def</span> update_bmc_ips():</span>
-      <span id="cb1-10"><a href="#cb1-10" aria-hidden="true"></a>    client <span class="op">=</span> login(MAAS_API_URL, API_KEY)</span>
-      <span id="cb1-11"><a href="#cb1-11" aria-hidden="true"></a>    nodes <span class="op">=</span> client.machines.<span class="bu">list</span>(status<span class="op">=</span>NodeStatus.READY)</span>
-      <span id="cb1-12"><a href="#cb1-12" aria-hidden="true"></a>    <span class="cf">for</span> node <span class="kw">in</span> nodes:</span>
-      <span id="cb1-13"><a href="#cb1-13" aria-hidden="true"></a>        hostname <span class="op">=</span> node.hostname</span>
-      <span id="cb1-14"><a href="#cb1-14" aria-hidden="true"></a>        fqdn <span class="op">=</span> <span class="ss">f&quot;</span><span class="sc">{</span>hostname<span class="sc">}{</span>FQDN_SUFFIX<span class="sc">}</span><span class="ss">&quot;</span></span>
-      <span id="cb1-15"><a href="#cb1-15" aria-hidden="true"></a>        ip_address <span class="op">=</span> socket.gethostbyname(fqdn)</span>
-      <span id="cb1-16"><a href="#cb1-16" aria-hidden="true"></a>        node.power_address <span class="op">=</span> ip_address</span>
-      <span id="cb1-17"><a href="#cb1-17" aria-hidden="true"></a>        node.save()</span>
-      <span id="cb1-18"><a href="#cb1-18" aria-hidden="true"></a></span>
-      <span id="cb1-19"><a href="#cb1-19" aria-hidden="true"></a><span class="cf">if</span> <span class="va">__name__</span> <span class="op">==</span> <span class="st">&quot;__main__&quot;</span>:</span>
-      <span id="cb1-20"><a href="#cb1-20" aria-hidden="true"></a>    update_bmc_ips()</span></code></pre></div>
+      <div class="sourceCode" id="cb2"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="im">import</span> maas.client</span>
+      <span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a><span class="im">from</span> maas.client <span class="im">import</span> login</span>
+      <span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a><span class="im">from</span> maas.client.enum <span class="im">import</span> NodeStatus</span>
+      <span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a></span>
+      <span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a>MAAS_API_URL <span class="op">=</span> <span class="st">&#39;http://&lt;MAAS_SERVER&gt;/MAAS/&#39;</span></span>
+      <span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a>API_KEY <span class="op">=</span> <span class="st">&#39;&lt;YOUR_API_KEY&gt;&#39;</span></span>
+      <span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a>FQDN_SUFFIX <span class="op">=</span> <span class="st">&#39;-mgmt&#39;</span></span>
+      <span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a></span>
+      <span id="cb2-9"><a href="#cb2-9" aria-hidden="true"></a><span class="kw">def</span> update_bmc_ips():</span>
+      <span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a>    client <span class="op">=</span> login(MAAS_API_URL, API_KEY)</span>
+      <span id="cb2-11"><a href="#cb2-11" aria-hidden="true"></a>    nodes <span class="op">=</span> client.machines.<span class="bu">list</span>(status<span class="op">=</span>NodeStatus.READY)</span>
+      <span id="cb2-12"><a href="#cb2-12" aria-hidden="true"></a>    <span class="cf">for</span> node <span class="kw">in</span> nodes:</span>
+      <span id="cb2-13"><a href="#cb2-13" aria-hidden="true"></a>        hostname <span class="op">=</span> node.hostname</span>
+      <span id="cb2-14"><a href="#cb2-14" aria-hidden="true"></a>        fqdn <span class="op">=</span> <span class="ss">f&quot;</span><span class="sc">{</span>hostname<span class="sc">}{</span>FQDN_SUFFIX<span class="sc">}</span><span class="ss">&quot;</span></span>
+      <span id="cb2-15"><a href="#cb2-15" aria-hidden="true"></a>        ip_address <span class="op">=</span> socket.gethostbyname(fqdn)</span>
+      <span id="cb2-16"><a href="#cb2-16" aria-hidden="true"></a>        node.power_address <span class="op">=</span> ip_address</span>
+      <span id="cb2-17"><a href="#cb2-17" aria-hidden="true"></a>        node.save()</span>
+      <span id="cb2-18"><a href="#cb2-18" aria-hidden="true"></a></span>
+      <span id="cb2-19"><a href="#cb2-19" aria-hidden="true"></a><span class="cf">if</span> <span class="va">__name__</span> <span class="op">==</span> <span class="st">&quot;__main__&quot;</span>:</span>
+      <span id="cb2-20"><a href="#cb2-20" aria-hidden="true"></a>    update_bmc_ips()</span></code></pre></div>
       <ul>
       <li><p>Add the script to <code>crontab</code> to run every 5 minutes:</p>
-      <div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="ex">*/5</span> * * * * /usr/bin/python3 /path/to/update_bmc_ips.py</span></code></pre></div></li>
+      <div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="ex">*/5</span> * * * * /usr/bin/python3 /path/to/update_bmc_ips.py</span></code></pre></div></li>
       </ul></li>
       </ol>
       <p>By following these steps, users can manage their MAAS setup more effectively, even when direct FQDN usage is not supported for IPMI addresses. The provided workarounds ensure that the IPMI addresses are updated and managed correctly using the MAAS API and periodic scripts.</p>
-      <h2 id="automating-initial-configuration-settings-for-new-machines">Automating Initial Configuration Settings for New Machines</h2>
+      <h2 id="automating-initial-configuration-settings-for-new-machines">Automating initial configuration settings for new machines</h2>
       <p><strong>Problem:</strong> Users need to manually configure network interfaces to DHCP and set power configurations to Manual for new machines added to MAAS, seeking a way to automate these settings.</p>
       <p><strong>Solution:</strong> To automate the initial configuration settings for new machines in MAAS, follow these steps:</p>
       <ol type="1">
-      <li><p><strong>Use Preseed Scripts:</strong></p>
+      <li><p><strong>Use preseed scripts:</strong></p>
       <ul>
       <li>Utilize MAAS preseed scripts to automate network and power configurations. Preseed scripts can run commands during different stages of machine deployment.</li>
       </ul></li>
-      <li><p><strong>Curtin Userdata:</strong></p>
+      <li><p><strong>Curtin userdata:</strong></p>
       <ul>
       <li>Modify <code>curtin_userdata</code> to include early commands for setting network interfaces to DHCP and power configuration to Manual. Add these configurations to the preseed file.</li>
       </ul>
       <p>Example preseed configuration:</p>
-      <div class="sourceCode" id="cb3"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="fu">early_commands</span><span class="kw">:</span></span>
-      <span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a><span class="fu">  10_dhcp</span><span class="kw">: </span><span class="ch">|</span></span>
-      <span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>    for nic in $(ls /sys/class/net/ | grep -v lo); do</span>
-      <span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a>      echo &quot;dhclient ${nic}&quot; &gt;&gt; /etc/network/interfaces.d/${nic};</span>
-      <span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a>      dhclient ${nic}</span>
-      <span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a>    done</span>
-      <span id="cb3-7"><a href="#cb3-7" aria-hidden="true"></a><span class="fu">  20_power</span><span class="kw">: </span><span class="ch">|</span></span>
-      <span id="cb3-8"><a href="#cb3-8" aria-hidden="true"></a>    echo &quot;manual&quot; &gt; /etc/maas/power.conf</span></code></pre></div></li>
+      <div class="sourceCode" id="cb4"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="fu">early_commands</span><span class="kw">:</span></span>
+      <span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a><span class="fu">  10_dhcp</span><span class="kw">: </span><span class="ch">|</span></span>
+      <span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>    for nic in $(ls /sys/class/net/ | grep -v lo); do</span>
+      <span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>      echo &quot;dhclient ${nic}&quot; &gt;&gt; /etc/network/interfaces.d/${nic};</span>
+      <span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a>      dhclient ${nic}</span>
+      <span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a>    done</span>
+      <span id="cb4-7"><a href="#cb4-7" aria-hidden="true"></a><span class="fu">  20_power</span><span class="kw">: </span><span class="ch">|</span></span>
+      <span id="cb4-8"><a href="#cb4-8" aria-hidden="true"></a>    echo &quot;manual&quot; &gt; /etc/maas/power.conf</span></code></pre></div></li>
       <li><p><strong>MAAS CLI:</strong></p>
       <ul>
       <li>Use the MAAS CLI to automate the setting of DHCP and power configuration for newly added machines. Create a script to be run after the machine is added to MAAS.</li>
       </ul>
       <p>Example script:</p>
-      <div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="co">#!/bin/bash</span></span>
-      <span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a><span class="va">MACHINE_ID=$1</span></span>
-      <span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a></span>
-      <span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a><span class="co"># Set network interface to DHCP</span></span>
-      <span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a><span class="ex">maas</span> admin interface link-subnet <span class="va">$MACHINE_ID</span> <span class="kw">\</span></span>
-      <span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a>  <span class="va">$(</span><span class="ex">maas</span> admin interfaces read <span class="va">$MACHINE_ID</span> <span class="kw">|</span> <span class="ex">jq</span> <span class="st">&#39;.[0].id&#39;</span><span class="va">)</span> <span class="kw">\</span></span>
-      <span id="cb4-7"><a href="#cb4-7" aria-hidden="true"></a>  <span class="va">mode=</span>DHCP</span>
-      <span id="cb4-8"><a href="#cb4-8" aria-hidden="true"></a></span>
-      <span id="cb4-9"><a href="#cb4-9" aria-hidden="true"></a><span class="co"># Set power configuration to Manual</span></span>
-      <span id="cb4-10"><a href="#cb4-10" aria-hidden="true"></a><span class="ex">maas</span> admin machine update <span class="va">$MACHINE_ID</span> power_type=manual</span></code></pre></div></li>
-      <li><p><strong>Automate Through Hooks:</strong></p>
+      <div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="co">#!/bin/bash</span></span>
+      <span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a><span class="va">MACHINE_ID=$1</span></span>
+      <span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a></span>
+      <span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a><span class="co"># Set network interface to DHCP</span></span>
+      <span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a><span class="ex">maas</span> admin interface link-subnet <span class="va">$MACHINE_ID</span> <span class="kw">\</span></span>
+      <span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a>  <span class="va">$(</span><span class="ex">maas</span> admin interfaces read <span class="va">$MACHINE_ID</span> <span class="kw">|</span> <span class="ex">jq</span> <span class="st">&#39;.[0].id&#39;</span><span class="va">)</span> <span class="kw">\</span></span>
+      <span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a>  <span class="va">mode=</span>DHCP</span>
+      <span id="cb5-8"><a href="#cb5-8" aria-hidden="true"></a></span>
+      <span id="cb5-9"><a href="#cb5-9" aria-hidden="true"></a><span class="co"># Set power configuration to Manual</span></span>
+      <span id="cb5-10"><a href="#cb5-10" aria-hidden="true"></a><span class="ex">maas</span> admin machine update <span class="va">$MACHINE_ID</span> power_type=manual</span></code></pre></div></li>
+      <li><p><strong>Automate through hooks:</strong></p>
       <ul>
       <li>Use MAAS hooks to trigger the script whenever a new machine is added. Hooks can be configured to execute scripts based on specific events.</li>
       </ul></li>
-      <li><p><strong>Check Certified Hardware:</strong></p>
+      <li><p><strong>Check certified hardware:</strong></p>
       <ul>
       <li>Ensure that the hardware being added to MAAS is certified and recognized by MAAS. This helps in automatic detection and configuration.</li>
       </ul></li>
-      <li><p><strong>Custom Automation:</strong></p>
+      <li><p><strong>Custom automation:</strong></p>
       <ul>
       <li>Integrate these steps into your existing automation framework if you have one. Tools like Ansible, Terraform, or custom scripts can be used to manage these configurations.</li>
       </ul></li>
       </ol>
       <p>By implementing these steps, users can automate the initial configuration settings for new machines in MAAS, reducing manual intervention and streamlining the deployment process.</p>
-      <h2 id="vlan-issues-and-rack-controller-configuration">VLAN Issues and Rack Controller Configuration</h2>
+      <h2 id="vlan-issues-and-rack-controller-configuration">VLAN issues and rack controller configuration</h2>
       <p><strong>Problem:</strong> Users encounter issues with VLANs not being utilized on any rack controller, leading to problems with DHCP and network connectivity.</p>
       <p><strong>Solution:</strong> To troubleshoot and resolve VLAN issues in MAAS, follow these steps:</p>
       <ol type="1">
-      <li><strong>Configure VLAN Interfaces:</strong>
+      <li><strong>Configure VLAN interfaces:</strong>
       <ul>
       <li><p>Ensure that VLAN interfaces are correctly configured on the rack controller with proper IDs, links, and IP addresses. Use <code>netplan</code> to apply configurations:</p>
-      <div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="fu">sudo</span> netplan apply</span></code></pre></div></li>
+      <div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="fu">sudo</span> netplan apply</span></code></pre></div></li>
       </ul></li>
-      <li><strong>Define Subnets Properly:</strong>
+      <li><strong>Define subnets properly:</strong>
       <ul>
       <li>Verify that subnets are defined correctly in MAAS for each VLAN. Check that the network, gateway, and DNS information are accurately entered.</li>
       </ul></li>
-      <li><strong>Physical Connections:</strong>
+      <li><strong>Physical connections:</strong>
       <ul>
       <li>Confirm that the rack controller is physically connected to the appropriate networks and VLANs. If using a managed switch, ensure that ports are configured for the correct VLANs.</li>
       </ul></li>
-      <li><strong>Check MAAS Logs:</strong>
+      <li><strong>Check MAAS logs:</strong>
       <ul>
       <li><p>Review rack controller logs for any errors related to VLANs or DHCP:</p>
-      <div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="fu">tail</span> -f /var/log/maas/*.log</span></code></pre></div></li>
+      <div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="fu">tail</span> -f /var/log/maas/*.log</span></code></pre></div></li>
       </ul></li>
-      <li><strong>Force Network Re-detection:</strong>
+      <li><strong>Force network re-detection:</strong>
       <ul>
       <li>Remove and re-add the rack controller in MAAS to force it to re-detect available networks and VLANs.</li>
       </ul></li>
-      <li><strong>Test DHCP on Single VLAN:</strong>
+      <li><strong>Test DHCP on single VLAN:</strong>
       <ul>
       <li>Enable DHCP on one VLAN at a time to identify any working configurations.</li>
       </ul></li>
-      <li><strong>Static IP Address:</strong>
+      <li><strong>Static IP address:</strong>
       <ul>
       <li>Consider setting a static IP address on the VLAN interface to avoid DHCP conflicts.</li>
       </ul></li>
-      <li><strong>Restart Rack Controller:</strong>
+      <li><strong>Restart rack controller:</strong>
       <ul>
       <li>Restart the rack controller to ensure it reconnects correctly to MAAS and the VLANs.</li>
       </ul></li>
-      <li><strong>Reinstall Rack Controller:</strong>
+      <li><strong>Reinstall rack controller:</strong>
       <ul>
       <li>As a last resort, reinstall the rack controller following the official documentation to resolve any networking issues:
       <ul>
       <li>Ensure the rack controller is not installed on the same machine as the region controller.</li>
       </ul></li>
       </ul></li>
-      <li><strong>DHCP Forwarding Considerations:</strong>
+      <li><strong>DHCP forwarding considerations:</strong>
       <ul>
       <li>If using DHCP forwarding on the router, ensure that the rack servers on the VLAN can still communicate with the DHCP server.</li>
       </ul></li>
       </ol>
       <p>By following these steps, users can troubleshoot and resolve issues with VLAN utilization on rack controllers in MAAS, ensuring proper network configuration and connectivity.</p>
-      <h2 id="releasing-old-dhcp-leases">Releasing Old DHCP Leases</h2>
+      <h2 id="releasing-old-dhcp-leases">Releasing old DHCP leases</h2>
       <p><strong>Problem:</strong> Deploying servers in MAAS results in an error stating “No more IPs available in subnet,” despite having unused IP addresses.</p>
       <p><strong>Solution:</strong> To release old DHCP leases and resolve IP allocation issues, follow these steps:</p>
       <ol type="1">
-      <li><strong>Check for Orphaned IP Addresses:</strong>
+      <li><strong>Check for orphaned IP addresses:</strong>
       <ul>
       <li><p>Run the following SQL query to identify orphaned IP addresses in the MAAS database:</p>
-      <div class="sourceCode" id="cb7"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a>sudo <span class="op">-</span>u postgres psql <span class="op">-</span>d maasdb <span class="op">-</span>c <span class="ot">&quot;</span></span>
-      <span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a><span class="kw">SELECT</span> <span class="fu">count</span>(<span class="op">*</span>)</span>
-      <span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a><span class="kw">FROM</span> maasserver_staticipaddress</span>
-      <span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a><span class="kw">LEFT</span> <span class="kw">JOIN</span> maasserver_interface_ip_addresses <span class="kw">ON</span> maasserver_staticipaddress.<span class="kw">id</span> <span class="op">=</span> maasserver_interface_ip_addresses.staticipaddress_id</span>
-      <span id="cb7-5"><a href="#cb7-5" aria-hidden="true"></a><span class="kw">LEFT</span> <span class="kw">JOIN</span> maasserver_interface <span class="kw">ON</span> maasserver_interface.<span class="kw">id</span> <span class="op">=</span> maasserver_interface_ip_addresses.interface_id</span>
-      <span id="cb7-6"><a href="#cb7-6" aria-hidden="true"></a><span class="kw">WHERE</span> maasserver_staticipaddress.ip <span class="kw">IS</span> <span class="kw">NULL</span> </span>
-      <span id="cb7-7"><a href="#cb7-7" aria-hidden="true"></a>  <span class="kw">AND</span> maasserver_interface.<span class="kw">type</span> <span class="op">=</span> <span class="st">&#39;unknown&#39;</span> </span>
-      <span id="cb7-8"><a href="#cb7-8" aria-hidden="true"></a>  <span class="kw">AND</span> maasserver_staticipaddress.alloc_type <span class="op">=</span> <span class="dv">6</span>;</span>
-      <span id="cb7-9"><a href="#cb7-9" aria-hidden="true"></a><span class="ot">&quot;</span></span></code></pre></div></li>
+      <div class="sourceCode" id="cb8"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a>sudo <span class="op">-</span>u postgres psql <span class="op">-</span>d maasdb <span class="op">-</span>c <span class="ot">&quot;</span></span>
+      <span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a><span class="kw">SELECT</span> <span class="fu">count</span>(<span class="op">*</span>)</span>
+      <span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a><span class="kw">FROM</span> maasserver_staticipaddress</span>
+      <span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a><span class="kw">LEFT</span> <span class="kw">JOIN</span> maasserver_interface_ip_addresses <span class="kw">ON</span> maasserver_staticipaddress.<span class="kw">id</span> <span class="op">=</span> maasserver_interface_ip_addresses.staticipaddress_id</span>
+      <span id="cb8-5"><a href="#cb8-5" aria-hidden="true"></a><span class="kw">LEFT</span> <span class="kw">JOIN</span> maasserver_interface <span class="kw">ON</span> maasserver_interface.<span class="kw">id</span> <span class="op">=</span> maasserver_interface_ip_addresses.interface_id</span>
+      <span id="cb8-6"><a href="#cb8-6" aria-hidden="true"></a><span class="kw">WHERE</span> maasserver_staticipaddress.ip <span class="kw">IS</span> <span class="kw">NULL</span> </span>
+      <span id="cb8-7"><a href="#cb8-7" aria-hidden="true"></a>  <span class="kw">AND</span> maasserver_interface.<span class="kw">type</span> <span class="op">=</span> <span class="st">&#39;unknown&#39;</span> </span>
+      <span id="cb8-8"><a href="#cb8-8" aria-hidden="true"></a>  <span class="kw">AND</span> maasserver_staticipaddress.alloc_type <span class="op">=</span> <span class="dv">6</span>;</span>
+      <span id="cb8-9"><a href="#cb8-9" aria-hidden="true"></a><span class="ot">&quot;</span></span></code></pre></div></li>
       <li><p>This will help you identify any orphaned addresses that are not properly allocated.</p></li>
       </ul></li>
-      <li><strong>Clean Neighbor Discoveries:</strong>
+      <li><strong>Clean neighbor discoveries:</strong>
       <ul>
       <li><p>Use the MAAS CLI to clear discovered neighbors, which might be causing IP conflicts:</p>
-      <div class="sourceCode" id="cb8"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="ex">maas</span> admin discoveries clear all=True -k</span></code></pre></div></li>
+      <div class="sourceCode" id="cb9"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="ex">maas</span> admin discoveries clear all=True -k</span></code></pre></div></li>
       </ul></li>
-      <li><strong>Verify Cleared Discoveries:</strong>
+      <li><strong>Verify cleared discoveries:</strong>
       <ul>
       <li><p>After clearing, check if the discoveries were successfully removed:</p>
-      <div class="sourceCode" id="cb9"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="ex">maas</span> admin discoveries read -k</span></code></pre></div></li>
+      <div class="sourceCode" id="cb10"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a><span class="ex">maas</span> admin discoveries read -k</span></code></pre></div></li>
       </ul></li>
-      <li><strong>Clear ARP Table (Optional):</strong>
+      <li><strong>Clear ARP table (optional):</strong>
       <ul>
       <li><p>If necessary, clear the ARP table on the Rack server to ensure no stale entries exist:</p>
-      <div class="sourceCode" id="cb10"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a><span class="ex">arp</span> -d [IP address]</span></code></pre></div></li>
+      <div class="sourceCode" id="cb11"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a><span class="ex">arp</span> -d [IP address]</span></code></pre></div></li>
       <li><p>Example to clear all entries:</p>
-      <div class="sourceCode" id="cb11"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a><span class="ex">arp</span> -d 172.21.68.79</span>
-      <span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a><span class="ex">arp</span> -d 172.21.68.69</span></code></pre></div></li>
+      <div class="sourceCode" id="cb12"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true"></a><span class="ex">arp</span> -d 172.21.68.79</span>
+      <span id="cb12-2"><a href="#cb12-2" aria-hidden="true"></a><span class="ex">arp</span> -d 172.21.68.69</span></code></pre></div></li>
       </ul></li>
-      <li><strong>Run Deployment Again:</strong>
+      <li><strong>Run deployment again:</strong>
       <ul>
       <li><p>Attempt to deploy the server again to check if the issue persists. If the error still occurs, check the discoveries once more without cleaning:</p>
-      <div class="sourceCode" id="cb12"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true"></a><span class="ex">maas</span> admin discoveries read -k</span></code></pre></div></li>
+      <div class="sourceCode" id="cb13"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true"></a><span class="ex">maas</span> admin discoveries read -k</span></code></pre></div></li>
       </ul></li>
       </ol>
       <p>By following these steps, users can release old DHCP leases and address IP exhaustion issues in MAAS, ensuring successful server deployment.</p>
@@ -837,25 +895,25 @@
       <p><strong>Problem:</strong> Configuring the loopback interface (lo) using MAAS is not straightforward, especially when deploying nodes for use with Free Range Routing (FRR) and BGP.</p>
       <p><strong>Solution:</strong> To configure loopback addresses in MAAS, follow these steps:</p>
       <ol type="1">
-      <li><strong>Understand Loopback Interface:</strong>
+      <li><strong>Understand loopback interface:</strong>
       <ul>
       <li>Loopback interfaces do not require MAC addresses since they are used for internal routing within the node itself.</li>
       </ul></li>
-      <li><strong>Manually Add Loopback Interface:</strong>
+      <li><strong>Manually add loopback interface:</strong>
       <ul>
       <li>After commissioning a node, manually add the loopback interface in MAAS.</li>
       <li>If the MAAS web UI requires a MAC address for the loopback interface, use a placeholder value like <code>00:00:00:00:00:00</code> but ensure it does not conflict with other nodes.</li>
       </ul></li>
-      <li><strong>Avoid Duplicate MAC Addresses:</strong>
+      <li><strong>Avoid duplicate MAC addresses:</strong>
       <ul>
       <li>Since MAAS does not support duplicate MAC addresses, manually configure the loopback interface on each node with a unique identifier or find a way to bypass the MAC address requirement.</li>
       </ul></li>
-      <li><strong>Alternative Methods:</strong>
+      <li><strong>Alternative methods:</strong>
       <ul>
       <li>If manually adding the loopback interface in MAAS is problematic, consider configuring the loopback interface outside of MAAS using post-deployment scripts.</li>
       <li>Use MAAS to deploy the base configuration, then apply custom network configurations (including loopback interfaces) through cloud-init or other automation tools.</li>
       </ul></li>
-      <li><strong>Feedback from Support:</strong>
+      <li><strong>Feedback from support:</strong>
       <ul>
       <li>Internal support teams may have additional methods or patches to address this issue. Reach out to MAAS support for the latest solutions or updates regarding loopback interface configuration.</li>
       </ul></li>
@@ -865,27 +923,27 @@
       <p><strong>Problem:</strong> Users may encounter errors when attempting to shrink the dynamic IP address range in MAAS due to conflicts with existing IP addresses or ranges.</p>
       <p><strong>Solution:</strong> To troubleshoot and resolve this issue, follow these steps:</p>
       <ol type="1">
-      <li><strong>Check Current IP Ranges and Static Addresses:</strong>
+      <li><strong>Check current IP ranges and static addresses:</strong>
       <ul>
       <li><p>Use the following SQL queries to check the current IP ranges and static IP addresses in the MAAS database:</p>
-      <div class="sourceCode" id="cb13"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true"></a><span class="kw">SELECT</span> <span class="op">*</span> <span class="kw">FROM</span> maasserver_iprange;</span>
-      <span id="cb13-2"><a href="#cb13-2" aria-hidden="true"></a><span class="kw">SELECT</span> <span class="op">*</span> <span class="kw">FROM</span> maasserver_staticipaddress <span class="kw">WHERE</span> text(ip) <span class="kw">LIKE</span> <span class="st">&#39;192.168.0.%&#39;</span> <span class="kw">ORDER</span> <span class="kw">BY</span> ip;</span></code></pre></div></li>
+      <div class="sourceCode" id="cb14"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true"></a><span class="kw">SELECT</span> <span class="op">*</span> <span class="kw">FROM</span> maasserver_iprange;</span>
+      <span id="cb14-2"><a href="#cb14-2" aria-hidden="true"></a><span class="kw">SELECT</span> <span class="op">*</span> <span class="kw">FROM</span> maasserver_staticipaddress <span class="kw">WHERE</span> text(ip) <span class="kw">LIKE</span> <span class="st">&#39;192.168.0.%&#39;</span> <span class="kw">ORDER</span> <span class="kw">BY</span> ip;</span></code></pre></div></li>
       <li><p>Identify any existing IP addresses that may conflict with the desired new range.</p></li>
       </ul></li>
-      <li><strong>Identify Sticky Addresses:</strong>
+      <li><strong>Identify sticky addresses:</strong>
       <ul>
       <li>Identify any sticky addresses within the current range that may cause conflicts. Sticky addresses are IP addresses allocated by MAAS DHCP that persist over reboots.</li>
       </ul></li>
-      <li><strong>Adjust IP Range:</strong>
+      <li><strong>Adjust IP range:</strong>
       <ul>
       <li>Ensure that the new IP range does not overlap with any existing reserved or sticky addresses. Modify the start and end IP addresses to avoid conflicts.</li>
       <li>Example: If the current range is 192.168.0.194 - 192.168.0.220 and sticky addresses occupy 192.168.0.195 - 192.168.0.211, adjust the range to avoid these addresses.</li>
       </ul></li>
-      <li><strong>Update MAAS Configuration:</strong>
+      <li><strong>Update MAAS configuration:</strong>
       <ul>
       <li>After identifying a non-conflicting range, update the MAAS configuration to reflect the new IP range.</li>
       </ul></li>
-      <li><strong>Database Updates:</strong>
+      <li><strong>Database updates:</strong>
       <ul>
       <li>If necessary, manually update the IP range in the MAAS database to ensure consistency. Make sure to backup the database before making any changes.</li>
       </ul></li>
