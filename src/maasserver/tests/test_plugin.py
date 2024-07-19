@@ -159,6 +159,7 @@ class TestRegionWorkerServiceMaker(TestServiceMaker):
             "ipc-worker",
             "import-resources",
             "import-resources-progress",
+            "active-discovery",
         }
         self.assertEqual(expected_services, service.namedServices.keys())
         self.assertEqual(
@@ -248,7 +249,6 @@ class TestRegionMasterServiceMaker(TestServiceMaker):
             "prometheus-exporter",
             "postgres-listener-master",
             "networks-monitor",
-            "active-discovery",
             "reverse-dns",
             "reverse-proxy",
             "certificate-expiration-check",
