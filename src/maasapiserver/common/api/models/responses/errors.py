@@ -1,7 +1,7 @@
 from typing import Optional
 
 from fastapi.encoders import jsonable_encoder
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from starlette import status
 from starlette.responses import JSONResponse
 
@@ -137,4 +137,34 @@ class ServiceUnavailableErrorResponse(JSONResponse):
                 ServiceUnavailableErrorBodyResponse(details=details)
             ),
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+
+
+class MacaroonModel(BaseModel):
+    m: dict[str, str]
+    v: int
+    ns: Optional[str]
+    cdata: Optional[dict[str, str]]
+
+
+class DischargeRequiredInfo(BaseModel):
+    macaroon: MacaroonModel = Field(alias="Macaroon")
+    macaroon_path: str = Field(alias="MacaroonPath")
+    cookie_name_suffix: str = Field(alias="CookieNameSuffix")
+
+
+class DischargeRequiredErrorBodyResponse(BaseModel):
+    code: str = Field(alias="Code")
+    message: str = Field(alias="Message")
+    info: DischargeRequiredInfo = Field(alias="Info")
+
+
+class DischargeRequiredErrorResponse(JSONResponse):
+    DISCHARGE_HEADERS = {"WWW-Authenticate": "Macaroon"}
+
+    def __init__(self, body: DischargeRequiredErrorBodyResponse):
+        super().__init__(
+            content=jsonable_encoder(body),
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            headers=self.DISCHARGE_HEADERS,
         )

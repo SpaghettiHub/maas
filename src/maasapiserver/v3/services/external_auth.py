@@ -1,14 +1,20 @@
 #  Copyright 2024 Canonical Ltd.  This software is licensed under the
 #  GNU Affero General Public License version 3 (see the file LICENSE).
 
+from datetime import datetime, timedelta, timezone
+import json
 import os
 
-from macaroonbakery import bakery
+from macaroonbakery import bakery, checkers, httpbakery
 from macaroonbakery.bakery._store import RootKeyStore
 from sqlalchemy.ext.asyncio import AsyncConnection
 
+from maasapiserver.common.api.models.responses.errors import (
+    DischargeRequiredErrorBodyResponse,
+)
 from maasapiserver.common.services._base import Service
 from maasapiserver.common.utils.date import utcnow
+
 from maasapiserver.v3.auth.external_auth import (
     ExternalAuthConfig,
     ExternalAuthType,
@@ -16,6 +22,8 @@ from maasapiserver.v3.auth.external_auth import (
 from maasapiserver.v3.db.external_auth import ExternalAuthRepository
 from maasapiserver.v3.services.secrets import SecretsService
 from provisioningserver.security import to_bin, to_hex
+
+MACAROON_LIFESPAN = timedelta(days=1)
 
 
 # We need to implement RootKeyStore because we pass this service to the Macaroon Auth Checker
@@ -134,4 +142,53 @@ class ExternalAuthService(Service, RootKeyStore):
         await self.external_auth_repository.delete(id=id)
         await self.secrets_service.delete(
             path=self.ROOTKEY_MATERIAL_SECRET_FORMAT % id
+        )
+
+    async def authorization_request_from_error(
+        self,
+        # change bakery with oven?
+        macaroon_bakery: bakery.Bakery,
+        discharge_error: bakery.DischargeRequiredError,
+        headers: dict[str, str] | None = None,
+    ) -> DischargeRequiredErrorBodyResponse:
+        bakery_version = httpbakery.request_version(headers or {})
+        caveats, ops = discharge_error.cavs(), discharge_error.ops()
+        expiration = datetime.now(timezone.utc) + MACAROON_LIFESPAN
+        # change with async oven
+        macaroon = macaroon_bakery.oven.macaroon(
+            bakery_version, expiration, caveats, ops
+        )
+        content, _ = httpbakery.discharge_required_response(
+            macaroon=macaroon, path="/", cookie_suffix_name="maas"
+        )
+        content = json.loads(content.decode("utf-8"))
+        return DischargeRequiredErrorBodyResponse.parse_obj(
+            content
+        )
+
+    async def authorization_request_without_macaroon(
+        self,
+        macaroon_bakery: bakery.Bakery,
+        auth_endpoint: str,
+        auth_domain: str,
+        req_headers: dict[str, str] | None = None,
+    ) -> DischargeRequiredErrorBodyResponse:
+
+        bakery_version = httpbakery.request_version(req_headers or {})
+        condition = "is-authenticated-user"
+        if auth_domain:
+            condition += f" @{auth_domain}"
+        caveats = checkers.Caveat(condition=condition, location=auth_endpoint)
+        ops = [bakery.LOGIN_OP]
+        expiration = datetime.now(timezone.utc) + MACAROON_LIFESPAN
+        # change with async oven
+        macaroon = macaroon_bakery.oven.macaroon(
+            bakery_version, expiration, caveats, ops
+        )
+        content, _ = httpbakery.discharge_required_response(
+            macaroon=macaroon, path="/", cookie_suffix_name="maas"
+        )
+        content = json.loads(content.decode("utf-8"))
+        return DischargeRequiredErrorBodyResponse.parse_obj(
+            content
         )

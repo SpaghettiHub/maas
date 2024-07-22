@@ -14,9 +14,9 @@ from maasapiserver.common.models.exceptions import (
     BaseExceptionDetail,
     UnauthorizedException,
 )
-from maasapiserver.v3.auth.base import AuthenticatedUser
 from maasapiserver.v3.auth.jwt import InvalidToken, JWT, UserRole
 from maasapiserver.v3.constants import V3_API_PREFIX
+from maasapiserver.v3.models.auth import AuthenticatedUser
 
 logger = logging.getLogger()
 

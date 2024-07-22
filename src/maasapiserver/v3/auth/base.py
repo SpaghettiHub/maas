@@ -1,7 +1,7 @@
 import typing
 
 from fastapi import Depends
-from pydantic import BaseModel
+from macaroonbakery import bakery
 from starlette.requests import Request
 
 from maasapiserver.common.models.constants import (
@@ -10,22 +10,21 @@ from maasapiserver.common.models.constants import (
 )
 from maasapiserver.common.models.exceptions import (
     BaseExceptionDetail,
+    DischargeRequiredException,
     ForbiddenException,
     UnauthorizedException,
 )
+from maasapiserver.v3.api import services
 from maasapiserver.v3.auth.jwt import UserRole
 from maasapiserver.v3.auth.openapi import OpenapiOAuth2PasswordBearer
 from maasapiserver.v3.constants import V3_API_PREFIX
+from maasapiserver.v3.models.auth import AuthenticatedUser
+from maasapiserver.v3.services import ServiceCollectionV3
 
 # This is used just to generate the openapi spec with the security annotations.
 oauth2_bearer_openapi = OpenapiOAuth2PasswordBearer(
     tokenUrl=f"{V3_API_PREFIX}/auth/login"
 )
-
-
-class AuthenticatedUser(BaseModel):
-    username: str
-    roles: set[UserRole]
 
 
 def get_authenticated_user(request: Request) -> AuthenticatedUser | None:
@@ -49,10 +48,11 @@ def check_permissions(required_roles: set[UserRole]) -> typing.Callable:
         Callable: Decorator function that checks permissions and raises exceptions if necessary.
     """
 
-    def wrapper(
+    async def wrapper(
         authenticated_user: AuthenticatedUser | None = Depends(
             get_authenticated_user
         ),
+        services: ServiceCollectionV3 = Depends(services),
         openapi_security_generator: None = Depends(oauth2_bearer_openapi),
     ) -> AuthenticatedUser:
         """
@@ -71,6 +71,18 @@ def check_permissions(required_roles: set[UserRole]) -> typing.Callable:
             ForbiddenException: If the user lacks the required roles.
         """
         if not authenticated_user:
+            if (
+                external_auth_info := await services.external_auth.get_external_auth()
+            ):
+                # substitute with async bakery
+                macaroon_bakery = bakery.Bakery()
+                discharge_response = await services.external_auth.authorization_request_without_macaroon(
+                    macaroon_bakery=macaroon_bakery,
+                    auth_endpoint=external_auth_info.url,
+                    auth_domain=external_auth_info.domain,
+                )
+                raise DischargeRequiredException(body=discharge_response)
+
             raise UnauthorizedException(
                 details=[
                     BaseExceptionDetail(

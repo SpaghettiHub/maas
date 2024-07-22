@@ -1,5 +1,9 @@
 from pydantic import BaseModel
 
+from maasapiserver.common.api.models.responses.errors import (
+    DischargeRequiredErrorBodyResponse,
+)
+
 
 class BaseExceptionDetail(BaseModel):
     type: str
@@ -52,3 +56,9 @@ class PreconditionFailedException(BaseException):
 class ServiceUnavailableException(BaseException):
     def __init__(self, details: list[BaseExceptionDetail] | None = None):
         super().__init__("The service is not available.", details)
+
+
+class DischargeRequiredException(Exception):
+    def __init__(self, body: DischargeRequiredErrorBodyResponse):
+        super().__init__("Macaroon discharge required.")
+        self.body = body
