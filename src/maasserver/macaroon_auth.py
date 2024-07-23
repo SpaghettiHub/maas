@@ -25,7 +25,7 @@ from piston3.utils import rc
 import requests
 
 from maasserver.auth import MAASAuthorizationBackend
-from maasserver.auth.macaroons import _get_macaroon_caveats_ops, _IDClient
+from maasserver.macaroons import _get_macaroon_caveats_ops, _IDClient
 from maasserver.models.rootkey import RootKey
 from maasserver.models.user import SYSTEM_USERS
 from maasserver.utils.views import request_headers
@@ -83,6 +83,7 @@ class MacaroonAPIAuthentication:
             return False
 
         req_headers = request_headers(request)
+        print(req_headers)
         macaroon_bakery = _get_bakery(request)
         auth_checker = macaroon_bakery.checker.auth(
             httpbakery.extract_macaroons(req_headers)
