@@ -54,10 +54,10 @@ Deployment of a JUJU controller or an OS directly on a node fails with the error
    - There might be differences in BIOS configurations that affect deployment.
 
    **Solution:**
-   - Ensure that BIOS settings, especially related to network boot and IPMI, are consistent and correctly configured.
+   - Ensure that BIOS settings, especially related to network boot and BMCs, are consistent and correctly configured.
 
 6. **Check subnet and IP configuration:**
-   - Ensure the IP configuration for subnets is correct, and no conflicting or duplicate subnets are present.
+   - Ensure the IP configuration for subnets is correct, and no conflicting, overlapping or duplicate subnets are present.
 
    **Solution:**
    - Verify and correct subnet configurations in the MAAS UI.
@@ -69,9 +69,18 @@ Deployment of a JUJU controller or an OS directly on a node fails with the error
    - Check MAAS and cloud-init logs for more details:
 
    ```bash
-   tail -f /var/log/maas/regiond.log
-   tail -f /var/log/maas/rackd.log
-   tail -f /var/log/cloud-init.log
+   # deb <= 3.4
+   tail -f /var/log/maas/regiond.log # on regiond host
+   tail -f /var/log/maas/rackd.log # on rackd host
+   tail -f /var/log/cloud-init.log  # on deploying host
+
+   # deb >= 3.5
+   journalctl -f -u regiond.service
+   journalctl -f -u rackd.service
+
+   # snap
+   tail -f /var/snap/maas/common/log/regiond.log
+   tail -f /var/snap/maas/common/log/rackd.log
    ```
 
 ### Example configuration and commands:
@@ -129,7 +138,11 @@ MAAS restarted after an update, causing DNS to fail due to duplicate subnets and
 5. **Verify DNS configuration:**
    - Check the DNS configuration files to ensure there are no remaining issues. The relevant files can be found in:
      ```bash
-     /var/snap/maas/current/bind/named.conf.maas
+     # deb
+     /etc/bind/maas/
+
+     # snap
+     /var/snap/maas/current/bind/
      ```
 
 6. **Decouple DNS from MAAS:**
