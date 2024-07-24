@@ -1,13 +1,15 @@
 #  Copyright 2024 Canonical Ltd.  This software is licensed under the
 #  GNU Affero General Public License version 3 (see the file LICENSE).
 
+from datetime import timedelta
 from functools import lru_cache
 import os
 
-from macaroonbakery import bakery, checkers
+from macaroonbakery import bakery, checkers, httpbakery
 from macaroonbakery.bakery._store import RootKeyStore
 from pymacaroons import Macaroon
 from sqlalchemy.ext.asyncio import AsyncConnection
+from starlette.datastructures import Headers
 
 from maasapiserver.common.auth.checker import AsyncChecker
 from maasapiserver.common.auth.locator import AsyncThirdPartyLocator
@@ -27,8 +29,10 @@ from maasapiserver.v3.db.external_auth import ExternalAuthRepository
 from maasapiserver.v3.models.users import User
 from maasapiserver.v3.services.secrets import SecretsService
 from maasapiserver.v3.services.users import UsersService
-from maasserver.macaroons import _IDClient
+from maasserver.macaroons import _get_macaroon_caveats_ops, _IDClient
 from provisioningserver.security import to_bin, to_hex
+
+MACAROON_LIFESPAN = timedelta(days=1)
 
 
 @lru_cache
@@ -237,3 +241,35 @@ class ExternalAuthService(Service, RootKeyStore):
         await self.secrets_service.delete(
             path=self.ROOTKEY_MATERIAL_SECRET_FORMAT % id
         )
+
+    async def get_discharge_macaroon(
+        self,
+        macaroon_bakery: bakery.Bakery,
+        auth_endpoint: str,
+        auth_domain: str,
+        req_headers: Headers | None = None,
+    ) -> bakery.Macaroon:
+        bakery_version = httpbakery.request_version(req_headers or {})
+        condition = "is-authenticated-user"
+        if auth_domain:
+            condition += f" @{auth_domain}"
+        caveats, ops = _get_macaroon_caveats_ops(auth_endpoint, auth_domain)
+        expiration = utcnow() + MACAROON_LIFESPAN
+        macaroon = await macaroon_bakery.oven.macaroon(
+            bakery_version, expiration, caveats, ops
+        )
+        return macaroon
+
+    async def get_discharge_macaroon_from_error(
+        self,
+        macaroon_bakery: bakery.Bakery,
+        discharge_error: bakery.DischargeRequiredError,
+        req_headers: Headers | None = None,
+    ) -> bakery.Macaroon:
+        bakery_version = httpbakery.request_version(req_headers or {})
+        caveats, ops = discharge_error.cavs(), discharge_error.ops()
+        expiration = utcnow() + MACAROON_LIFESPAN
+        macaroon = await macaroon_bakery.oven.macaroon(
+            bakery_version, expiration, caveats, ops
+        )
+        return macaroon

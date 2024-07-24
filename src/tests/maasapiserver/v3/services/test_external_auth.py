@@ -451,3 +451,136 @@ class TestExternalAuthService:
         assert isinstance(bakery_instance.oven.locator, AsyncThirdPartyLocator)
         assert bakery_instance.oven.locator._allow_insecure is True
         assert bakery_instance.oven.location == "http://localhost:5000/"
+
+    async def test_get_discharge_macaroon(self, mock_aioresponse) -> None:
+        secrets_service_mock = Mock(SecretsService)
+        # get the external auth config
+        secrets_service_mock.get_composite_secret = AsyncMock(
+            return_value={
+                "key": "mykey",
+                "url": "",
+                "user": "admin@candid",
+                "domain": "",
+                "rbac-url": "http://10.0.1.23:5000",
+                "admin-group": "admin",
+            }
+        )
+
+        os_urandom = b"\xf2\x92\x8b\x04G|@\x9fRP\xcb\xd6\x8d\xad\xee\x88A\xa4T\x9d\xe5Rx\xc6o\x1bc\x1e*\xb3\xfe}"
+        hex_os_urandom = to_hex(os_urandom)
+        bakery_key = "SOgnhQ+dcZuCGm03boCauHK4KB3PiK8xi808mq49lpw="
+        # There are 2 subsequent calls to get_simple_secret:
+        # - the first one will get the bakery key
+        # - the second one will get the material key
+        secrets_service_mock.get_simple_secret = AsyncMock(
+            side_effect=[bakery_key, hex_os_urandom]
+        )
+        external_auth_service = ExternalAuthService(
+            Mock(AsyncConnection),
+            secrets_service=secrets_service_mock,
+            users_service=Mock(UsersService),
+            external_auth_repository=Mock(ExternalAuthRepository),
+        )
+
+        bakery_instance = await external_auth_service._get_bakery(
+            "http://localhost:5000/"
+        )
+        external_auth_info = await external_auth_service.get_external_auth()
+
+        third_party_key = bakery.generate_key()
+
+        # mock the call to the third party auth
+        mock_aioresponse.get(
+            "http://10.0.1.23:5000/auth/discharge/info",
+            payload={
+                "Version": bakery.LATEST_VERSION,
+                "PublicKey": str(third_party_key.public_key),
+            },
+        )
+
+        discharge_macaroon = (
+            await external_auth_service.get_discharge_macaroon(
+                macaroon_bakery=bakery_instance,
+                auth_endpoint=external_auth_info.url,
+                auth_domain=external_auth_info.domain,
+            )
+        )
+        macaroon = discharge_macaroon.macaroon
+        assert macaroon.location == "http://localhost:5000/"
+        assert len(macaroon.first_party_caveats()) == 1
+        assert (
+            macaroon.third_party_caveats()[0].location
+            == "http://10.0.1.23:5000/auth"
+        )
+
+    async def test_get_discharge_macaroon_from_error(
+        self, mock_aioresponse
+    ) -> None:
+        secrets_service_mock = Mock(SecretsService)
+        # get the external auth config
+        secrets_service_mock.get_composite_secret = AsyncMock(
+            return_value={
+                "key": "mykey",
+                "url": "",
+                "user": "admin@candid",
+                "domain": "",
+                "rbac-url": "http://10.0.1.23:5000",
+                "admin-group": "admin",
+            }
+        )
+
+        os_urandom = b"\xf2\x92\x8b\x04G|@\x9fRP\xcb\xd6\x8d\xad\xee\x88A\xa4T\x9d\xe5Rx\xc6o\x1bc\x1e*\xb3\xfe}"
+        hex_os_urandom = to_hex(os_urandom)
+        bakery_key = "SOgnhQ+dcZuCGm03boCauHK4KB3PiK8xi808mq49lpw="
+        # There are 2 subsequent calls to get_simple_secret:
+        # - the first one will get the bakery key
+        # - the second one will get the material key
+        secrets_service_mock.get_simple_secret = AsyncMock(
+            side_effect=[bakery_key, hex_os_urandom]
+        )
+        external_auth_service = ExternalAuthService(
+            Mock(AsyncConnection),
+            secrets_service=secrets_service_mock,
+            users_service=Mock(UsersService),
+            external_auth_repository=Mock(ExternalAuthRepository),
+        )
+
+        bakery_instance = await external_auth_service._get_bakery(
+            "http://localhost:5000/"
+        )
+
+        third_party_key = bakery.generate_key()
+
+        # mock the call to the third party auth
+        mock_aioresponse.get(
+            "http://10.0.1.23:5000/auth/discharge/info",
+            payload={
+                "Version": bakery.LATEST_VERSION,
+                "PublicKey": str(third_party_key.public_key),
+            },
+        )
+
+        # This is how caveats are retrieved when building a DischargeRequiredError
+        _, caveats = (
+            bakery_instance.checker._identity_client.identity_from_context(
+                ctx=None
+            )
+        )
+        ops = [bakery.LOGIN_OP]
+        discharge_error = bakery.DischargeRequiredError(
+            msg="Discharge required", ops=ops, cavs=caveats
+        )
+
+        discharge_macaroon = (
+            await external_auth_service.get_discharge_macaroon_from_error(
+                macaroon_bakery=bakery_instance,
+                discharge_error=discharge_error,
+            )
+        )
+        macaroon = discharge_macaroon.macaroon
+        assert macaroon.location == "http://localhost:5000/"
+        assert len(macaroon.first_party_caveats()) == 1
+        assert (
+            macaroon.third_party_caveats()[0].location
+            == "http://10.0.1.23:5000/auth"
+        )
