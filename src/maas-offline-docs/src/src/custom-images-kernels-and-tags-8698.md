@@ -1,0 +1,18 @@
+**kernels, and tags**
+
+* [Customise images](https://maas.io/docs/how-to-customise-images)
+* [Build MAAS images](https://maas.io/docs/how-to-build-maas-images)
+* [Build Ubuntu](https://maas.io/docs/how-to-build-an-ubuntu-image)
+* [Build RHEL 7](https://maas.io/docs/how-to-build-a-rhel-7-image)
+* [Build RHEL 8](https://maas.io/docs/how-to-build-a-rhel-8-image)
+* [Build CentOS 7](https://maas.io/docs/how-to-build-a-centos-7-image)
+* [Build Oracle Linux 8](https://maas.io/docs/how-to-build-an-oracle-linux-8-image)
+* [Build Oracle Linux 9](https://maas.io/docs/how-to-build-an-oracle-linux-9-image)
+* [Build ESXi](https://maas.io/docs/how-to-build-an-esxi-image)
+* [Build Windows](https://maas.io/docs/how-to-build-a-windows-image)
+* [Deploy a real-time kernel](https://maas.io/docs/how-to-deploy-a-real-time-kernel)
+* [Use VMWare images](https://maas.io/docs/how-to-use-vmware-images)
+* [Deploy a FIPS kernel](https://maas.io/docs/how-to-deploy-a-fips-compliant-kernel)
+* [Use machine tags](https://maas.io/docs/how-to-use-machine-tags)
+* [Use controller tags](https://maas.io/docs/how-to-use-controller-tags)
+* [Use storage tags](https://maas.io/docs/how-to-use-storage-tags)
