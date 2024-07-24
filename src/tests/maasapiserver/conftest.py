@@ -1,6 +1,7 @@
 from .fixtures.app import (
     api_app,
     api_client,
+    api_client_rbac,
     authenticated_admin_api_client_v3,
     authenticated_api_client,
     authenticated_user,
@@ -19,6 +20,7 @@ from .fixtures.db import (
 __all__ = [
     "api_app",
     "api_client",
+    "api_client_rbac",
     "authenticated_admin_api_client_v3",
     "authenticated_user_api_client_v3",
     "authenticated_api_client",

@@ -1,7 +1,9 @@
+import json
+from unittest import mock
 from httpx import AsyncClient
 import pytest
 
-from maasapiserver.common.api.models.responses.errors import ErrorBodyResponse
+from maasapiserver.common.api.models.responses.errors import DischargeRequiredErrorResponse, ErrorBodyResponse
 from maasapiserver.v3.api.models.responses.users import UserInfoResponse
 from maasapiserver.v3.constants import V3_API_PREFIX
 
@@ -43,7 +45,13 @@ class TestUsersApi:
         assert error_response.kind == "Error"
         assert error_response.code == 401
 
-    @pytest.mark.skip
-    async def test_get_user_info_discharge_required(self):
+    async def test_get_user_info_discharge_required(self, api_client_rbac: AsyncClient):
         """If external auth is enabled make sure we receive a discharge required response"""
-        pass
+        response = await api_client_rbac.get(f"{V3_API_PREFIX}/users/me")
+        assert response.status_code == 401
+        discharge_response = json.loads(response.content.decode("utf-8"))
+        assert discharge_response["Code"] == "macaroon discharge required"
+        assert discharge_response["Info"]["Macaroon"] is not None
+        assert discharge_response["Info"]["MacaroonPath"] == "/"
+        assert discharge_response["Info"]["CookieNameSuffix"] == "maas"
+

@@ -5,9 +5,11 @@ from aioresponses import aioresponses
 from django.core import signing
 from fastapi import FastAPI
 from httpx import AsyncClient, Headers
+from macaroonbakery import bakery
 import pytest
 
 from maasapiserver.common.db import Database
+from maasapiserver.common.utils.date import utcnow
 from maasapiserver.main import create_app
 from maasapiserver.settings import Config
 from maasapiserver.v2.models.entities.user import User
@@ -129,6 +131,34 @@ async def authenticated_user_api_client_v3(
         client.headers = Headers(
             {"Authorization": "bearer " + token_response.access_token}
         )
+        yield client
+
+
+@pytest.fixture
+async def api_client_rbac(api_app: FastAPI, fixture: Fixture, mock_aioresponse) -> AsyncIterator[AsyncClient]:
+    """Unauthenticated client for the v3 API with rbac setup"""
+    rbac_url = "http://rbac.example:5000"
+    now = utcnow()
+    external_auth_config = {
+        "path": "global/external-auth",
+        "created": now,
+        "updated": now,
+        "value": {
+            "key": "mykey",
+            "url": "",
+            "user": "admin@candid",
+            "domain": "",
+            "rbac-url": rbac_url,
+            "admin-group": "admin",
+        }
+
+    }
+    key = bakery.generate_key()
+    await fixture.create("maasserver_secret", [external_auth_config])
+    mock_aioresponse.get(f"{rbac_url}/auth/discharge/info", payload={
+        "Version": bakery.LATEST_VERSION,
+        "PublicKey": str(key.public_key)})
+    async with AsyncClient(app=api_app, base_url="http://test") as client:
         yield client
 
 
