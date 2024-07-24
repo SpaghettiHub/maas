@@ -54,7 +54,7 @@ Considering MAAS for your next project? [Get in touch](/t/how-to-contact-us/5448
 | 2     | tutorial-get-fancy-cli-output           | [Get fancy CLI output](/t/-/6027)                                              |
 | 0     |                                         |                                                                                |
 | 1     | how-to-guides                           | [How-to guides](/t/-/6663)                                                     |
-| 2     |                                         | Core configuration                                                               |
+| 2     | core-configuration                                      | [Core configuration](/t/-/8696)                                              |
 | 3     | how-to-install-maas                     | [Install MAAS](/t/-/5128)                                                      |
 | 3     | how-to-connect-maas-networks            | [Connect networks](/t/-/5164)                                                  |
 | 3     | how-to-enable-dhcp                      | [Enable DHCP](/t/-/5132)                                                       |
