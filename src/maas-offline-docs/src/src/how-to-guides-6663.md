@@ -10,16 +10,12 @@ We begin with the **[Core configuration](https://maas.io/docs/core-configuration
 
 Once the core setup is complete, we move on to **[Special-case configuration](https://maas.io/docs/special-case-configuration)**, which enhances and customizes your MAAS environment for specific needs and advanced functionalities. This stage builds on the core foundation, allowing you to tailor your setup. These configurations allow you to address specific operational requirements and enhance the overall functionality of your MAAS environment.
 
-### Custom images, kernels, and tags
-
-Next, we delve into **[Custom Images, Kernels, and Tags](https://maas.io/docs/custom-images-kernels-and-tags)**, where you learn to personalize your MAAS environment by building and using custom images, deploying specialized kernels, and applying tags. This customization ensures that your infrastructure meets your specific operational demands.
+Next, we delve into **[Custom images, kernels, and tags](https://maas.io/docs/custom-images-kernels-and-tags)**, where you learn to personalize your MAAS environment by building and using custom images, deploying specialized kernels, and applying tags. This customization ensures that your infrastructure meets your specific operational demands.
 
 The **Scripting MAAS** section equips you with the knowledge to automate and interact with MAAS programmatically. This is essential for efficient and scalable management.
 
 Maintaining and validating your MAAS setup is crucial for long-term success. The **[Maintenance and validation](https://maas.io/docs/maintenance-and-validation)** section covers essential practices to keep your environment running smoothly and securely.
 
-### Join the community
-
-Lastly, we encourage you to **Join the Community**. Engaging with the MAAS community offers support, collaboration, and opportunities to contribute.
+Lastly, we encourage you to **Join the community**. Engaging with the MAAS community offers support, collaboration, and opportunities to contribute.
 
 This structured approach ensures you can build a robust, scalable, and secure MAAS environment tailored to your needs. Each section builds on the previous one, providing a logical progression from basic setup to advanced customization and maintenance. By following this guide, you'll be well-equipped to manage your MAAS infrastructure effectively.
