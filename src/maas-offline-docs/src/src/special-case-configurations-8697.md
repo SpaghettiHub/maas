@@ -2,7 +2,7 @@
 
 To fully leverage the capabilities of MAAS, there are many special-case configurations you can implement. This guide provides the necessary steps to enhance, secure, and optimize your MAAS environment.
 
-### Quick Links:
+### Quick links:
 
 - [Manage IP ranges](https://maas.io/docs/how-to-manage-ip-ranges)
 - [Mirror MAAS images](https://maas.io/docs/how-to-mirror-maas-images)
@@ -28,55 +28,55 @@ To fully leverage the capabilities of MAAS, there are many special-case configur
 - [Deploy VMs on IBM Z](https://maas.io/docs/how-to-deploy-vms-on-ibm-z)
 - [Set up air-gapped MAAS](https://maas.io/docs/how-to-configure-an-air-gapped-maas)
 
-### Manage IP Ranges
+### Manage IP ranges
 
 Effectively managing IP ranges is critical for network organization and efficiency. Follow these steps to configure and optimize your IP ranges.
 
-### Mirror MAAS Images
+### Mirror MAAS images
 
 Mirroring MAAS images locally ensures faster deployments and reduced dependency on external sources. Learn how to set up and manage image mirroring.
 
-### Enable High Availability
+### Enable high availability
 
 High availability is essential for maintaining service continuity. This guide covers the configuration required to enable high availability in your MAAS setup.
 
-### Use Availability Zones
+### Use availability zones
 
 Utilizing availability zones can enhance resource management and fault tolerance. Discover how to configure and leverage availability zones effectively.
 
-### Customise Machines
+### Customise machines
 
 Customizing machines to meet specific requirements is crucial for optimizing performance. Follow these steps to tailor your machines to your needs.
 
-### Manage Storage
+### Manage storage
 
 Proper storage management is vital for data integrity and performance. Learn how to configure and manage storage within your MAAS environment.
 
-### Use Resource Pools
+### Use resource pools
 
 Resource pools allow for organized allocation and management of resources. This guide provides detailed instructions on setting up and using resource pools.
 
-### Manage Tags
+### Manage tags
 
 Tags are essential for organizing and managing your machines. Follow these steps to create and manage tags effectively.
 
-### Annotate Machines
+### Annotate machines
 
 Annotating machines helps in identifying and organizing them. Learn how to add and manage annotations for better machine management.
 
-### Enhance MAAS Security
+### Enhance MAAS security
 
 Enhancing security is critical for protecting your MAAS environment. This section covers essential security configurations and best practices.
 
-### Manage User Access
+### Manage user access
 
 Proper user access management ensures secure and efficient operation. Follow these steps to configure and manage user access in MAAS.
 
-### Change MAAS Settings
+### Change MAAS settings
 
 Adjusting MAAS settings allows for a customized and optimized environment. Learn how to modify settings to suit your operational needs.
 
-### Use Network Tags
+### Use network tags
 
 Network tags help in organizing and managing network resources. This guide covers the creation and usage of network tags in MAAS.
 
@@ -88,27 +88,27 @@ Implementing TLS is crucial for secure communication. Follow these steps to conf
 
 Integrating Vault provides enhanced security for secrets management. Learn how to integrate and configure Vault with MAAS.
 
-### Use Virtual Machines
+### Use virtual machines
 
 Using virtual machines can optimize resource usage and flexibility. Discover how to create and manage virtual machines within MAAS.
 
-### Set Up External LXD
+### Set up external LXD
 
 Setting up external LXD provides additional capabilities and resources. This guide covers the configuration of external LXD with MAAS.
 
-### Use External LXD
+### Use external LXD
 
 Leveraging external LXD can enhance your infrastructure. Learn how to utilize external LXD effectively in your MAAS environment.
 
-### Use LXD Projects
+### Use LXD projects
 
 LXD projects help in organizing and managing containers. Follow these steps to set up and use LXD projects within MAAS.
 
-### Manage Virtual Machines
+### Manage virtual machines
 
 Effective management of virtual machines is crucial for operational efficiency. This guide provides detailed instructions on managing VMs in MAAS.
 
-### Set Up Power Drivers
+### Set up power drivers
 
 Setting up power drivers ensures efficient power management. Learn how to configure and manage power drivers in your MAAS environment.
 
@@ -116,6 +116,6 @@ Setting up power drivers ensures efficient power management. Learn how to config
 
 Deploying VMs on IBM Z requires specific configurations. Follow this guide to successfully deploy virtual machines on IBM Z.
 
-### Set Up Air-Gapped MAAS
+### Set up air-gapped MAAS
 
 An air-gapped MAAS setup enhances security by isolating it from external networks. Learn how to configure and manage an air-gapped MAAS environment.
