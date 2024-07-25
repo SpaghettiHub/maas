@@ -1,8 +1,6 @@
-# Custom Images, Kernels, and Tags
-
 Welcome to the section dedicated to customizing your MAAS environment with custom images, specialized kernels, and efficient tag management. Here, you'll find comprehensive guides to help you tailor your infrastructure to meet your specific operational needs.
 
-## Customizing Images
+## Customizing images
 
 Creating and managing custom images allows you to deploy tailored environments that meet your exact specifications.
 
@@ -17,7 +15,7 @@ Creating and managing custom images allows you to deploy tailored environments t
 - [Build ESXi](https://maas.io/docs/how-to-build-an-esxi-image)
 - [Build Windows](https://maas.io/docs/how-to-build-a-windows-image)
 
-## Deploying Specialized Kernels
+## Deploying specialized kernels
 
 Deploy specialized kernels to enhance performance and meet specific operational requirements.
 
@@ -25,7 +23,7 @@ Deploy specialized kernels to enhance performance and meet specific operational 
 - [Use VMWare images](https://maas.io/docs/how-to-use-vmware-images)
 - [Deploy a FIPS kernel](https://maas.io/docs/how-to-deploy-a-fips-compliant-kernel)
 
-## Managing Tags
+## Managing tags
 
 Efficiently manage your MAAS environment by using tags to organize and categorize resources.
 
