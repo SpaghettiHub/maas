@@ -2,7 +2,7 @@
 
 Welcome to the comprehensive guide for configuring and managing your MAAS (Metal as a Service) environment. 
 
-## Why This Sequence?
+## Why this sequence?
 
 These guides are designed to take you through every essential step, from initial setup to advanced customization, ensuring you can leverage the full power of MAAS efficiently and effectively.  The stream of instructions flows from basic to very advanced, allowing you to jump in wherever you feel comfortable, and continue from there.
 
