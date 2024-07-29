@@ -2,6 +2,7 @@
 
 ## MAAS OS deployment failing with cloud-init error
 
+<!-- add to main doc -->
 **Problem:**
 Deployment of a JUJU controller or an OS directly on a node fails with the error "cloud-init Data source not found."
 
@@ -2691,4 +2692,4 @@ on u.id = c.user_id
 where key = 'your-leaked-api-key';
 ```
 
-To remove the leaked API key, log in to the MAAS UI and delete it. Then reconfigure your MAAS CLI and hardware sync as needed.
+	To remove the leaked API key, log in to the MAAS UI and delete it. Then reconfigure your MAAS CLI and hardware sync as needed.
