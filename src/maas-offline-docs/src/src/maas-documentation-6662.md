@@ -71,12 +71,9 @@ Considering MAAS for your next project? [Get in touch](/t/how-to-contact-us/5448
 | 3     | how-to-manage-ip-ranges                 | [Manage IP ranges](/t/-/5136)                                                  |
 | 3     | how-to-mirror-maas-images               | [Mirror MAAS images](/t/-/5927)                                                |
 | 3     | how-to-enable-high-availability         | [Enable high availability](/t/-/5120)                                          |
-| 3     | how-to-use-availability-zones           | [Use availability zones](/t/-/5152)                                            |
+| 3     | how-to-group-machines                   | [Group machines](/t/-/8833)                                                    |
 | 3     | how-to-customise-machines               | [Customise machines](/t/-/5108)                                                |
 | 3     | how-to-manage-storage                   | [Manage storage](/t/-/7846)                                                    |
-| 3     | how-to-use-resource-pools               | [Use resource pools](/t/-/7845)                                                |
-| 3     | how-to-manage-tags                      | [Manage tags](/t/how-to-manage-tags/5928)                                      |
-| 3     | how-to-annotate-machines                | [Annotate machines](/t/how-to-annotate-machines/5929)                          |
 | 3     | how-to-enhance-maas-security            | [Enhance MAAS security](/t/how-to-enhance-maas-security/5196)                  |
 | 3     | how-to-manage-user-access               | [Manage user access](/t/how-to-manage-user-access/5184)                        |
 | 3     | how-to-change-maas-settings             | [Change MAAS settings](/t/how-to-change-maas-settings/8035)                    |
@@ -105,7 +102,6 @@ Considering MAAS for your next project? [Get in touch](/t/how-to-contact-us/5448
 | 3     | how-to-deploy-a-real-time-kernel        | [Deploy a real-time kernel](/t/-/6658)                                         |
 | 3     | how-to-use-vmware-images                | [Use VMWare images](/t/-/5144)                                                 |
 | 3     | how-to-deploy-a-fips-compliant-kernel   | [Deploy a FIPS kernel](/t/-/7743)                                              |
-| 3     | how-to-use-machine-tags                 | [Use machine tags](/t/how-to-use-machine-tags/5224)                            |
 | 3     | how-to-use-controller-tags              | [Use controller tags](/t/how-to-use-controller-tags/5216)                      |
 | 3     | how-to-use-storage-tags                 | [Use storage tags](/t/how-to-use-storage-tags/5232)                            |
 | 2     |                                         | Scripting MAAS                                                                 |
@@ -201,6 +197,9 @@ Considering MAAS for your next project? [Get in touch](/t/how-to-contact-us/5448
 [details=Mapping table]
 | PATH                                                    | LOCATION                                         |
 |---------------------------------------------------------|--------------------------------------------------|
+| /docs/how-to-use-resource-pools                         | /docs/how-to-group-machines                      |
+| /docs/how-to-manage-tags                                | /docs/how-to-group-machines                      |
+| /docs/how-to-annotate-machines                          | /docs/how-to-group-machines                      |
 | /docs/customising-machine-specifications                | /docs/how-to-customise-machines                  |
 | /docs/setting-up-power-drivers                          | /docs/how-to-set-up-power-drivers                |
 | /docs/making-machines-available-for-deployment          | /docs/how-to-commission-machines-with-maas       |
@@ -231,8 +230,8 @@ Considering MAAS for your next project? [Get in touch](/t/how-to-contact-us/5448
 | /docs/how-to-manage-virtual-machines                    | /docs/overseeing-individual-virtual-machines     |
 | /docs/how-to-label-devices                              | /docs/device-labelling-and-annotations           |
 | /docs/how-to-tag-machines                               | /docs/tagging-machines-and-controllers           |
-| /docs/how-to-annotate-machines                          | /docs/annotating-machine-details                 |
-| /docs/how-to-use-machine-tags                           | /docs/using-machine-tags                         |
+| /docs/how-to-annotate-machines                          | /docs/how-to-group-machines                      |
+| /docs/how-to-use-machine-tags                           | /docs/how-to-group-machines                      |
 | /docs/how-to-use-controller-tags                        | /docs/using-controllers-tags                     |
 | /docs/how-to-use-storage-tags                           | /docs/using-storage-tags                         |
 | /docs/how-to-use-network-tags                           | /docs/using-network-tags                         |
@@ -385,7 +384,7 @@ Considering MAAS for your next project? [Get in touch](/t/how-to-contact-us/5448
 | /docs/deb/2.9/cli/commissioning-logs                    | /docs/accessing-commissioning-logs               |
 | /docs/deb/2.9/cli/contact-us                            | /docs/community-and-support                      |
 | /docs/deb/2.9/cli/event-logs                            | /docs/an-overview-of-maas-events                 |
-| /docs/deb/2.9/cli/give-me-an-example-of-maas            | /docs/tutorial-bootstrapping-maas                             |
+| /docs/deb/2.9/cli/give-me-an-example-of-maas            | /docs/tutorial-bootstrapping-maas                |
 | /docs/deb/2.9/cli/hardware-testing                      | /docs/implementing-hardware-test-scripts         |
 | /docs/deb/2.9/cli/how-to-manage-networks                | /docs/networking-management                      |
 | /docs/deb/2.9/cli/how-to-manage-tags                    | /docs/device-labelling-and-annotations           |
@@ -402,10 +401,10 @@ Considering MAAS for your next project? [Get in touch](/t/how-to-contact-us/5448
 | /docs/deb/2.9/ui/commissioning-logs                     | /docs/accessing-commissioning-logs               |
 | /docs/deb/2.9/ui/contact-us                             | /docs/community-and-support                      |
 | /docs/deb/2.9/ui/event-logs                             | /docs/an-overview-of-maas-events                 |
-| /docs/deb/2.9/ui/give-me-an-example-of-maas             | /docs/tutorial-bootstrapping-maas                             |
+| /docs/deb/2.9/ui/give-me-an-example-of-maas             | /docs/tutorial-bootstrapping-maas                |
 | /docs/deb/2.9/ui/hardware-testing                       | /docs/implementing-hardware-test-scripts         |
 | /docs/deb/2.9/ui/how-to-manage-networks                 | /docs/networking-management                      |
-| /docs/deb/2.9/ui/how-to-manage-tags                     | /docs/device-labelling-and-annotations           |
+| /docs/deb/2.9/ui/how-to-manage-tags                     | /docs/how-to-group-machines                      |
 | /docs/deb/2.9/ui/manage-machine-interfaces              | /docs/deploying-machines-in-maas                 |
 | /docs/deb/2.9/ui/network-testing                        | /docs/the-role-of-maas-networks                  |
 | /docs/deb/2.9/ui/ntp-services                           | /docs/the-role-of-maas-networks                  |
@@ -418,10 +417,10 @@ Considering MAAS for your next project? [Get in touch](/t/how-to-contact-us/5448
 | /docs/deb/3.0/cli/commissioning-logs                    | /docs/accessing-commissioning-logs               |
 | /docs/deb/3.0/cli/contact-us                            | /docs/community-and-support                      |
 | /docs/deb/3.0/cli/event-logs                            | /docs/an-overview-of-maas-events                 |
-| /docs/deb/3.0/cli/give-me-an-example-of-maas            | /docs/tutorial-bootstrapping-maas                             |
+| /docs/deb/3.0/cli/give-me-an-example-of-maas            | /docs/tutorial-bootstrapping-maas                |
 | /docs/deb/3.0/cli/hardware-testing                      | /docs/implementing-hardware-test-scripts         |
 | /docs/deb/3.0/cli/how-to-manage-networks                | /docs/networking-management                      |
-| /docs/deb/3.0/cli/how-to-manage-tags                    | /docs/device-labelling-and-annotations           |
+| /docs/deb/3.0/cli/how-to-manage-tags                    | /docs/how-to-group-machines                      |
 | /docs/deb/3.0/cli/how-to-work-with-tags                 | /docs/labelling-devices                          |
 | /docs/deb/3.0/cli/manage-machine-interfaces             | /docs/deploying-machines-in-maas                 |
 | /docs/deb/3.0/cli/network-testing                       | /docs/the-role-of-maas-networks                  |
@@ -435,10 +434,10 @@ Considering MAAS for your next project? [Get in touch](/t/how-to-contact-us/5448
 | /docs/deb/3.0/ui/commissioning-logs                     | /docs/accessing-commissioning-logs               |
 | /docs/deb/3.0/ui/contact-us                             | /docs/community-and-support                      |
 | /docs/deb/3.0/ui/event-logs                             | /docs/an-overview-of-maas-events                 |
-| /docs/deb/3.0/ui/give-me-an-example-of-maas             | /docs/tutorial-bootstrapping-maas                             |
+| /docs/deb/3.0/ui/give-me-an-example-of-maas             | /docs/tutorial-bootstrapping-maas                |
 | /docs/deb/3.0/ui/hardware-testing                       | /docs/implementing-hardware-test-scripts         |
 | /docs/deb/3.0/ui/how-to-manage-networks                 | /docs/networking-management                      |
-| /docs/deb/3.0/ui/how-to-manage-tags                     | /docs/device-labelling-and-annotations           |
+| /docs/deb/3.0/ui/how-to-manage-tags                     | /docs/how-to-group-machines                      |
 | /docs/deb/3.0/ui/how-to-work-with-tags                  | /docs/labelling-devices                          |
 | /docs/deb/3.0/ui/manage-machine-interfaces              | /docs/deploying-machines-in-maas                 |
 | /docs/deb/3.0/ui/network-testing                        | /docs/the-role-of-maas-networks                  |
@@ -452,9 +451,9 @@ Considering MAAS for your next project? [Get in touch](/t/how-to-contact-us/5448
 | /docs/deb/3.1/cli/commissioning-logs                    | /docs/accessing-commissioning-logs               |
 | /docs/deb/3.1/cli/contact-us                            | /docs/community-and-support                      |
 | /docs/deb/3.1/cli/event-logs                            | /docs/an-overview-of-maas-events                 |
-| /docs/deb/3.1/cli/give-me-an-example-of-maas            | /docs/tutorial-bootstrapping-maas                             |
+| /docs/deb/3.1/cli/give-me-an-example-of-maas            | /docs/tutorial-bootstrapping-maas                |
 | /docs/deb/3.1/cli/how-to-manage-networks                | /docs/networking-management                      |
-| /docs/deb/3.1/cli/how-to-manage-tags                    | /docs/device-labelling-and-annotations           |
+| /docs/deb/3.1/cli/how-to-manage-tags                    | /docs/how-to-group-machines                      |
 | /docs/deb/3.1/cli/how-to-work-with-tags                 | /docs/labelling-devices                          |
 | /docs/deb/3.1/cli/manage-machine-interfaces             | /docs/deploying-machines-in-maas                 |
 | /docs/deb/3.1/cli/proxy                                 | /docs/controllers-understanding-region-and-rack  |
@@ -465,9 +464,9 @@ Considering MAAS for your next project? [Get in touch](/t/how-to-contact-us/5448
 | /docs/deb/3.1/ui/commissioning-logs                     | /docs/accessing-commissioning-logs               |
 | /docs/deb/3.1/ui/contact-us                             | /docs/community-and-support                      |
 | /docs/deb/3.1/ui/event-logs                             | /docs/an-overview-of-maas-events                 |
-| /docs/deb/3.1/ui/give-me-an-example-of-maas             | /docs/tutorial-bootstrapping-maas                             |
+| /docs/deb/3.1/ui/give-me-an-example-of-maas             | /docs/tutorial-bootstrapping-maas                |
 | /docs/deb/3.1/ui/how-to-manage-networks                 | /docs/networking-management                      |
-| /docs/deb/3.1/ui/how-to-manage-tags                     | /docs/device-labelling-and-annotations           |
+| /docs/deb/3.1/ui/how-to-manage-tags                     | /docs/how-to-group-machines                      |
 | /docs/deb/3.1/ui/how-to-work-with-tags                  | /docs/labelling-devices                          |
 | /docs/deb/3.1/ui/manage-machine-interfaces              | /docs/deploying-machines-in-maas                 |
 | /docs/deb/3.1/ui/proxy                                  | /docs/controllers-understanding-region-and-rack  |
@@ -516,7 +515,7 @@ Considering MAAS for your next project? [Get in touch](/t/how-to-contact-us/5448
 | /docs/how-to-manage-proxies                             | /docs/connecting-maas-networks                   |
 | /docs/how-to-manage-racks                               | /docs/configuring-maas-controllers               |
 | /docs/how-to-manage-regions                             | /docs/configuring-maas-controllers               |
-| /docs/how-to-manage-tags                                | /docs/device-labelling-and-annotations           |
+| /docs/how-to-manage-tags                                | /docs/how-to-group-machines                      |
 | /docs/how-to-manage-vm-hoss                             | /docs/overseeing-individual-virtual-machines     |
 | /docs/how-to-manage-vms                                 | /docs/overseeing-individual-virtual-machines     |
 | /docs/how-to-manage-vmware-images                       | /docs/integrating-vmware-images                  |
@@ -552,7 +551,7 @@ Considering MAAS for your next project? [Get in touch](/t/how-to-contact-us/5448
 | /docs/intro-to-vm-hosting                               | /docs/virtual-machines                           |
 | /docs/kvm-host-storage-pools                            | /docs/machines                                   |
 | /docs/kvm-introduction                                  | /docs/virtual-machines                           |
-| /docs/maas-bootstrap-tutorial                           | /docs/tutorial-bootstrapping-maas                             |
+| /docs/maas-bootstrap-tutorial                           | /docs/tutorial-bootstrapping-maas                |
 | /docs/maas-concepts-and-terms-reference                 | /docs/maas-glossary                              |
 | /docs/maas-image-builder                                | /docs/customising-images-for-specific-needs      |
 | /docs/maas-installation-requirements                    | /docs/installation-requirements                  |
@@ -613,7 +612,7 @@ Considering MAAS for your next project? [Get in touch](/t/how-to-contact-us/5448
 | /docs/vmware-images                                     | /docs/integrating-vmware-images                  |
 | /docs/whats-new-in-maas                                 | /docs/what-is-new-with-maas                      |
 | /docs/accessing-commissioning-logs                      | /docs/how-to-read-commissioning-logs             |
-| /docs/annotating-machine-details                        | /docs/how-to-annotate-machines                   |
+| /docs/annotating-machine-details                        | /docs/how-to-group-machines                      |
 | /docs/auditing-maas-operations                          | /docs/how-to-audit-maas                          |
 | /docs/authenticating-to-the-maas-api                    | /docs/how-to-authenticate-to-the-maas-api        |
 | /docs/backing-up-maas                                   | /docs/how-to-back-up-maas                        |
@@ -657,15 +656,17 @@ Considering MAAS for your next project? [Get in touch](/t/how-to-contact-us/5448
 | /docs/security-and-user-management                      | /docs/how-to-secure-maas                         |
 | /docs/setting-up-and-configuring-maas                   | /docs/how-to-set-up-maas                         |
 | /docs/setting-up-lxd-for-vms                            | /docs/how-to-set-up-external-lxd                 |
-| /docs/tagging-machines-and-controllers                  | /docs/how-to-manage-tags                         |
+| /docs/tagging-machines-and-controllers                  | /docs/how-to-group-machines                      |
 | /docs/troubleshooting-common-maas-issues                | /docs/how-to-troubleshoot-common-issues          |
 | /docs/understanding-event-logs                          | /docs/how-to-read-event-logs                     |
 | /docs/upgrading-maas                                    | /docs/how-to-upgrade-maas                        |
 | /docs/upgrading-postgresql-12-to-version-14             | /docs/how-to-upgrade-postgresql-v12-to-v14       |
 | /docs/use-lxd-projects-with-maas                        | /docs/how-to-use-lxd-projects                    |
-| /docs/using-availability-zones                          | /docs/how-to-use-availability-zones              |
+| /docs/using-availability-zones                          | /docs/how-to-group-machines                      |
+| /docs/how-to-use-availability-zones                     | /docs/how-to-group-machines                      |
 | /docs/using-controller-tags                             | /docs/how-to-use-controller-tags                 |
-| /docs/using-machine-tags                                | /docs/how-to-use-machine-tags                    |
+| /docs/using-machine-tags                                | /docs/how-to-group-machines                      |
+| /docs/how-to-use-machine-tags                           | /docs/how-to-group-machines                      |
 | /docs/using-network-tags                                | /docs/how-to-use-network-tag                     |
 | /docs/using-storage-tags                                | /docs/how-to-use-storage-tags                    |
 | /docs/utilizing-the-python-api-client                   | /docs/how-to-use-the-python-api-client           |
@@ -708,40 +709,40 @@ Considering MAAS for your next project? [Get in touch](/t/how-to-contact-us/5448
 | /docs/an-overview-of-maas-events                        | /docs/about-maas-events                          |
 | /docs/understanding-audit-events                        | /docs/about-audit-events                         |
 | /docs/delving-into-maas-logging-practices               | /docs/about-maas-logging                         |
-| /docs/tutorial-bootstrapping-maas                                    | /docs/tutorial-bootstrapping-maas                |
+| /docs/tutorial-bootstrapping-maas                       | /docs/tutorial-bootstrapping-maas                |
 | /docs/try-out-the-maas-cli                              | /docs/tutorial-try-the-maas-cli                  |
 | /docs/create-custom-images                              | /docs/tutorial-creating-custom-images            |
 | /docs/get-fancy-cli-output                              | /docs/tutorial-get-fancy-cli-output              |
-| /docs/general-reference-information                     | /docs/reference-general-information                    |
-| /docs/installation-requirements-reference               | /docs/reference-installation-requirements              |
-| /docs/maas-source-code                                  | /docs/reference-maas-source-code                       |
-| /docs/documentation-style-reference                     | /docs/reference-documentation-style-guide              |
-| /docs/maas-glossary-reference                           | /docs/reference-maas-glossary                          |
-| /docs/maas-community-code-of-conduct                    | /docs/reference-community-code-of-conduct              |
-| /docs/detailed-api-documentation                        | /docs/reference-api-documentation                      |
-| /docs/maas-script-reference                             | /docs/reference-maas-scripts                           |
-| /docs/commissioning-scripts-reference                   | /docs/reference-commissioning-scripts                  |
-| /docs/hardware-test-scripts-reference                   | /docs/reference-hardware-test-scripts                  |
-| /docs/terraform-reference                               | /docs/reference-terraform                              |
-| /docs/device-labels-reference                           | /docs/reference-device-labels                          |
-| /docs/maas-metrics-reference                            | /docs/reference-maas-metrics                           |
-| /docs/power-drivers-reference                           | /docs/reference-power-drivers                          |
-| /docs/bmc-drivers-reference                             | /docs/reference-bmc-drivers                            |
-| /docs/storage-reference                                 | /docs/reference-maas-storage                           |
-| /docs/release-notes-and-version-details                 | /docs/reference-release-notes                          |
-| /docs/what-is-new-with-maas-3-4                         | /docs/reference-release-notes-maas-3-4                 |
-| /docs/what-is-new-with-maas-3-3                         | /docs/reference-release-notes-maas-3-3                 |
-| /docs/what-is-new-with-maas-3-2                         | /docs/reference-release-notes-maas-3-2                 |
-| /docs/what-is-new-with-maas-3-1                         | /docs/reference-release-notes-maas-3-1                 |
-| /docs/what-is-new-with-maas-3-0                         | /docs/reference-release-notes-maas-3-0                 |
-| /docs/what-is-new-with-maas-2-9                         | /docs/reference-release-notes-maas-2-9                 |
-| /docs/what-is-new-with-maas-2-8                         | /docs/reference-release-notes-maas-2-8                 |
-| /docs/what-is-new-with-maas-2-7                         | /docs/reference-release-notes-maas-2-7                 |
-| /docs/the-role-of-maas-networks                         | /docs/about-maas-networks                              |
-| /docs/the-osi-model                                     | /docs/about-the-osi-model                              |
-| /docs/basics-of-dhcp-in-maas                            | /docs/about-dhcp-in-maas                               |
-| /docs/cloud-networking-essentials-for-maas              | /docs/about-cloud-networking                           |
-| /docs/monitoring-and-logging                            | /docs/about-monitoring-and-logging                     |
-| /docs/boosting-maas-performance                         | /docs/about-maas-performance                           |
-| /docs/delving-into-maas-logging-practices               | /docs/about-maas-logging                               |
+| /docs/general-reference-information                     | /docs/reference-general-information              |
+| /docs/installation-requirements-reference               | /docs/reference-installation-requirements        |
+| /docs/maas-source-code                                  | /docs/reference-maas-source-code                 |
+| /docs/documentation-style-reference                     | /docs/reference-documentation-style-guide        |
+| /docs/maas-glossary-reference                           | /docs/reference-maas-glossary                    |
+| /docs/maas-community-code-of-conduct                    | /docs/reference-community-code-of-conduct        |
+| /docs/detailed-api-documentation                        | /docs/reference-api-documentation                |
+| /docs/maas-script-reference                             | /docs/reference-maas-scripts                     |
+| /docs/commissioning-scripts-reference                   | /docs/reference-commissioning-scripts            |
+| /docs/hardware-test-scripts-reference                   | /docs/reference-hardware-test-scripts            |
+| /docs/terraform-reference                               | /docs/reference-terraform                        |
+| /docs/device-labels-reference                           | /docs/reference-device-labels                    |
+| /docs/maas-metrics-reference                            | /docs/reference-maas-metrics                     |
+| /docs/power-drivers-reference                           | /docs/reference-power-drivers                    |
+| /docs/bmc-drivers-reference                             | /docs/reference-bmc-drivers                      |
+| /docs/storage-reference                                 | /docs/reference-maas-storage                     |
+| /docs/release-notes-and-version-details                 | /docs/reference-release-notes                    |
+| /docs/what-is-new-with-maas-3-4                         | /docs/reference-release-notes-maas-3-4           |
+| /docs/what-is-new-with-maas-3-3                         | /docs/reference-release-notes-maas-3-3           |
+| /docs/what-is-new-with-maas-3-2                         | /docs/reference-release-notes-maas-3-2           |
+| /docs/what-is-new-with-maas-3-1                         | /docs/reference-release-notes-maas-3-1           |
+| /docs/what-is-new-with-maas-3-0                         | /docs/reference-release-notes-maas-3-0           |
+| /docs/what-is-new-with-maas-2-9                         | /docs/reference-release-notes-maas-2-9           |
+| /docs/what-is-new-with-maas-2-8                         | /docs/reference-release-notes-maas-2-8           |
+| /docs/what-is-new-with-maas-2-7                         | /docs/reference-release-notes-maas-2-7           |
+| /docs/the-role-of-maas-networks                         | /docs/about-maas-networks                        |
+| /docs/the-osi-model                                     | /docs/about-the-osi-model                        |
+| /docs/basics-of-dhcp-in-maas                            | /docs/about-dhcp-in-maas                         |
+| /docs/cloud-networking-essentials-for-maas              | /docs/about-cloud-networking                     |
+| /docs/monitoring-and-logging                            | /docs/about-monitoring-and-logging               |
+| /docs/boosting-maas-performance                         | /docs/about-maas-performance                     |
+| /docs/delving-into-maas-logging-practices               | /docs/about-maas-logging                         |
 [/details]
