@@ -49,7 +49,12 @@ class HMCZPowerDriver(PowerDriver):
     can_set_boot_order = True
     description = "IBM Hardware Management Console (HMC) for Z"
     settings = [
-        make_setting_field("power_address", "HMC Address", required=True),
+        make_setting_field(
+            "power_address",
+            "HMC Address",
+            field_type="ip_address",
+            required=True,
+        ),
         make_setting_field("power_user", "HMC username", required=True),
         make_setting_field(
             "power_pass",
@@ -214,20 +219,25 @@ class HMCZPowerDriver(PowerDriver):
             )
         else:
             for storage_group in partition.list_attached_storage_groups():
-                # MAAS/LXD detects the storage volume UUID as its serial.
-                try:
-                    storage_volume = storage_group.storage_volumes.find(
-                        uuid=boot_device["serial"].upper()
-                    )
-                except NotFound:
-                    pass
-                else:
-                    break
-            partition.update_properties(
-                {
-                    "boot-device": "storage-volume",
-                    "boot-storage-volume": storage_volume.uri,
-                }
+                # MAAS/LXD detects the storage volume UUID or serial-number as its serial.
+                storage_volumes = storage_group.storage_volumes.list(
+                    full_properties=True
+                )
+                for vol in storage_volumes:
+                    if boot_device["serial"].upper() in [
+                        vol.properties.get("uuid", "").strip(),
+                        vol.properties.get("serial-number", "").strip(),
+                    ]:
+                        partition.update_properties(
+                            {
+                                "boot-device": "storage-volume",
+                                "boot-storage-volume": vol.uri,
+                            }
+                        )
+                        return
+
+            raise PowerError(
+                f'No storage volume found with {boot_device["serial"].upper()}'
             )
 
 
