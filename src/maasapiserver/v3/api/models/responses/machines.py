@@ -47,3 +47,20 @@ class MachineResponse(HalResponse[BaseHal]):
 
 class MachinesListResponse(TokenPaginatedResponse[MachineResponse]):
     kind = "MachinesList"
+
+
+class UsbDeviceResponse(HalResponse[BaseHal]):
+    kind = "MachineHardwareDevice"
+    id: int
+    type: int
+    vendor_id: int
+    product_id: int
+    vendor_name: str
+    product_name: str
+    commissioning_driver: str
+    bus_number: int
+    device_number: int
+
+
+class UsbDevicesListResponse(TokenPaginatedResponse[UsbDeviceResponse]):
+    kind = "MachineHardwareDevicesList"
