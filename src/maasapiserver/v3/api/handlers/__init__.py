@@ -1,5 +1,6 @@
 from maasapiserver.common.api.base import API
 from maasapiserver.v3.api.handlers.auth import AuthHandler
+from maasapiserver.v3.api.handlers.events import EventsHandler
 from maasapiserver.v3.api.handlers.fabrics import FabricsHandler
 from maasapiserver.v3.api.handlers.interfaces import InterfacesHandler
 from maasapiserver.v3.api.handlers.machines import MachinesHandler
@@ -15,16 +16,20 @@ from maasapiserver.v3.constants import V3_API_PREFIX
 APIv3 = API(
     prefix=V3_API_PREFIX,
     handlers=[
-        RootHandler(),
-        ZonesHandler(),
-        ResourcePoolHandler(),
         AuthHandler(),
-        MachinesHandler(),
-        InterfacesHandler(),
+        EventsHandler(),
         FabricsHandler(),
+        InterfacesHandler(),
+        MachinesHandler(),
+        ResourcePoolHandler(),
+        RootHandler(),
         SpacesHandler(),
-        VlansHandler(),
         SubnetsHandler(),
+<<<<<<< src/maasapiserver/v3/api/handlers/__init__.py
         UsersHandler(),
+=======
+        VlansHandler(),
+        ZonesHandler(),
+>>>>>>> src/maasapiserver/v3/api/handlers/__init__.py
     ],
 )
