@@ -20,16 +20,24 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"net"
+	"net/http"
 	"os"
 	"os/signal"
+	"path"
 	"path/filepath"
 	"syscall"
 	"time"
 
 	backoff "github.com/cenkalti/backoff/v4"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"go.opentelemetry.io/otel/exporters/prometheus"
+	"go.opentelemetry.io/otel/metric"
+	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.temporal.io/sdk/client"
+	temporalotel "go.temporal.io/sdk/contrib/opentelemetry"
 	"go.temporal.io/sdk/converter"
 	"gopkg.in/yaml.v3"
 
@@ -57,6 +65,9 @@ type config struct {
 		CacheSize int64  `yaml:"cache_size"`
 	} `yaml:"httpproxy"`
 	Controllers []string `yaml:"controllers,flow"`
+	Metrics     struct {
+		Enabled bool `yaml:"enabled"`
+	} `yaml:"metrics"`
 }
 
 // setupLogger sets the global logger with the provided logLevel.
@@ -118,7 +129,8 @@ func getClusterCert() (tls.Certificate, *x509.CertPool, error) {
 // secret is used for EncryptionCodec (AES) to encrypt input/output (payloads)
 // cert, ca are used to setup mTLS
 func getTemporalClient(systemID string, secret []byte, cert tls.Certificate,
-	ca *x509.CertPool, endpoints []string) (client.Client, error) {
+	ca *x509.CertPool, endpoints []string,
+	metrics temporalotel.MetricsHandler) (client.Client, error) {
 	// Encryption Codec required for Temporal Workflow's payload encoding
 	codec, err := codec.NewEncryptionCodec([]byte(secret))
 	if err != nil {
@@ -151,6 +163,7 @@ func getTemporalClient(systemID string, secret []byte, cert tls.Certificate,
 						ServerName: "maas",
 					},
 				},
+				MetricsHandler: metrics,
 			})
 		}, retry,
 	)
@@ -214,7 +227,47 @@ func getCertificatesDir() string {
 	return "/var/lib/maas/certificates"
 }
 
+func setupMetrics(meterProvider *metric.MeterProvider) error {
+	exporter, err := prometheus.New()
+	if err != nil {
+		return err
+	}
+
+	socketPath := path.Join(getRunDir(), "agent-metrics.sock")
+
+	*meterProvider = sdkmetric.NewMeterProvider(sdkmetric.WithReader(exporter))
+
+	//nolint:govet // false positive
+	if err := syscall.Unlink(socketPath); err != nil {
+		if !os.IsNotExist(err) {
+			return err
+		}
+	}
+
+	listener, err := net.Listen("unix", socketPath)
+	if err != nil {
+		return err
+	}
+
+	//nolint:gosec // we know what we are doing here and we need 0660
+	if err := os.Chmod(socketPath, 0660); err != nil {
+		return err
+	}
+
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.Handler())
+
+	server := &http.Server{
+		Handler:           mux,
+		ReadHeaderTimeout: 60 * time.Second,
+	}
+
+	return server.Serve(listener)
+}
+
 func Run() int {
+	fatal := make(chan error)
+
 	cfg, err := getConfig()
 	if err != nil {
 		fmt.Printf("Failed starting MAAS Agent: %s", err)
@@ -229,13 +282,22 @@ func Run() int {
 
 	setupLogger(cfg.LogLevel)
 
+	var meterProvider metric.MeterProvider
+
+	// TODO: make this configurable?
+	// if cfg.Metrics.Enabled {
+	go func() { fatal <- setupMetrics(&meterProvider) }()
+
 	cert, ca, err := getClusterCert()
 	if err != nil {
 		log.Error().Err(err).Msg("Cannot fetch cluster certificate")
 		return 1
 	}
 
-	temporalClient, err := getTemporalClient(cfg.SystemID, []byte(cfg.Secret), cert, ca, cfg.Controllers)
+	temporalClient, err := getTemporalClient(cfg.SystemID, []byte(cfg.Secret),
+		cert, ca, cfg.Controllers, temporalotel.NewMetricsHandler(
+			temporalotel.MetricsHandlerOptions{
+				Meter: meterProvider.Meter("maas.agent.temporal")}))
 	if err != nil {
 		log.Error().Err(err).Msg("Temporal client error")
 		return 1
@@ -301,8 +363,6 @@ func Run() int {
 		log.Err(err).Msg("Workflow configure-agent failed")
 		return 1
 	}
-
-	fatal := make(chan error)
 
 	go func() {
 		fatal <- workerPool.Error()
