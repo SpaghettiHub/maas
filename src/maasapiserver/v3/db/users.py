@@ -5,14 +5,16 @@ from sqlalchemy import select
 from sqlalchemy.sql.operators import and_, eq, gt
 
 from maasapiserver.common.db.tables import SessionTable, UserTable
-from maasapiserver.v3.api.models.requests.users import UserRequest
 from maasapiserver.v3.db.base import BaseRepository
 from maasapiserver.v3.models.base import ListResult
 from maasapiserver.v3.models.users import User
 
 
-class UsersRepository(BaseRepository[User, UserRequest]):
-    async def create(self, request: UserRequest) -> User:
+class UsersRepository(BaseRepository[User]):
+    async def get_next_id(self) -> int:
+        raise Exception("Not implemented yet.")
+
+    async def create(self, resource: User) -> User:
         raise Exception("Not implemented yet.")
 
     async def find_by_id(self, id: int) -> User | None:

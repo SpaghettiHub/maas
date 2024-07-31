@@ -1,3 +1,5 @@
+from datetime import datetime
+from typing import Any
 from unittest.mock import AsyncMock, Mock
 
 import pytest
@@ -13,6 +15,7 @@ from maasapiserver.common.models.exceptions import (
     BadRequestException,
     PreconditionFailedException,
 )
+from maasapiserver.v3.api.models.requests.zones import ZoneRequest
 from maasapiserver.v3.constants import DEFAULT_ZONE_NAME
 from maasapiserver.v3.db.zones import ZonesRepository
 from maasapiserver.v3.models.base import ListResult
@@ -30,6 +33,53 @@ from tests.maasapiserver.fixtures.db import Fixture
 @pytest.mark.usefixtures("ensuremaasdb")
 @pytest.mark.asyncio
 class TestZonesService:
+    async def test_create(
+        self, db_connection: AsyncConnection, fixture: Fixture
+    ) -> None:
+        class ZoneMatcher(Zone):
+            def __init__(self, **kwargs: Any) -> None:
+                kwargs["created"] = datetime.now()
+                kwargs["updated"] = datetime.now()
+                super().__init__(**kwargs)
+
+            def __eq__(self, other: Any) -> bool:
+                if not isinstance(other, Zone):
+                    return False
+                return (
+                    self.id == other.id
+                    and self.name == other.name
+                    and self.description == other.description
+                    and self.created >= other.created
+                    and self.updated  # The matcher is created after the actual resource
+                    >= other.updated
+                )
+
+        now = datetime.utcnow()
+        zone = Zone(
+            id=1,
+            name="test",
+            description="description",
+            created=now,
+            updated=now,
+        )
+        zones_repository_mock = Mock(ZonesRepository)
+        zones_repository_mock.create = AsyncMock(return_value=zone)
+        zones_repository_mock.get_next_id = AsyncMock(return_value=1)
+        zones_service = ZonesService(
+            connection=db_connection,
+            zones_repository=zones_repository_mock,
+        )
+        request = ZoneRequest(name=zone.name, description=zone.description)
+        created_zone = await zones_service.create(request)
+        zones_repository_mock.create.assert_called_once_with(
+            ZoneMatcher(
+                id=1,
+                name=zone.name,
+                description=zone.description,
+            )
+        )
+        assert created_zone is not None
+
     async def test_delete(
         self, db_connection: AsyncConnection, fixture: Fixture
     ) -> None:
@@ -113,13 +163,11 @@ class TestZonesService:
         zones_repository_mock.list = AsyncMock(
             return_value=ListResult[ZonesRepository](items=[], next_token=None)
         )
-        resource_pools_service = ZonesService(
+        zones_service = ZonesService(
             connection=db_connection,
             zones_repository=zones_repository_mock,
         )
-        resource_pools_list = await resource_pools_service.list(
-            token=None, size=1
-        )
+        zones_list = await zones_service.list(token=None, size=1)
         zones_repository_mock.list.assert_called_once_with(token=None, size=1)
-        assert resource_pools_list.next_token is None
-        assert resource_pools_list.items == []
+        assert zones_list.next_token is None
+        assert zones_list.items == []

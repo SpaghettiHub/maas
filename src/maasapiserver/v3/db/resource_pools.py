@@ -5,6 +5,7 @@ from sqlalchemy import desc, insert, select, Select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.operators import eq, le
 
+from maasapiserver.common.db.sequences import ResourcePoolIdSequence
 from maasapiserver.common.db.tables import ResourcePoolTable
 from maasapiserver.common.models.constants import (
     UNIQUE_CONSTRAINT_VIOLATION_TYPE,
@@ -12,9 +13,6 @@ from maasapiserver.common.models.constants import (
 from maasapiserver.common.models.exceptions import (
     AlreadyExistsException,
     BaseExceptionDetail,
-)
-from maasapiserver.v3.api.models.requests.resource_pools import (
-    ResourcePoolRequest,
 )
 from maasapiserver.v3.db.base import BaseRepository
 from maasapiserver.v3.models.base import ListResult
@@ -29,9 +27,11 @@ RESOURCE_POOLS_FIELDS = (
 )
 
 
-class ResourcePoolRepository(
-    BaseRepository[ResourcePool, ResourcePoolRequest]
-):
+class ResourcePoolRepository(BaseRepository[ResourcePool]):
+    async def get_next_id(self) -> int:
+        stmt = select(ResourcePoolIdSequence.next_value())
+        return (await self.connection.execute(stmt)).scalar()
+
     async def find_by_id(self, id: int) -> Optional[ResourcePool]:
         stmt = self._select_all_statement().where(
             eq(ResourcePoolTable.c.id, id)
@@ -41,24 +41,23 @@ class ResourcePoolRepository(
                 return ResourcePool(**resource_pools._asdict())
         return None
 
-    async def create(self, request: ResourcePoolRequest) -> ResourcePool:
-        now = datetime.utcnow()
+    async def create(self, resource_pool: ResourcePool) -> ResourcePool:
         stmt = (
             insert(ResourcePoolTable)
             .returning(*RESOURCE_POOLS_FIELDS)
             .values(
-                name=request.name,
-                description=request.description,
-                updated=now,
-                created=now,
+                name=resource_pool.name,
+                description=resource_pool.description,
+                updated=resource_pool.updated,
+                created=resource_pool.created,
             )
         )
         try:
             result = await self.connection.execute(stmt)
         except IntegrityError:
-            self._raise_constraint_violation(request.name)
-        resource_pools = result.one()
-        return ResourcePool(**resource_pools._asdict())
+            self._raise_constraint_violation(resource_pool.name)
+        created_resource_pools = result.one()
+        return ResourcePool(**created_resource_pools._asdict())
 
     async def list(
         self, token: str | None, size: int

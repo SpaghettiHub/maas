@@ -7,14 +7,16 @@ from sqlalchemy import desc, select, Select
 from sqlalchemy.sql.operators import eq, le
 
 from maasapiserver.common.db.tables import SpaceTable
-from maasapiserver.v3.api.models.requests.spaces import SpaceRequest
 from maasapiserver.v3.db.base import BaseRepository
 from maasapiserver.v3.models.base import ListResult
 from maasapiserver.v3.models.spaces import Space
 
 
-class SpacesRepository(BaseRepository[Space, SpaceRequest]):
-    async def create(self, request: SpaceRequest) -> Space:
+class SpacesRepository(BaseRepository[Space]):
+    async def get_next_id(self) -> int:
+        raise Exception("Not implemented yet.")
+
+    async def create(self, resource: Space) -> Space:
         raise NotImplementedError()
 
     async def find_by_id(self, id: int) -> Space | None:

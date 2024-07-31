@@ -1,9 +1,9 @@
-from datetime import datetime
 from typing import Any
 
 from sqlalchemy import delete, desc, insert, select, Select
 from sqlalchemy.sql.operators import eq, le
 
+from maasapiserver.common.db.sequences import ZoneIdSequence
 from maasapiserver.common.db.tables import DefaultResourceTable, ZoneTable
 from maasapiserver.common.models.constants import (
     UNIQUE_CONSTRAINT_VIOLATION_TYPE,
@@ -12,18 +12,21 @@ from maasapiserver.common.models.exceptions import (
     AlreadyExistsException,
     BaseExceptionDetail,
 )
-from maasapiserver.v3.api.models.requests.zones import ZoneRequest
 from maasapiserver.v3.db.base import BaseRepository
 from maasapiserver.v3.models.base import ListResult
 from maasapiserver.v3.models.zones import Zone
 
 
-class ZonesRepository(BaseRepository[Zone, ZoneRequest]):
-    async def create(self, request: ZoneRequest) -> Zone:
+class ZonesRepository(BaseRepository[Zone]):
+    async def get_next_id(self) -> int:
+        stmt = select(ZoneIdSequence.next_value())
+        return (await self.connection.execute(stmt)).scalar()
+
+    async def create(self, zone: Zone) -> Zone:
         check_integrity_stmt = (
             select(ZoneTable.c.id)
             .select_from(ZoneTable)
-            .where(eq(ZoneTable.c.name, request.name))
+            .where(eq(ZoneTable.c.name, zone.name))
             .limit(1)
         )
         existing_entity = (
@@ -34,12 +37,11 @@ class ZonesRepository(BaseRepository[Zone, ZoneRequest]):
                 details=[
                     BaseExceptionDetail(
                         type=UNIQUE_CONSTRAINT_VIOLATION_TYPE,
-                        message=f"An entity with name '{request.name}' already exists. Its id is '{existing_entity.id}'.",
+                        message=f"An entity with name '{zone.name}' already exists. Its id is '{existing_entity.id}'.",
                     )
                 ]
             )
 
-        now = datetime.utcnow()
         stmt = (
             insert(ZoneTable)
             .returning(
@@ -50,15 +52,16 @@ class ZonesRepository(BaseRepository[Zone, ZoneRequest]):
                 ZoneTable.c.updated,
             )
             .values(
-                name=request.name,
-                description=request.description,
-                updated=now,
-                created=now,
+                id=zone.id,
+                name=zone.name,
+                description=zone.description,
+                updated=zone.updated,
+                created=zone.created,
             )
         )
         result = await self.connection.execute(stmt)
-        zone = result.one()
-        return Zone(**zone._asdict())
+        created_zone = result.one()
+        return Zone(**created_zone._asdict())
 
     async def find_by_id(self, id: int) -> Zone | None:
         stmt = self._select_all_statement().filter(eq(ZoneTable.c.id, id))

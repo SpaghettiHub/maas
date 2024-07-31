@@ -5,9 +5,6 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncConnection
 
 from maasapiserver.common.models.exceptions import AlreadyExistsException
-from maasapiserver.v3.api.models.requests.resource_pools import (
-    ResourcePoolRequest,
-)
 from maasapiserver.v3.db.resource_pools import ResourcePoolRepository
 from maasapiserver.v3.models.resource_pools import ResourcePool
 from tests.fixtures.factories.resource_pools import (
@@ -47,35 +44,45 @@ class TestResourcePoolRepo(RepositoryCommonTests[ResourcePool]):
 @pytest.mark.usefixtures("ensuremaasdb")
 @pytest.mark.asyncio
 class TestResourcePoolRepository:
+    async def test_get_next_id(self, db_connection: AsyncConnection) -> None:
+        resource_pools_repository = ResourcePoolRepository(db_connection)
+        first = await resource_pools_repository.get_next_id()
+        second = await resource_pools_repository.get_next_id()
+        assert first < second
+
     async def test_create(self, db_connection: AsyncConnection) -> None:
-        now = datetime.utcnow()
+        date = datetime.fromisocalendar(2024, 1, 1).astimezone(timezone.utc)
         resource_pools_repository = ResourcePoolRepository(db_connection)
         created_resource_pools = await resource_pools_repository.create(
-            ResourcePoolRequest(
-                name="my_resource_pool", description="my description"
+            ResourcePool(
+                id=2,
+                name="my_resource_pool",
+                description="my description",
+                created=date,
+                updated=date,
             )
         )
         assert created_resource_pools.id
         assert created_resource_pools.name == "my_resource_pool"
         assert created_resource_pools.description == "my description"
-        assert created_resource_pools.created.astimezone(
-            timezone.utc
-        ) >= now.astimezone(timezone.utc)
-        assert created_resource_pools.updated.astimezone(
-            timezone.utc
-        ) >= now.astimezone(timezone.utc)
+        assert created_resource_pools.created.astimezone(timezone.utc) == date
+        assert created_resource_pools.updated.astimezone(timezone.utc) == date
 
     async def test_create_duplicated(
         self, db_connection: AsyncConnection, fixture: Fixture
     ) -> None:
+        date = datetime.fromisocalendar(2024, 1, 1).astimezone(timezone.utc)
         resource_pools_repository = ResourcePoolRepository(db_connection)
         created_resource_pools = await create_test_resource_pool(fixture)
 
         with pytest.raises(AlreadyExistsException):
             await resource_pools_repository.create(
-                ResourcePoolRequest(
+                ResourcePool(
+                    id=3,
                     name=created_resource_pools.name,
                     description=created_resource_pools.description,
+                    created=date,
+                    updated=date,
                 )
             )
 

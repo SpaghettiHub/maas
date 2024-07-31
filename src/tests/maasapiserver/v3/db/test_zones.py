@@ -45,21 +45,29 @@ class TestZonesRepo(RepositoryCommonTests[Zone]):
 @pytest.mark.usefixtures("ensuremaasdb")
 @pytest.mark.asyncio
 class TestZonesRepository:
+    async def test_get_next_id(self, db_connection: AsyncConnection) -> None:
+        zones_repository = ZonesRepository(db_connection)
+        first = await zones_repository.get_next_id()
+        second = await zones_repository.get_next_id()
+        assert first < second
+
     async def test_create(self, db_connection: AsyncConnection) -> None:
-        now = datetime.utcnow()
+        date = datetime.fromisocalendar(2024, 1, 1).astimezone(timezone.utc)
         zones_repository = ZonesRepository(db_connection)
         created_zone = await zones_repository.create(
-            ZoneRequest(name="my_zone", description="my description")
+            Zone(
+                id=2,
+                name="my_zone",
+                description="my description",
+                created=date,
+                updated=date,
+            )
         )
         assert created_zone.id > 1
         assert created_zone.name == "my_zone"
         assert created_zone.description == "my description"
-        assert created_zone.created.astimezone(timezone.utc) >= now.astimezone(
-            timezone.utc
-        )
-        assert created_zone.updated.astimezone(timezone.utc) >= now.astimezone(
-            timezone.utc
-        )
+        assert created_zone.created.astimezone(timezone.utc) == date
+        assert created_zone.updated.astimezone(timezone.utc) == date
 
     async def test_create_duplicated(
         self, db_connection: AsyncConnection, fixture: Fixture

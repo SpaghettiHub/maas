@@ -7,14 +7,16 @@ from sqlalchemy import desc, select, Select
 from sqlalchemy.sql.operators import eq, le
 
 from maasapiserver.common.db.tables import SubnetTable
-from maasapiserver.v3.api.models.requests.subnets import SubnetRequest
 from maasapiserver.v3.db.base import BaseRepository
 from maasapiserver.v3.models.base import ListResult
 from maasapiserver.v3.models.subnets import Subnet
 
 
-class SubnetsRepository(BaseRepository[Subnet, SubnetRequest]):
-    async def create(self, request: SubnetRequest) -> Subnet:
+class SubnetsRepository(BaseRepository[Subnet]):
+    async def get_next_id(self) -> int:
+        raise Exception("Not implemented yet.")
+
+    async def create(self, resource: Subnet) -> Subnet:
         raise NotImplementedError()
 
     async def find_by_id(self, id: int) -> Subnet | None:
