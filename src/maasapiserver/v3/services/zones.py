@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncConnection
@@ -49,7 +50,16 @@ class ZonesService(Service):
         )
 
     async def create(self, zone_request: ZoneRequest) -> Zone:
-        return await self.zones_repository.create(zone_request)
+        zone_id = await self.zones_repository.get_next_id()
+        now = datetime.utcnow()
+        zone = Zone(
+            id=zone_id,
+            name=zone_request.name,
+            description=zone_request.description,
+            updated=now,
+            created=now,
+        )
+        return await self.zones_repository.create(zone)
 
     async def get_by_id(self, id: int) -> Optional[Zone]:
         return await self.zones_repository.find_by_id(id)

@@ -7,14 +7,16 @@ from sqlalchemy import desc, select, Select
 from sqlalchemy.sql.operators import eq, le
 
 from maasapiserver.common.db.tables import FabricTable
-from maasapiserver.v3.api.models.requests.fabrics import FabricRequest
 from maasapiserver.v3.db.base import BaseRepository
 from maasapiserver.v3.models.base import ListResult
 from maasapiserver.v3.models.fabrics import Fabric
 
 
-class FabricsRepository(BaseRepository[Fabric, FabricRequest]):
-    async def create(self, request: FabricRequest) -> Fabric:
+class FabricsRepository(BaseRepository[Fabric]):
+    async def get_next_id(self) -> int:
+        raise NotImplementedError("Not implemented yet.")
+
+    async def create(self, resource: Fabric) -> Fabric:
         raise NotImplementedError()
 
     async def find_by_id(self, id: int) -> Fabric | None:

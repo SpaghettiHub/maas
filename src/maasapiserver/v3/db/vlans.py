@@ -5,14 +5,16 @@ from sqlalchemy import desc, select
 from sqlalchemy.sql.operators import eq, le
 
 from maasapiserver.common.db.tables import VlanTable
-from maasapiserver.v3.api.models.requests.vlans import VlanRequest
 from maasapiserver.v3.db.base import BaseRepository
 from maasapiserver.v3.models.base import ListResult
 from maasapiserver.v3.models.vlans import Vlan
 
 
-class VlansRepository(BaseRepository[Vlan, VlanRequest]):
-    async def create(self, request: VlanRequest) -> Vlan:
+class VlansRepository(BaseRepository[Vlan]):
+    async def get_next_id(self) -> int:
+        raise NotImplementedError("Not implemented yet.")
+
+    async def create(self, resource: Vlan) -> Vlan:
         raise NotImplementedError()
 
     async def find_by_id(self, id: int) -> Vlan | None:

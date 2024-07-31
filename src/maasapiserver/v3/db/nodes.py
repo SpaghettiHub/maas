@@ -2,27 +2,29 @@ from sqlalchemy import update
 from sqlalchemy.sql.operators import eq
 
 from maasapiserver.common.db.tables import NodeTable
-from maasapiserver.v3.api.models.requests.nodes import NodeRequest
 from maasapiserver.v3.db.base import BaseRepository
 from maasapiserver.v3.models.base import ListResult
 from maasapiserver.v3.models.nodes import Node
 
 
-class NodesRepository(BaseRepository[Node, NodeRequest]):
-    async def create(self, request: NodeRequest) -> Node:
-        raise Exception("Not implemented yet.")
+class NodesRepository(BaseRepository[Node]):
+    async def get_next_id(self) -> int:
+        raise NotImplementedError("Not implemented yet.")
+
+    async def create(self, resource: Node) -> Node:
+        raise NotImplementedError("Not implemented yet.")
 
     async def find_by_id(self, id: int) -> Node | None:
-        raise Exception("Not implemented yet.")
+        raise NotImplementedError("Not implemented yet.")
 
     async def list(self, token: str | None, size: int) -> ListResult[Node]:
-        raise Exception("Not implemented yet.")
+        raise NotImplementedError("Not implemented yet.")
 
     async def update(self, resource: Node) -> Node:
-        raise Exception("Not implemented yet.")
+        raise NotImplementedError("Not implemented yet.")
 
     async def delete(self, id: int) -> None:
-        raise Exception("Not implemented yet.")
+        raise NotImplementedError("Not implemented yet.")
 
     async def move_to_zone(self, old_zone_id: int, new_zone_id: int) -> None:
         stmt = (
