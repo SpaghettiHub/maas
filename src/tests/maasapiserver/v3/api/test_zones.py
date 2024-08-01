@@ -31,18 +31,6 @@ from tests.maasapiserver.v3.api.base import (
 
 class TestZonesApi(ApiCommonTests):
     def get_endpoints_configuration(self) -> list[EndpointDetails]:
-        def _assert_zone_in_list(
-            zone: Zone, zones_response: ZonesListResponse
-        ) -> None:
-            zone_response = next(
-                filter(
-                    lambda zone_response: zone.id == zone_response.id,
-                    zones_response.items,
-                )
-            )
-            assert zone.id == zone_response.id
-            assert zone.name == zone_response.name
-            assert zone.description == zone_response.description
 
         async def create_pagination_test_resources(
             fixture: Fixture, size: int
@@ -71,11 +59,10 @@ class TestZonesApi(ApiCommonTests):
                 path=f"{V3_API_PREFIX}/zones",
                 user_role=UserRole.USER,
                 pagination_config=PaginatedEndpointTestConfig[
-                    ZonesListResponse
+                    Zone, ZonesListResponse
                 ](
                     response_type=ZonesListResponse,
                     create_resources_routine=create_pagination_test_resources,
-                    assert_routine=_assert_zone_in_list,
                 ),
             ),
             EndpointDetails(
