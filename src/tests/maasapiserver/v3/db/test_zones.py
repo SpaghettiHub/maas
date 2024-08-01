@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import timezone
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncConnection
@@ -6,13 +6,36 @@ from sqlalchemy.sql.operators import eq
 
 from maasapiserver.common.db.tables import ZoneTable
 from maasapiserver.common.models.exceptions import AlreadyExistsException
-from maasapiserver.v3.api.models.requests.zones import ZoneRequest
+from maasapiserver.common.utils.date import utcnow
 from maasapiserver.v3.constants import DEFAULT_ZONE_NAME
-from maasapiserver.v3.db.zones import ZonesRepository
+from maasapiserver.v3.db.zones import (
+    ZoneCreateOrUpdateResourceBuilder,
+    ZonesRepository,
+)
 from maasapiserver.v3.models.zones import Zone
 from tests.fixtures.factories.zone import create_test_zone
 from tests.maasapiserver.fixtures.db import Fixture
 from tests.maasapiserver.v3.db.base import RepositoryCommonTests
+
+
+class TestZoneCreateOrUpdateResourceBuilder:
+    def test_builder(self) -> None:
+        now = utcnow()
+        resource = (
+            ZoneCreateOrUpdateResourceBuilder()
+            .with_name("test")
+            .with_description("descr")
+            .with_created(now)
+            .with_updated(now)
+            .builld()
+        )
+
+        assert resource.get_values() == {
+            "name": "test",
+            "description": "descr",
+            "created": now,
+            "updated": now,
+        }
 
 
 class TestZonesRepo(RepositoryCommonTests[Zone]):
@@ -46,10 +69,15 @@ class TestZonesRepo(RepositoryCommonTests[Zone]):
 @pytest.mark.asyncio
 class TestZonesRepository:
     async def test_create(self, db_connection: AsyncConnection) -> None:
-        now = datetime.utcnow()
+        now = utcnow()
         zones_repository = ZonesRepository(db_connection)
         created_zone = await zones_repository.create(
-            ZoneRequest(name="my_zone", description="my description")
+            ZoneCreateOrUpdateResourceBuilder()
+            .with_name("my_zone")
+            .with_description("my description")
+            .with_created(now)
+            .with_updated(now)
+            .builld()
         )
         assert created_zone.id > 1
         assert created_zone.name == "my_zone"
@@ -64,15 +92,18 @@ class TestZonesRepository:
     async def test_create_duplicated(
         self, db_connection: AsyncConnection, fixture: Fixture
     ) -> None:
+        now = utcnow()
         zones_repository = ZonesRepository(db_connection)
         created_zone = await create_test_zone(fixture)
 
         with pytest.raises(AlreadyExistsException):
             await zones_repository.create(
-                ZoneRequest(
-                    name=created_zone.name,
-                    description=created_zone.description,
-                )
+                ZoneCreateOrUpdateResourceBuilder()
+                .with_name(created_zone.name)
+                .with_description(created_zone.description)
+                .with_created(now)
+                .with_updated(now)
+                .builld()
             )
 
     async def test_delete(
