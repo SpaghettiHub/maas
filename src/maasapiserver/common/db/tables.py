@@ -142,7 +142,7 @@ BlockDeviceTable = Table(
     Column("id_path", String(4096), nullable=True),
     Column("size", BigInteger, nullable=False),
     Column("block_size", Integer, nullable=False),
-    Column("tags", Text, nullable=True),
+    Column("tags", ARRAY(Text), nullable=True),
     Column(
         "node_config_id",
         BigInteger,
@@ -662,6 +662,7 @@ RootKeyTable = Table(
     Column("expiration", DateTime(timezone=True), nullable=False),
 )
 
+<<<<<<< src/maasapiserver/common/db/tables.py
 NodeDeviceTable = Table(
     "maasserver_nodedevice",
     METADATA,
@@ -715,4 +716,22 @@ NodeDeviceVpdTable = Table(
         ForeignKey("maasserver_nodedevice.id"),
         nullable=False,
     ),
+=======
+VirtualBlockDeviceTable = Table(
+    "maasserver_virtualblockdevice",
+    METADATA,
+    Column(
+        "blockdevice_ptr_id",
+        BigInteger,
+        ForeignKey("maasserver_blockdevice.id"),
+        nullable=False,
+    ),
+    Column(
+        "filesystem_ptr_id",
+        BigInteger,
+        ForeignKey("maasserver_filesystem.id"),
+        nullable=False,
+    ),
+    Column("uuid", Text, nullable=False, unique=True),
+>>>>>>> src/maasapiserver/common/db/tables.py
 )
