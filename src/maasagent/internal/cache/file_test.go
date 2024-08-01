@@ -17,8 +17,10 @@ package cache
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path"
 	"strconv"
@@ -27,6 +29,12 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/sdk/instrumentation"
+	"go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/metric/metricdata"
+	"go.opentelemetry.io/otel/sdk/metric/metricdata/metricdatatest"
 )
 
 func TestNewFileCache(t *testing.T) {
@@ -186,7 +194,7 @@ func TestFileCacheAdd(t *testing.T) {
 				},
 			},
 			out: func(cache *FileCache) bool {
-				return cache.indexSize == 2 && cache.index.Len() == 2
+				return cache.indexSize.Load() == 2 && cache.index.Len() == 2
 			},
 			err: nil,
 		},
@@ -205,7 +213,7 @@ func TestFileCacheAdd(t *testing.T) {
 				},
 			},
 			out: func(cache *FileCache) bool {
-				return cache.indexSize == 1 && cache.index.Len() == 1
+				return cache.indexSize.Load() == 1 && cache.index.Len() == 1
 			},
 			err: nil,
 		},
@@ -352,7 +360,7 @@ func newLockedReader() lockedReader {
 
 func (r *lockedReader) Read(b []byte) (int, error) {
 	<-r.ch
-	return 1, errors.New("oops")
+	return 1, io.EOF
 }
 
 func (r *lockedReader) unlock() {
@@ -369,17 +377,22 @@ func TestFileCacheConcurrentSet(t *testing.T) {
 	key := "key"
 
 	ch := make(chan error)
+
 	go func() {
-		ch <- cache.Set(key, &lr, 1)
+		if err := cache.Set(key, &lr, 1); err != nil {
+			ch <- err
+		}
 	}()
 
 	go func() {
-		ch <- cache.Set(key, &lr, 1)
+		if err := cache.Set(key, &lr, 1); err != nil {
+			ch <- err
+		}
 	}()
 
 	assert.Error(t, ErrKeySetInProgress, <-ch)
+
 	lr.unlock()
-	<-ch
 }
 
 func TestFileCacheConcurrentGetSet(t *testing.T) {
@@ -389,19 +402,94 @@ func TestFileCacheConcurrentGetSet(t *testing.T) {
 	}
 
 	lr := newLockedReader()
-	key := "key"
-
-	ch := make(chan error)
-	go func() {
-		ch <- cache.Set(key, &lr, 1)
-	}()
 
 	go func() {
-		_, err := cache.Get(key)
-		ch <- err
+		cache.Set("key1", &lr, 1)
 	}()
 
-	assert.Error(t, ErrKeySetInProgress, <-ch)
+	v := []byte("x")
+	err = cache.Set("key2", bytes.NewReader(v), int64(len(v)))
+	assert.NoError(t, err)
+
+	_, err = cache.Get("key2")
+	assert.NoError(t, err)
+
 	lr.unlock()
-	<-ch
+}
+
+func TestFileCacheMetrics(t *testing.T) {
+	metricReader := metric.NewManualReader()
+	meterProvider := metric.NewMeterProvider(metric.WithReader(metricReader))
+
+	cache, err := NewFileCache(1, t.TempDir(),
+		WithMetricMeter(meterProvider.Meter("test")))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	v := []byte("x")
+
+	_ = cache.Set("key1", bytes.NewReader(v), int64(len(v)))
+	_, _ = cache.Get("key1")
+	_ = cache.Set("key2", bytes.NewReader(v), int64(len(v)))
+	_, _ = cache.Get("key2")
+	_, _ = cache.Get("key1")
+
+	expected := metricdata.ScopeMetrics{
+		Scope: instrumentation.Scope{
+			Name: "test",
+		},
+
+		Metrics: []metricdata.Metrics{
+			{
+				Name: "cache.size",
+				Unit: "byte",
+				Data: metricdata.Gauge[int64]{
+					DataPoints: []metricdata.DataPoint[int64]{
+						{
+							Attributes: attribute.NewSet(attribute.String("type", "current")),
+							Value:      1,
+						},
+						{
+							Attributes: attribute.NewSet(attribute.String("type", "max")),
+							Value:      1,
+						},
+					},
+				},
+			},
+			{
+				Name: "cache.usage",
+				Unit: "{count}",
+				Data: metricdata.Sum[int64]{
+					DataPoints: []metricdata.DataPoint[int64]{
+						{
+							Attributes: attribute.NewSet(attribute.String("type", "hits")),
+							Value:      3,
+						},
+						{
+							Attributes: attribute.NewSet(attribute.String("type", "misses")),
+							Value:      1,
+						},
+						{
+							Attributes: attribute.NewSet(attribute.String("type", "errors")),
+							Value:      0,
+						},
+					},
+					Temporality: metricdata.CumulativeTemporality,
+					IsMonotonic: true,
+				},
+			},
+		},
+	}
+
+	rm := metricdata.ResourceMetrics{}
+	err = metricReader.Collect(context.Background(), &rm)
+	assert.NoError(t, err)
+	require.Len(t, rm.ScopeMetrics, 1)
+
+	metricdatatest.AssertEqual(
+		t,
+		expected,
+		rm.ScopeMetrics[0],
+		metricdatatest.IgnoreTimestamp())
 }
