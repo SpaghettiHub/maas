@@ -7,7 +7,6 @@ import pytest
 from sqlalchemy.sql.operators import eq
 
 from maasapiserver.common.api.models.responses.errors import ErrorBodyResponse
-from maasapiserver.common.db.tables import ZoneTable
 from maasapiserver.common.models.constants import (
     CANNOT_DELETE_DEFAULT_ZONE_VIOLATION_TYPE,
     ETAG_PRECONDITION_VIOLATION_TYPE,
@@ -20,6 +19,7 @@ from maasapiserver.v3.api.models.responses.zones import (
 from maasapiserver.v3.auth.jwt import UserRole
 from maasapiserver.v3.constants import V3_API_PREFIX
 from maasapiserver.v3.models.zones import Zone
+from maasservicelayer.db.tables import ZoneTable
 from tests.fixtures.factories.zone import create_test_zone
 from tests.maasapiserver.fixtures.db import Fixture
 from tests.maasapiserver.v3.api.base import (
