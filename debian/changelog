@@ -1,3 +1,9 @@
+maas (1:3.3.8-0ubuntu2) jammy; urgency=medium
+
+  * New upstream release, MAAS 3.3.8.
+
+ -- Anton Troyanov <anton.troyanov@canonical.com>  Mon, 12 Aug 2024 12:51:26 +0000
+
 maas (1:3.3.8-0ubuntu1) jammy; urgency=medium
 
   * New upstream release, MAAS 3.3.8.
