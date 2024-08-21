@@ -13,48 +13,34 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package dhcpd
+//go:build 386 || arm || mips || mipsle
+
+package omapi
 
 import (
-	"container/heap"
+	"bytes"
+	"encoding/binary"
 )
 
-type LeaseHeap []Notification
+func binaryWrite(v any) ([]byte, error) {
+	b := &bytes.Buffer{}
 
-func NewLeaseHeap() *LeaseHeap {
-	var l LeaseHeap
+	var value any
 
-	heap.Init(&l)
-
-	return &l
-}
-
-func (l LeaseHeap) Len() int {
-	return len(l)
-}
-
-func (l LeaseHeap) Less(i, j int) bool {
-	return l[i].Timestamp < l[j].Timestamp
-}
-
-func (l LeaseHeap) Swap(i, j int) {
-	l[i], l[j] = l[j], l[i]
-}
-
-func (l *LeaseHeap) Push(elm any) {
-	notification, ok := elm.(Notification)
-	if !ok {
-		return
+	// check for unfixed size integers, these should be int32/uint32 on 32bit archs
+	switch val := v.(type) {
+	case int:
+		value = int32(val)
+	case uint:
+		value = uint32(val)
+	default:
+		value = val
 	}
 
-	*l = append(*l, notification)
-}
+	err := binary.Write(b, binary.BigEndian, value)
+	if err != nil {
+		return nil, err
+	}
 
-func (l *LeaseHeap) Pop() any {
-	prev := *l
-	n := len(prev)
-	x := prev[n-1]
-	*l = prev[0 : n-1]
-
-	return x
+	return b.Bytes(), nil
 }

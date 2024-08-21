@@ -11,7 +11,7 @@ class User(MaasBaseModel):
     password: str
     is_superuser: bool
     first_name: str
-    last_name: str
+    last_name: Optional[str]
     is_staff: bool
     is_active: bool
     date_joined: datetime
@@ -23,3 +23,13 @@ class User(MaasBaseModel):
 
     def check_password(self, password) -> bool:
         return PBKDF2PasswordHasher().verify(password, self.password)
+
+
+class UserProfile(MaasBaseModel):
+    completed_intro: bool
+    auth_last_check: Optional[datetime]
+    is_local: bool
+    user_id: int
+
+    def etag(self) -> str:
+        pass
