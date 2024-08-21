@@ -120,11 +120,11 @@ maas $PROFILE interface update $SYSTEM_ID $INTERFACE_ID link_connected=true
 
 There are some occasional issues with commissioning and deployment.  This section covers some of the most common items.
 
-## Resolving "cloud-init data source not found" during MAAS deployment
+### Resolving "cloud-init data source not found" during MAAS deployment
 
 When deploying an OS or a Juju controller on a node using MAAS, you might encounter the error "cloud-init data source not found." This section provides a step-by-step guide to troubleshoot and resolve this issue, ensuring successful deployment.
 
-### Step 1: Verify connectivity to MAAS metadata server
+#### Step 1: Verify connectivity to MAAS metadata server
 
 Cloud-init relies on the MAAS metadata server to retrieve essential information such as SSH keys and user data. If the node cannot reach this server, the deployment will fail.
 
@@ -137,7 +137,7 @@ Cloud-init relies on the MAAS metadata server to retrieve essential information 
   maas $PROFILE subnet update $SUBNET_ID dns_servers="[$MAAS_IP]"
   ```
 
-### Step 2: Address MAAS services or proxy issues
+#### Step 2: Address MAAS services or proxy issues
 
 Sometimes, issues with proxy services like Squid or BIND can cause the deployment to fail. Toggling the proxy settings might resolve the problem.
 
@@ -150,7 +150,7 @@ Sometimes, issues with proxy services like Squid or BIND can cause the deploymen
   maas $PROFILE maas set-config name=http_proxy value=""
   ```
 
-### Step 3: Check network configuration and connectivity
+#### Step 3: Check network configuration and connectivity
 
 Proper network setup is crucial for the MAAS metadata service to function correctly.
 
@@ -158,7 +158,7 @@ Proper network setup is crucial for the MAAS metadata service to function correc
   - Ensure that the network configuration allows proper routing to the MAAS metadata service.
   - Check for firewalls or other network issues that might be blocking access to the MAAS server.
 
-### Step 4: Restart MAAS services
+#### Step 4: Restart MAAS services
 
 If the issue persists, restarting the MAAS services can often resolve intermittent problems.
 
@@ -170,21 +170,21 @@ If the issue persists, restarting the MAAS services can often resolve intermitte
   sudo systemctl restart maas-rackd maas-regiond
   ```
 
-### Step 5: Verify BIOS configuration
+#### Step 5: Verify BIOS configuration
 
 Incorrect BIOS settings, especially those related to network boot and BMCs, can cause deployment issues.
 
 - **Check and update BIOS settings:**
   - Ensure that the BIOS settings on the nodes are consistent and correctly configured for network boot.
 
-### Step 6: Validate subnet and IP configuration
+#### Step 6: Validate subnet and IP configuration
 
 Conflicting, overlapping, or duplicate subnets can disrupt the deployment process.
 
 - **Check subnet configurations:**
   - In the MAAS UI, verify that the subnet and IP configurations are correct and free of conflicts.
 
-### Step 7: Analyze logs
+#### Step 7: Analyze logs
 
 If the problem is still unresolved, logs can provide detailed insights.
 
@@ -200,13 +200,86 @@ If the problem is still unresolved, logs can provide detailed insights.
   less /var/log/cloud-init.log
   ```
 
-### Community tips
+#### Community tips
 
 - Some users resolved the issue by adding a dynamic reserved range to the IPv6 subnet.
 - Make sure the DNS IP in the subnet summary is set to the MAAS region/rack servers’ IP.
 
 By following these troubleshooting steps, you should be able to resolve the "cloud-init data source not found" error and successfully deploy your OS using MAAS.
 
+### How to resolve DHCP services not starting in MAAS
+
+If you're having trouble with the DHCP services in MAAS not starting, especially after fixing memory and disk problems, this guide will help you troubleshoot and resolve the issue.
+
+#### Step 1: Check MAAS logs
+
+Start by looking at the MAAS logs to find any errors related to DHCP services.
+
+1. **Access MAAS logs:**
+   - Look for errors in the MAAS logs that might explain why the DHCP services aren’t starting.
+
+   **Example log entry:**
+   ```plaintext
+   2021-06-09 08:58:43 maasserver.rack_controller: [critical] Failed configuring DHCP on rack controller 'id:1'.
+   File "/snap/maas/12555/lib/python3.8/site-packages/maasserver/dhcp.py", line 864, in configure_dhcp
+   config = yield deferToDatabase(get_dhcp_configuration, rack_controller)
+   ...
+   ```
+
+#### Step 2: Check for configuration corruption
+
+Problems might be due to configuration corruption from earlier memory and disk issues.
+
+1. **Verify subnet and fabric configuration:**
+   - Make sure subnets are correctly assigned to the right fabrics in the MAAS UI.
+
+   **Steps:**
+   - Go to the "Subnets" section in the MAAS UI.
+   - Open the configuration page for each subnet.
+   - Reassign the subnet to the correct fabric if needed.
+
+#### Step 3: Restart MAAS services
+
+After fixing any misconfigurations, restart the MAAS services to apply the changes.
+
+**Commands:**
+```bash
+sudo systemctl restart maas-rackd
+sudo systemctl restart maas-regiond
+```
+
+#### Step 4: Clean up proxy cache (if applicable)
+
+If you use a proxy, clearing the proxy cache might help resolve issues related to DHCP services.
+
+**Commands:**
+```bash
+sudo mv /var/snap/maas/common/proxy /var/snap/maas/common/proxy.old
+sudo mkdir -p /var/snap/maas/common/proxy
+sudo chown -R proxy:proxy /var/snap/maas/common/proxy
+sudo chmod -R 0750 /var/snap/maas/common/proxy
+sudo systemctl restart maas-proxy
+```
+
+#### Step 5: Verify DHCP settings
+
+Make sure the DHCP settings are correct in the MAAS UI.
+
+1. **Check DHCP configuration:**
+   - Ensure that DHCP is enabled on the correct subnets.
+
+#### Step 6: Check and repair the database
+
+The problem might be related to the MAAS database. Checking and repairing the database can help fix these issues.
+
+**Commands:**
+```bash
+sudo maas-region dbshell
+# Inside the database shell
+VACUUM FULL;
+```
+
+By following these steps, you should be able to diagnose and resolve issues that are preventing the DHCP services from starting in MAAS.
 ## Conclusion
 
 Provisioning machines with MAAS involves commissioning, deploying, and managing machines and their networks. By following these steps, you can efficiently prepare your machines for use and ensure that your infrastructure is running smoothly. Whether you're using the MAAS UI or CLI, you have powerful tools at your disposal to manage your data center like a pro.
