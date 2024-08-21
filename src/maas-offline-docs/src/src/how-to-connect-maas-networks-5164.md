@@ -714,7 +714,7 @@ MAAS provides managed NTP services (with [Chrony](https://chrony.tuxfamily.org/)
 
 The region controller configures the NTP service to keep its time synchronised from one or more external sources. By default, the MAAS region controller uses `ntp.ubuntu.com`. Rack controllers also configure the NTP service, synchronising their time with the region controllers. Rack controllers also configure DHCP with the correct NTP information, so that the DHCP servers can manage the NTP clients for the rack. Any machine on the network that obtains a DHCP lease from MAAS will benefit from NTP support.
 
-## External NTP
+## Set up external NTP
 
 External sites, such as an existing NTP infrastructure, can be used directly as a time source for both rack controllers and machines.
 
@@ -733,3 +733,48 @@ followed by:
 ```nohighlight
 maas admin maas set-config name=ntp_external_only value=true
 ```
+Here’s the guide rewritten at an eighth-grade reading level:
+
+---
+
+## Fix VLAN issues
+
+Sometimes, VLANs don’t work on any rack controller, which can cause problems with DHCP and network connections.
+
+Follow these steps to troubleshoot and fix VLAN issues in MAAS:
+
+1. Configure VLAN interfaces  
+   Make sure the VLAN interfaces on the rack controller are set up with the correct VLAN IDs, links, and IP addresses. After setting them up, apply the changes using this command:
+
+   ```bash
+   sudo netplan apply
+   ```
+
+2. Define subnets correctly  
+   Check that the subnets for each VLAN are set up correctly in MAAS. Make sure the network, gateway, and DNS information is entered accurately.
+
+3. Check physical connections  
+   Make sure the rack controller is physically connected to the right networks and VLANs. If you’re using a managed switch, make sure the ports are set up for the correct VLANs.
+
+4. Review MAAS logs  
+   Look at the MAAS logs for any errors related to VLANs or DHCP that might help you find the problem.
+
+5. Force network re-detection  
+   To make MAAS detect the networks and VLANs again, remove the rack controller from MAAS and then add it back.
+
+6. Test DHCP on one VLAN at a time  
+   Turn on DHCP for one VLAN at a time to see which ones are working correctly. This can help you find issues with specific VLANs.
+
+7. Set a static IP address  
+   You might want to set a static IP address on the VLAN interface to avoid problems with DHCP.
+
+8. Restart the rack controller  
+   Restart the rack controller to make sure it reconnects properly to MAAS and the VLANs. This can sometimes fix connection issues.
+
+9. Reinstall the rack controller if needed  
+   If these steps don’t solve the problem, you might need to reinstall the rack controller by following the official MAAS documentation. Make sure the rack controller isn’t installed on the same machine as the region controller.
+
+10. Consider DHCP forwarding  
+    If you’re using DHCP forwarding on your router, make sure the rack servers on the VLAN can still communicate with the DHCP server.
+
+By following these steps, you should be able to fix VLAN issues on rack controllers in MAAS and ensure everything is connected properly.
