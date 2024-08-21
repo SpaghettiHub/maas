@@ -137,6 +137,57 @@ Building a bridge with netplan is independent of MAAS UI or CLI. You can configu
     
 3. Apply the new configuration with `netplan apply`.
 
+Here’s a simpler version of the guide:
+
+---
+
+## Configure two NICs on one machine
+
+Suppose that you need to set up a machine with two network interface cards (NICs): one for a private subnet managed by MAAS and another for a public subnet used for internet access. Configuring the second NIC through the MAAS UI can be tricky, but these steps will help.
+
+First, make sure MAAS detects both NICs. You should see both network interfaces (like ens18 and ens19) listed in the machine’s network configuration in the MAAS UI.
+
+Next, go to the MAAS UI and select the machine. Navigate to the “Network” tab. For the first NIC (ens18), make sure it’s set to use DHCP on the private subnet (like 192.168.10.0/24).
+
+For the second NIC (ens19), you’ll need to edit the interface settings manually for the public subnet (like 192.168.1.0/24). In the “Edit Physical” settings for ens19, select the right fabric and subnet, set the IP address manually or use DHCP if your public network has a DHCP server, and enter the gateway and DNS settings needed for internet access.
+
+Make sure the netplan configuration on the machine matches the settings from MAAS. Here’s an example of how the `50-cloud-init.yaml` file might look:
+
+```yaml
+network:
+    version: 2
+    ethernets:
+        ens18:
+            addresses:
+            - 192.168.10.5/24
+            match:
+                macaddress: 8e:57:8a:55:d4:2d
+            mtu: 1500
+            nameservers:
+                addresses:
+                - 192.168.10.10
+                search:
+                - maas
+            set-name: ens18
+        ens19:
+            addresses:
+            - 192.168.1.10/24  # Set this according to your network
+            gateway4: 192.168.1.1  # Default gateway for internet access
+            nameservers:
+                addresses:
+                - 8.8.8.8  # Google's DNS or your preferred DNS
+                - 8.8.4.4
+            match:
+                macaddress: c6:11:fb:c9:5e:e2
+            mtu: 1500
+            set-name: ens19
+```
+
+After that, apply the network configuration using the `netplan apply` command or reboot the machine to make sure the settings take effect.
+
+One thing to note is that there might be a bug when selecting a fabric in the “Edit Physical” settings, which can cause it to reset. Be sure the correct fabric and subnet are selected before you save the configuration.
+
+By following these steps, you’ll be able to set up both NICs on your machine, allowing it to connect to both the private MAAS-managed network and the public internet.
 ## Find fabric IDs (CLI)
 
 You'll need the "fabric ID" to manipulate some networking parameters in the CLI. To determine a fabric ID based on a subnet address:
