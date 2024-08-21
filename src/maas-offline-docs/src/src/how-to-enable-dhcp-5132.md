@@ -325,6 +325,51 @@ To set a DNS forwarder:
 maas $PROFILE maas set-config name=upstream_dns value=$MY_UPSTREAM_DNS
 ```
 
+Here’s a simpler version of the guide:
+
+---
+
+## Resolve external DHCP issues
+
+If MAAS successfully commissions and deploys a machine but gets stuck in the "rebooting" stage with a "network is unreachable" error (errno 101), the problem might be related to your external DHCP configuration. Even though external DHCP isn’t officially supported with MAAS, you can try these steps to fix the issue.
+
+1. Verify that your external DHCP server is properly set up and working on the subnet where the MAAS rack controller is connected. Make sure the DHCP server is providing IP addresses correctly and is visible in the network discovery results.
+
+2. Enable network discovery in MAAS so the rack controller regularly checks for external DHCP servers. You can do this with the following command:
+
+   ```bash
+   maas admin subnet update <subnet-id> manage_discovery=true
+   ```
+
+3. Check the MAAS logs to see if the rack controller is detecting the external DHCP server. Look for any errors or warnings that could show problems with DHCP detection.
+
+4. If the issue continues, set up the server’s network with a static IP address. This is especially helpful in virtual environments where DHCP might not work as expected. Here’s an example of a netplan configuration for setting a static IP:
+
+   ```yaml
+   network:
+     ethernets:
+       ens16:
+         addresses:
+           - 192.168.30.20/23
+         nameservers:
+           addresses:
+             - 192.168.30.1
+             - 192.168.30.2
+         routes:
+           - to: default
+             via: 192.168.30.10
+     version: 2
+   ```
+
+   Apply the configuration changes with this command:
+
+   ```bash
+   sudo netplan apply
+   ```
+
+5. Make sure the network interfaces and routing are correctly set up to allow communication with the MAAS server. Double-check that the static IP and routes are configured properly, especially in environments like OpenVSwitch.
+
+By following these steps, you should be able to fix the "network is unreachable" error and make sure that the MAAS deployment process finishes successfully. This approach addresses both DHCP configuration issues and network interface settings.
 ## Resolve DHCP service failures
 
 If you're having trouble with the DHCP services in MAAS not starting, especially after fixing memory and disk problems, this guide will help you troubleshoot and resolve the issue.
@@ -398,3 +443,4 @@ VACUUM FULL;
 ```
 
 By following these steps, you should be able to diagnose and resolve issues that are preventing the DHCP services from starting in MAAS.
+
