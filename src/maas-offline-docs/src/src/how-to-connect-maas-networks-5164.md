@@ -59,6 +59,30 @@ You can create static IP routes as desired.
     gateway_ip=$GATEWAY_IP
 ```
 
+Here’s the guide without any bolding:
+
+---
+
+## Configure loopback
+
+Configuring the loopback interface (`lo`) in MAAS can be a bit tricky, especially when you need it for advanced networking tasks like Free Range Routing (FRR) and BGP. Here’s how you can do it:
+
+1. Understand the loopback interface  
+   The loopback interface is used for internal routing within the node and doesn’t need a MAC address. It’s important for network functions like BGP in more advanced setups.
+
+2. Manually add the loopback interface  
+   After commissioning a node in MAAS, you’ll need to manually add the loopback interface. If the MAAS web UI asks for a MAC address, you can use a placeholder like `00:00:00:00:00:00`. Just make sure this placeholder doesn’t match any other MAC addresses in your network.
+
+3. Avoid duplicate MAC addresses  
+   MAAS doesn’t allow duplicate MAC addresses on different nodes, so each node should have a unique MAC address. If needed, you can manually configure the loopback interface on each node to avoid the MAC address requirement.
+
+4. Consider other methods  
+   If adding the loopback interface in MAAS is causing problems, you might want to configure it outside of MAAS using post-deployment scripts. First, set up the basic configuration with MAAS, then use tools like cloud-init to add your custom network settings, including the loopback interface.
+
+5. Ask for help if needed  
+   If you’re still having trouble, you can ask MAAS support or your internal teams for more help. They might have new solutions or workarounds that fit your needs.
+
+By following these steps, you can set up loopback interfaces on nodes managed by MAAS, allowing you to use advanced networking features like L3 routing and BGP.
 ## Bridging
 
 To configure a bridge with the MAAS UI, select *Machines* > machine > *Network* > hosting network > *Create bridge* > details > *Save interface*. You can then deploy machines using this bridge. Note that you can create an "Open switch" bridge if desired, and MAAS will create the netplan model for you.
