@@ -207,6 +207,49 @@ If the problem is still unresolved, logs can provide detailed insights.
 
 By following these troubleshooting steps, you should be able to resolve the "cloud-init data source not found" error and successfully deploy your OS using MAAS.
 
+** NEXT clean up how-to version of "Unable to commission server - cloud-init error: 'Can not apply stage final, no datasource found!'" :pulse2417:
+SCHEDULED: <2024-08-21 Wed>
+### Resolving cloud-init error: “Can not apply stage final, no datasource found!”
+
+When you try to commission servers in a MAAS 3.1 environment, you might see the cloud-init error "Can not apply stage final, no datasource found!" This problem stops the commissioning process, even though your current OpenStack environment is working fine.
+
+To fix this issue, follow these steps:
+
+First, check the network configuration. Make sure the new servers are set up correctly to connect to the MAAS server. Look for network issues that might block access to the necessary metadata. You can check the network interfaces with `ip a`, check the routing with `ip route`, and check DNS resolution with `nslookup maas-server-ip`.
+
+Next, review the MAAS logs for any errors or warnings that could explain the issue.
+
+Then, check the cloud-init configuration. Make sure the configuration is correct and that the datasource is properly defined. If needed, update the cloud-init configuration to ensure it detects the datasource. You can edit the cloud-init configuration file using `sudo nano /etc/cloud/cloud.cfg` and make sure the datasource list includes MAAS, like this:
+
+```yaml
+datasources:
+  - MAAS
+```
+
+After you verify and update the configurations, try recommissioning the server. You can do this through the MAAS UI or by using the CLI command:
+
+```bash
+maas $PROFILE machine commission $SYSTEM_ID
+```
+
+If the problem continues, try resetting the node and then recommissioning it. This can help fix issues related to temporary network or configuration problems. You can reset the node with these commands:
+
+```bash
+maas $PROFILE machine release $SYSTEM_ID
+maas $PROFILE machine commission $SYSTEM_ID
+```
+
+Make sure both MAAS and cloud-init are up to date, as updates often fix bugs and improve performance. You can update MAAS with `sudo snap refresh maas` and update cloud-init with:
+
+```bash
+sudo apt-get update
+sudo apt-get install --only-upgrade cloud-init
+```
+
+Finally, if the issue still isn’t resolved, check the official MAAS and cloud-init documentation for more troubleshooting tips. You might also want to ask for help from the MAAS community.
+
+By following these steps, you should be able to fix the "Can not apply stage final, no datasource found!" error and successfully commission your servers in MAAS.
+
 ## Conclusion
 
 Provisioning machines with MAAS involves commissioning, deploying, and managing machines and their networks. By following these steps, you can efficiently prepare your machines for use and ensure that your infrastructure is running smoothly. Whether you're using the MAAS UI or CLI, you have powerful tools at your disposal to manage your data center like a pro.
