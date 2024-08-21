@@ -6,21 +6,17 @@ This page explains how to manage DHCP for MAAS.  If you're new to the subject, y
 
 To enable MAAS-managed DHCP via the MAAS UI:
 
-1. Select *Subnets* > <desired VLAN> > *Reserved ranges* > *Reserved dynamic range*.
+1. Select *Subnets* > *desired VLAN* > *Configure DHCP*.
 
-2. Enter a *Start IP address* and an *End IP address*.
+2. The options *MAAS provides DHCP* and *Provide DHCP from a rack controller* will be pre-selected.
 
-3. Select *Reserve* > *Configure DHCP*. You will see a new screen.
+3. If you accept these options, you may need to choose a *Rack controller*.
 
-4. The options *MAAS provides DHCP* and *Provide DHCP from a rack controller* will be pre-selected.
+4. If you choose *Relay to another VLAN*, you will need to choose the target VLAN.
 
-5. If you accept these options, you may need to choose a *Rack controller*.
+5. Under *Reserved dynamic range*, you may have to select a subnet from the drop-down.
 
-6. If you choose *Relay to another VLAN*, you will need to choose the target VLAN.
-
-7. Under *Reserved dynamic range*, you may have to select a subnet from the drop-down.
-
-8. Select *Configure DHCP* for your changes to be registered with MAAS.
+6. Select *Configure DHCP* for your changes to be registered with MAAS.
 
 ## Create an IP range (UI)
 
