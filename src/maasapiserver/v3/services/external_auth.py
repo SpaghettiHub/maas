@@ -7,16 +7,22 @@ import os
 
 from macaroonbakery import bakery, checkers, httpbakery
 from macaroonbakery.bakery._store import RootKeyStore
+from macaroonbakery.httpbakery.agent import Agent, AuthInfo
 from pymacaroons import Macaroon
 from sqlalchemy.ext.asyncio import AsyncConnection
 from starlette.datastructures import Headers
 
 from maasapiserver.common.auth.checker import AsyncChecker
 from maasapiserver.common.auth.locator import AsyncThirdPartyLocator
+from maasapiserver.common.auth.macaroon_client import (
+    CandidAsyncClient,
+    RbacAsyncClient,
+)
 from maasapiserver.common.auth.oven import AsyncOven
 from maasapiserver.common.models.constants import INVALID_TOKEN_VIOLATION_TYPE
 from maasapiserver.common.models.exceptions import (
     BaseExceptionDetail,
+    DischargeRequiredException,
     UnauthorizedException,
 )
 from maasapiserver.common.services._base import Service
@@ -29,7 +35,7 @@ from maasapiserver.v3.db.external_auth import ExternalAuthRepository
 from maasapiserver.v3.models.users import User
 from maasapiserver.v3.services.secrets import SecretsService
 from maasapiserver.v3.services.users import UsersService
-from maasserver.macaroons import _IDClient
+from maasserver.macaroons import _get_macaroon_caveats_ops, _IDClient
 from provisioningserver.security import to_bin, to_hex
 
 MACAROON_LIFESPAN = timedelta(days=1)
@@ -100,6 +106,23 @@ class ExternalAuthService(Service, RootKeyStore):
             domain=auth_domain,
             admin_group=auth_admin_group,
         )
+
+    async def get_auth_info(self) -> AuthInfo | None:
+        """
+        Same logic of maasserver.macaroon_auth.get_auth_info
+        """
+        config = await self.secrets_service.get_composite_secret(
+            path=self.EXTERNAL_AUTH_SECRET_PATH, default=None
+        )
+
+        if config is None:
+            return None
+        key = bakery.PrivateKey.deserialize(config["key"])
+        agent = Agent(
+            url=config["url"],
+            username=config["user"],
+        )
+        return AuthInfo(key=key, agents=[agent])
 
     async def login(
         self, macaroons: list[list[Macaroon]], request_absolute_uri: str
@@ -248,3 +271,31 @@ class ExternalAuthService(Service, RootKeyStore):
             bakery_version, expiration, caveats, ops
         )
         return macaroon
+
+    async def raise_discharge_required_exception(
+        self,
+        external_auth_info: ExternalAuthConfig,
+        absolute_uri: str,
+        req_headers: Headers | None = None,
+    ):
+        macaroon_bakery = await self.get_bakery(absolute_uri)
+
+        caveats, ops = _get_macaroon_caveats_ops(
+            external_auth_info.url, external_auth_info.domain
+        )
+        macaroon = await self.generate_discharge_macaroon(
+            macaroon_bakery=macaroon_bakery,
+            caveats=caveats,
+            ops=ops,
+            req_headers=req_headers,
+        )
+        raise DischargeRequiredException(macaroon=macaroon)
+
+    async def get_candid_client(self) -> CandidAsyncClient:
+        auth_info = await self.get_auth_info()
+        return CandidAsyncClient(auth_info)
+
+    async def get_rbac_client(self) -> RbacAsyncClient:
+        auth_info = await self.get_auth_info()
+        auth_config = await self.get_external_auth()
+        return RbacAsyncClient(auth_config.url, auth_info)

@@ -50,20 +50,23 @@ def create_app_with_mocks(
             call_next: Callable[[Request], Awaitable[Response]],
         ) -> Response:
             request.state.services = mocked_services
-            request.state.services.external_auth = Mock(ExternalAuthService)
-            request.state.services.external_auth.get_external_auth = (
-                AsyncMock()
-            )
             if external_auth:
-                request.state.services.external_auth.get_external_auth.return_value = ExternalAuthConfig(
-                    type=ExternalAuthType.RBAC,
-                    url=RBAC_URL,
-                    domain="",
-                    admin_group="",
+                request.state.services.external_auth.get_external_auth = (
+                    AsyncMock(
+                        return_value=ExternalAuthConfig(
+                            type=ExternalAuthType.RBAC,
+                            url=RBAC_URL,
+                            domain="",
+                            admin_group="",
+                        )
+                    )
                 )
             else:
-                request.state.services.external_auth.get_external_auth.return_value = (
-                    None
+                request.state.services.external_auth = Mock(
+                    ExternalAuthService
+                )
+                request.state.services.external_auth.get_external_auth = (
+                    AsyncMock(return_value=None)
                 )
             return await call_next(request)
 
@@ -319,6 +322,29 @@ async def enable_rbac(fixture: Fixture, mock_aioresponse) -> None:
             "PublicKey": str(key.public_key),
         },
     )
+
+
+@pytest.fixture
+async def enable_candid(fixture: Fixture) -> None:
+    """
+    Enable candid by inserting the config in the db.
+    """
+    candid_url = "http://candid.example.com"
+    now = utcnow()
+    external_auth_config = {
+        "path": "global/external-auth",
+        "created": now,
+        "updated": now,
+        "value": {
+            "key": "mykey",
+            "url": candid_url,
+            "user": "admin@candid",
+            "domain": "",
+            "rbac-url": "",
+            "admin-group": "admin",
+        },
+    }
+    await fixture.create("maasserver_secret", [external_auth_config])
 
 
 @pytest.fixture
