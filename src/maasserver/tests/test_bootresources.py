@@ -245,7 +245,7 @@ class TestBootResourceStore(MAASServerTestCase):
     def test_save_content_later_adds_to__content_to_finalize_var(self):
         _, _, rfile = make_boot_resource_group()
         req = ResourceDownloadParam(
-            rfile_ids=[rfile.id],
+            rfile_id=rfile.id,
             source_list=[],
             sha256=rfile.sha256,
             total_size=rfile.size,
@@ -467,7 +467,13 @@ class TestBootResourceStore(MAASServerTestCase):
         store = BootResourceStore()
         store._content_to_finalize = {
             rfile_one.sha256: ResourceDownloadParam(
-                rfile_ids=[rfile_one.id, rfile_two.id],
+                rfile_id=rfile_one.id,
+                source_list=[],
+                sha256=rfile_one.sha256,
+                total_size=rfile_one.size,
+            ),
+            rfile_two.sha256: ResourceDownloadParam(
+                rfile_id=rfile_two.id,
                 source_list=[],
                 sha256=rfile_one.sha256,
                 total_size=rfile_one.size,

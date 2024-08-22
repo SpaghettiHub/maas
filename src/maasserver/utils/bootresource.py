@@ -81,7 +81,9 @@ class MMapedLocalFile(mmap.mmap):
 
 
 class LocalBootResourceFile:
-    def __init__(self, sha256: str, total_size: int, size: int = 0) -> None:
+    def __init__(
+        self, id: int | None, sha256: str, total_size: int, size: int = 0
+    ) -> None:
         """Local boot resource file
 
         Args:
@@ -89,10 +91,11 @@ class LocalBootResourceFile:
             total_size (int): the complete file size, in bytes
             size (int, optional): the current file size, in bytes. Defaults to 0.
         """
+        self.id = id
         self.sha256 = sha256
         self.total_size = total_size
         self._size = size
-        self._base_path = get_bootresource_store_path() / self.sha256
+        self._base_path = get_bootresource_store_path() / str(self.id)
         self._lock_fd: int | None = None
 
     def __repr__(self):
@@ -333,7 +336,7 @@ class LocalBootResourceFile:
                 tmp.write(data)
             size = tmp.tell()
             hexdigest = sha256.hexdigest()
-            localfile = cls(hexdigest, size)
+            localfile = cls(None, hexdigest, size)  # TODO: improve this
             if not localfile.path.exists():
                 os.link(tmp.name, localfile.path)
             return localfile

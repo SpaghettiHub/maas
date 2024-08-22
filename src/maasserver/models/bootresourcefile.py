@@ -166,7 +166,7 @@ class BootResourceFile(CleanSave, TimestampedModel):
         ]
 
     def local_file(self) -> LocalBootResourceFile:
-        return LocalBootResourceFile(self.sha256, self.size)
+        return LocalBootResourceFile(self.id, self.sha256, self.size)
 
     def __str__(self):
         return f"<BootResourceFile {self.filename}/{self.filetype}>"

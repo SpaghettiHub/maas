@@ -209,14 +209,13 @@ class BootResourceStore(ObjectStore):
         req = self._content_to_finalize.setdefault(
             rfile.sha256,
             ResourceDownloadParam(
-                rfile_ids=[],
+                rfile_id=rfile.id,
                 source_list=[],
                 total_size=rfile.size,
                 sha256=rfile.sha256,
                 extract_paths=[],
             ),
         )
-        req.rfile_ids.append(rfile.id)
         req.source_list.extend(source_list)
         if extract_path is not None:
             req.extract_paths.append(extract_path)
@@ -596,7 +595,7 @@ class BootResourceStore(ObjectStore):
     def delete_content_to_finalize(self):
         """Deletes all content that was set to be finalized."""
         for req in self._content_to_finalize.values():
-            BootResourceFile.objects.filter(id__in=req.rfile_ids).delete()
+            BootResourceFile.objects.filter(id=req.rfile_id).delete()
         self._content_to_finalize.clear()
 
     def _get_http_proxy(self) -> str | None:

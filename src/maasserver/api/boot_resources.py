@@ -137,7 +137,7 @@ def filestore_add_file(rfile: BootResourceFile):
     params = SyncRequestParam(
         resources=[
             ResourceDownloadParam(
-                rfile_ids=[rfile.id],
+                rfile_id=rfile.id,
                 source_list=[],
                 sha256=rfile.sha256,
                 total_size=rfile.size,
@@ -422,6 +422,7 @@ class BootResourceFileUploadHandler(OperationsHandler):
             region=RegionController.objects.get_running_controller()
         )
         lfile = LocalBootResourceFile(
+            id=rfile.id,
             sha256=rfile.sha256,
             total_size=rfile.size,
             size=sync_status.size,

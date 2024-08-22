@@ -34,7 +34,7 @@ MAX_SOURCES = 5
 
 @dataclass
 class ResourceDownloadParam:
-    rfile_ids: list[int]
+    rfile_id: int
     source_list: list[str]
     sha256: str
     total_size: int
@@ -88,7 +88,7 @@ class BootResourcesActivity(MAASAPIClient):
         super().__init__(url, token, user_agent=user_agent)
         self.region_id = region_id
 
-    async def report_progress(self, rfiles: list[int], size: int):
+    async def report_progress(self, rfile: int, size: int):
         """Report progress back to MAAS
 
         Args:
@@ -104,7 +104,7 @@ class BootResourcesActivity(MAASAPIClient):
             url,
             data={
                 "system_id": self.region_id,
-                "ids": rfiles,
+                "ids": [rfile],  # TODO: fix me
                 "size": size,
             },
         )
@@ -167,7 +167,7 @@ class BootResourcesActivity(MAASAPIClient):
         """
 
         lfile = LocalBootResourceFile(
-            param.sha256, param.total_size, param.size
+            param.rfile_id, param.sha256, param.total_size, param.size
         )
 
         url = param.source_list[
@@ -186,7 +186,7 @@ class BootResourcesActivity(MAASAPIClient):
                 for target in param.extract_paths:
                     lfile.extract_file(target)
                     activity.heartbeat()
-                await self.report_progress(param.rfile_ids, lfile.size)
+                await self.report_progress(param.rfile_id, lfile.size)
                 return True
 
             async with self.session.get(
@@ -201,7 +201,7 @@ class BootResourcesActivity(MAASAPIClient):
                     activity.heartbeat()
                     dt_now = datetime.now()
                     if dt_now > (last_update + REPORT_INTERVAL):
-                        await self.report_progress(param.rfile_ids, lfile.size)
+                        await self.report_progress(param.rfile_id, lfile.size)
                         last_update = dt_now
                     store.write(data)
 
@@ -215,10 +215,10 @@ class BootResourcesActivity(MAASAPIClient):
                     lfile.extract_file(target)
                     activity.heartbeat()
 
-                await self.report_progress(param.rfile_ids, lfile.size)
+                await self.report_progress(param.rfile_id, lfile.size)
                 return True
             else:
-                await self.report_progress(param.rfile_ids, 0)
+                await self.report_progress(param.rfile_id, 0)
                 lfile.unlink()
                 raise ApplicationError("Invalid checksum")
         except IOError as ex:
@@ -226,7 +226,7 @@ class BootResourcesActivity(MAASAPIClient):
             # let the user fix the issue and restart it manually later
             if ex.errno == 28:
                 lfile.unlink()
-                await self.report_progress(param.rfile_ids, 0)
+                await self.report_progress(param.rfile_id, 0)
                 activity.logger.error(ex.strerror)
                 return False
 
@@ -398,8 +398,9 @@ class SyncBootResourcesWorkflow:
         sync_jobs: list[Coroutine] = []
         for res in input.resources:
             missing: set[str] = set()
-            for id in res.rfile_ids:
-                missing.update(regions - set(sync_status[str(id)]["sources"]))
+            missing.update(
+                regions - set(sync_status[str(res.rfile_id)]["sources"])
+            )
             if missing == regions:
                 workflow.logger.error(
                     f"File {res.sha256} has no complete copy available, skipping"
