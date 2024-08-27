@@ -23,7 +23,6 @@ __all__ = [
     "ScanNetworks",
     "ValidateDHCPv4Config",
     "ValidateDHCPv6Config",
-    "ValidateLicenseKey",
 ]
 
 from twisted.protocols import amp
@@ -50,21 +49,6 @@ class DescribePowerTypes(amp.Command):
     arguments = []
     response = [(b"power_types", StructureAsJSON())]
     errors = []
-
-
-class ValidateLicenseKey(amp.Command):
-    """Validate an OS license key.
-
-    :since: 1.7
-    """
-
-    arguments = [
-        (b"osystem", amp.Unicode()),
-        (b"release", amp.Unicode()),
-        (b"key", amp.Unicode()),
-    ]
-    response = [(b"is_valid", amp.Boolean())]
-    errors = {exceptions.NoSuchOperatingSystem: b"NoSuchOperatingSystem"}
 
 
 class PowerDriverCheck(amp.Command):
@@ -360,30 +344,6 @@ class ValidateDHCPv6Config(_ValidateDHCPConfig):
 
     :since: 2.1
     """
-
-
-class EvaluateTag(amp.Command):
-    """Evaluate a tag against the list of nodes.
-
-    :since: 2.0
-    """
-
-    arguments = [
-        # System ID for rack controller.
-        (b"system_id", amp.Unicode()),
-        (b"tag_name", amp.Unicode()),
-        (b"tag_definition", amp.Unicode()),
-        (
-            b"tag_nsmap",
-            AmpList([(b"prefix", amp.Unicode()), (b"uri", amp.Unicode())]),
-        ),
-        # A 3-part credential string for the web API.
-        (b"credentials", amp.Unicode()),
-        # List of nodes the rack controller should evaluate.
-        (b"nodes", AmpList([(b"system_id", amp.Unicode())])),
-    ]
-    response = []
-    errors = []
 
 
 class AddChassis(amp.Command):
