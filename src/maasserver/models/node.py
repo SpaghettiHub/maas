@@ -67,7 +67,7 @@ from twisted.internet.defer import (
     DeferredList,
     inlineCallbacks,
     returnValue,
-    succeed,
+    succeed, maybeDeferred,
 )
 from twisted.internet.error import ConnectionDone
 from twisted.python.failure import Failure
@@ -5843,7 +5843,7 @@ class Node(CleanSave, TimestampedModel):
         # node; the user may choose to start it manually.
         NodeUserData.objects.set_user_data(self, user_data)
 
-    def _temporal_deploy(self, _, d: Deferred) -> Deferred:
+    def _temporal_deploy(self, _, d) -> Deferred:
         power_info = self.get_effective_power_info()
         dd = start_workflow(
             "deploy-n",
@@ -5902,7 +5902,6 @@ class Node(CleanSave, TimestampedModel):
             does not support it, `None` will be returned. The node must be
             powered on manually.
         """
-
         if not user.has_perm(NodePermission.edit, self):
             # You can't start a node you don't own unless you're an admin.
             raise PermissionDenied()
@@ -5928,8 +5927,7 @@ class Node(CleanSave, TimestampedModel):
             self._start_deployment()
             claimed_ips = True
             needs_power_call = False
-
-            d.addCallback(self._temporal_deploy, d)
+            d.addCallback(partial(deferToDatabase, self._temporal_deploy, d))
 
         elif self.status in COMMISSIONING_LIKE_STATUSES:
             if old_status is None:
@@ -5954,8 +5952,7 @@ class Node(CleanSave, TimestampedModel):
             set_deployment_timeout = True
             self._start_deployment()
             needs_power_call = False
-
-            d.addCallback(self._temporal_deploy, d)
+            d.addCallback(partial(deferToDatabase, self._temporal_deploy, d))
         else:
             set_deployment_timeout = False
 
