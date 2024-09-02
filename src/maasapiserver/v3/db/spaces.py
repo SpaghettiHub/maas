@@ -7,8 +7,8 @@ from sqlalchemy import desc, select, Select
 from sqlalchemy.sql.operators import eq, le
 
 from maasapiserver.v3.db.base import BaseRepository, CreateOrUpdateResource
-from maasapiserver.v3.models.base import ListResult
-from maasapiserver.v3.models.spaces import Space
+from maasservicelayer.models.base import ListResult
+from maasservicelayer.models.spaces import Space
 from maasservicelayer.db.filters import FilterQuery
 from maasservicelayer.db.tables import SpaceTable
 

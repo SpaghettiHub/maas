@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncConnection
 from sqlalchemy.sql.operators import eq
 
-from maasapiserver.v3.models.configurations import Configuration
+from maasservicelayer.models.configurations import Configuration
 from maasservicelayer.db.tables import ConfigTable
 
 

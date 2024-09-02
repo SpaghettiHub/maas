@@ -2,7 +2,7 @@
 from datetime import datetime
 from typing import Any
 
-from maasapiserver.v3.models.bmc import Bmc
+from maasservicelayer.models.bmc import Bmc
 from maasserver.enum import BMC_TYPE
 from tests.maasapiserver.fixtures.db import Fixture
 

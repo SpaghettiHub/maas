@@ -17,7 +17,7 @@ from maasapiserver.v3.api import services
 from maasapiserver.v3.auth.jwt import UserRole
 from maasapiserver.v3.auth.openapi import OpenapiOAuth2PasswordBearer
 from maasapiserver.v3.constants import V3_API_PREFIX
-from maasapiserver.v3.models.auth import AuthenticatedUser
+from maasservicelayer.models.auth import AuthenticatedUser
 from maasapiserver.v3.services import ServiceCollectionV3
 
 # This is used just to generate the openapi spec with the security annotations.

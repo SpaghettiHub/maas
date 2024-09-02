@@ -17,8 +17,8 @@ from maasapiserver.v3.db.base import (
     CreateOrUpdateResource,
     CreateOrUpdateResourceBuilder,
 )
-from maasapiserver.v3.models.base import ListResult
-from maasapiserver.v3.models.users import User, UserProfile
+from maasservicelayer.models.base import ListResult
+from maasservicelayer.models.users import User, UserProfile
 from maasservicelayer.db.filters import FilterQuery
 from maasservicelayer.db.tables import (
     SessionTable,

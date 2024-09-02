@@ -14,8 +14,8 @@ from maasapiserver.common.models.exceptions import (
 from maasapiserver.common.utils.date import utcnow
 from maasapiserver.v3.constants import DEFAULT_ZONE_NAME
 from maasapiserver.v3.db.zones import ZonesRepository
-from maasapiserver.v3.models.base import ListResult
-from maasapiserver.v3.models.zones import Zone
+from maasservicelayer.models.base import ListResult
+from maasservicelayer.models.zones import Zone
 from maasapiserver.v3.services import (
     BmcService,
     NodesService,

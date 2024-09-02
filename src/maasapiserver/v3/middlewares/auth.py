@@ -43,8 +43,8 @@ from maasapiserver.v3.db.users import (
     UserCreateOrUpdateResourceBuilder,
     UserProfileCreateOrUpdateResourceBuilder,
 )
-from maasapiserver.v3.models.auth import AuthenticatedUser
-from maasapiserver.v3.models.users import User
+from maasservicelayer.models.auth import AuthenticatedUser
+from maasservicelayer.models.users import User
 from maasserver.macaroons import _get_macaroon_caveats_ops
 from maasservicelayer.constants import SYSTEM_USERS
 

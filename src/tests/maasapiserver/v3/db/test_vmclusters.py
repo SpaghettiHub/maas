@@ -4,7 +4,7 @@ from sqlalchemy.sql.operators import eq
 
 from maasapiserver.v3.constants import DEFAULT_ZONE_NAME
 from maasapiserver.v3.db.vmcluster import VmClustersRepository
-from maasapiserver.v3.models.zones import Zone
+from maasservicelayer.models.zones import Zone
 from maasservicelayer.db.tables import VmClusterTable, ZoneTable
 from tests.fixtures.factories.vmcluster import create_test_vmcluster
 from tests.fixtures.factories.zone import create_test_zone

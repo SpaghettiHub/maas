@@ -5,7 +5,7 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncConnection
 
 from maasapiserver.v3.db.configurations import ConfigurationsRepository
-from maasapiserver.v3.models.configurations import Configuration
+from maasservicelayer.models.configurations import Configuration
 from maasapiserver.v3.services import ConfigurationsService
 
 

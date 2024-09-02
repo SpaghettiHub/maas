@@ -35,7 +35,9 @@ from maasapiserver.common.models.exceptions import (
 )
 from maasapiserver.common.utils.date import utcnow
 from maasapiserver.v2.constants import V2_API_PREFIX
-from maasapiserver.v3.api.models.responses.oauth2 import AccessTokenResponse
+from maasapiserver.v3.api.public.models.responses.oauth2 import (
+    AccessTokenResponse,
+)
 from maasapiserver.v3.auth.external_auth import (
     ExternalAuthConfig,
     ExternalAuthType,
@@ -51,8 +53,8 @@ from maasapiserver.v3.middlewares.auth import (
     V3AuthenticationMiddleware,
 )
 from maasapiserver.v3.middlewares.services import ServicesMiddleware
-from maasapiserver.v3.models.auth import AuthenticatedUser
-from maasapiserver.v3.models.users import User
+from maasservicelayer.models.auth import AuthenticatedUser
+from maasservicelayer.models.users import User
 from maasapiserver.v3.services import ServiceCollectionV3
 from maasservicelayer.constants import NODE_INIT_USERNAME, WORKER_USERNAME
 from maasservicelayer.db import Database

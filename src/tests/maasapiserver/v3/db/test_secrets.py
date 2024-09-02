@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncConnection
 from sqlalchemy.sql.operators import eq
 
 from maasapiserver.v3.db.secrets import SecretsRepository
-from maasapiserver.v3.models.secrets import Secret
+from maasservicelayer.models.secrets import Secret
 from maasservicelayer.db.tables import SecretTable
 from tests.fixtures.factories.secret import create_test_secret
 from tests.maasapiserver.fixtures.db import Fixture

@@ -5,8 +5,8 @@ from sqlalchemy.sql.expression import func
 from sqlalchemy.sql.operators import eq, le
 
 from maasapiserver.v3.db.base import BaseRepository, CreateOrUpdateResource
-from maasapiserver.v3.models.base import ListResult
-from maasapiserver.v3.models.machines import Machine, PciDevice, UsbDevice
+from maasservicelayer.models.base import ListResult
+from maasservicelayer.models.machines import Machine, PciDevice, UsbDevice
 from maasserver.enum import NODE_DEVICE_BUS, NODE_TYPE
 from maasservicelayer.db.filters import FilterQuery
 from maasservicelayer.db.tables import (

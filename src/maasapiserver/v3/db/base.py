@@ -11,7 +11,7 @@ from maasapiserver.common.models.exceptions import (
     AlreadyExistsException,
     BaseExceptionDetail,
 )
-from maasapiserver.v3.models.base import ListResult
+from maasservicelayer.models.base import ListResult
 from maasservicelayer.db.filters import FilterQuery
 
 T = TypeVar("T")

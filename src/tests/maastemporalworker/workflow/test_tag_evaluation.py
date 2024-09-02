@@ -13,8 +13,8 @@ from temporalio import activity
 from temporalio.testing import WorkflowEnvironment
 from temporalio.worker import Worker
 
-from maasapiserver.v3.models.bmc import Bmc
-from maasapiserver.v3.models.users import User
+from maasservicelayer.models.bmc import Bmc
+from maasservicelayer.models.users import User
 from maasservicelayer.db import Database
 from maasservicelayer.db.tables import NodeTagTable, TagTable
 from maastemporalworker.workflow.tag_evaluation import (

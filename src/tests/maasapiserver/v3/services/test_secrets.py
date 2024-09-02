@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncConnection
 
 from maasapiserver.common.utils.date import utcnow
 from maasapiserver.v3.db.secrets import SecretsRepository
-from maasapiserver.v3.models.secrets import Secret
+from maasservicelayer.models.secrets import Secret
 from maasapiserver.v3.services import ConfigurationsService
 from maasapiserver.v3.services.secrets import (
     LocalSecretsStorageService,
