@@ -110,6 +110,7 @@ Considering MAAS for your next project? [Get in touch](/t/how-to-contact-us/5448
 | 3     | how-to-use-controller-tags              | [Use controller tags](/t/how-to-use-controller-tags/5216)                      |
 | 3     | how-to-use-storage-tags                 | [Use storage tags](/t/how-to-use-storage-tags/5232)                            |
 | 2     | scripting-maas                          | Scripting MAAS                                                                 |
+| 3     | how-to-use-cloud-init-with-maas         | [Use cloud-init with MAAS](/t/how-to-use-cloud-init-with-maas/9122)            |
 | 3     | how-to-authenticate-to-the-maas-api     | [Login to the MAAS API](/t/how-to-authenticate-to-the-maas-api/5060)           |
 | 3     | how-to-use-the-python-api-client        | [Script MAAS with Python](/t/how-to-use-the-python-api-client/5404)            |
 | 2     | securing-your-instance                  | [Securing your instance](/t/-/8898)                                            |
