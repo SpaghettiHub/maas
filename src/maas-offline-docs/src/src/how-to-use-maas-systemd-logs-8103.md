@@ -1,201 +1,345 @@
-By default, MAAS logs a lot of runtime information to `systemd` log files, which are useful when things don’t work as expected. This guide will explain how to use these logs to manage your MAAS setup. We’ll cover version 3.5 and later, as well as earlier versions.
+MAAS logs considerable runtime information to standard log files, useful when things don't work as expected.  Prior to version 3.5, MAAS used custom log files for different components of the MAAS architecture.  In version 3.5, all [logging has been transferred](/t/about-system-logging/????) to the standard `systemd` logs.   This page gives a summary of how to access runtime logging for both version groups.
 
-## MAAS 3.5 and later
+## MAAS 3.5 log commands
 
-Starting with version 3.5, MAAS uses systemd logs, replacing all the special-purpose log files used previously. Below are some examples of the commands you'll use to retrieve various log combinations.
+### Pebble (snap-only)
 
-### Common log commands for all services
-
-You can use some generic commands to check logs for any MAAS service:
-
-- **View recent logs:**
-  ```bash
-  journalctl -u maas-regiond --since "1 hour ago"
-  ```
-This command will show all the log entries referring to the `maas-regiond` service that were generated in the the last hour.
-
-- **Filter logs by specific criteria:**
-  ```bash
-  journalctl -u maas-regiond -g "ERROR"
-  ```
-This command retrieves only those log lines that contain the word “ERROR,” which serves as a coarse issue filter. 
-
-### Service-specific log commands
-
-Each service in MAAS still writes its own log entries. Here’s how you can differentiate them.
-
-#### 1. Regiond (Region Controller)
-
-The Region Controller manages all MAAS web UI and API requests. If you’re having trouble with the web interface or API, these are the logs to check:
-
-- **Snap installation:**
-  ```bash
-  journalctl -u snap.maas.pebble -t maas-regiond
-  ```
-- **Debian package:**
-  ```bash
-  journalctl -u maas-regiond
-  ```
-
-#### 2. Rackd (Rack Controller)
-
-The Rack Controller communicates with machines, moderating network services like DHCP and DNS. If machines can’t get IP addresses or you have network problems, these logs may help:
-
-- **Snap installation:**
-  ```bash
-  journalctl -u snap.maas.pebble -t maas-rackd
-  ```
-- **Debian package:**
-  ```bash
-  journalctl -u maas-rackd
-  ```
-
-#### 3. MAAS Agent
-
-The MAAS Agent the machine life-cycle.  If commissioning or deployment fail, you’ll want to look here:
-
-- **Snap installation:**
-  ```bash
-  journalctl -u snap.maas.pebble -t maas-agent
-  ```
-- **Debian package:**
-  ```bash
-  journalctl -u maas-agent
-  ```
-
-#### 4. API Server
-
-If API requests seem to fail, check for these logs entries:
-
-- **Snap installation:**
-  ```bash
-  journalctl -u snap.maas.pebble -t maas-apiserver
-  ```
-- **Debian package:**
-  ```bash
-  journalctl -u maas-apiserver
-  ```
-
-#### 5. HTTP (Nginx)
-
-Web-server-related logs entries can be useful if you can't access the MAAS web interface:
-
-- **Snap installation:**
-  ```bash
-  journalctl -u snap.maas.pebble -t maas-http
-  ```
-- **Debian package:**
-  ```bash
-  journalctl -u maas-http
-  ```
-
-### Examples and use cases
-
-Here are more log examples:
-
-#### Example 1: Troubleshooting a machine that won't boot
-
-If a machine won't boot, you might want to look for `rackd` that point to network issues:
-
-```bash
-journalctl -u maas-rackd --since "2 hours ago"
+```nohighlight
+journalctl -u snap.maas.pebble -t maas.pebble
 ```
 
-For example, look for problems with DHCP or DNS.
+### Regiond (ex-regiond.log)
 
-#### Example 2: Debugging API issues
+For the snap, use:
 
-If the MAAS API won't respond, check the API server log entries:
-
-```bash
-journalctl -u maas-apiserver -g "500"
+```nohighlight
+journalctl -u snap.maas.pebble -t maas-regiond
 ```
 
-This particular filter shows any "500" error messages, which usually means there's a server problem.
+For the debian packages, use: 
 
-#### Example 3: Monitoring changes over time
-
-If you’re trying to see what changed over a given time period (e.g., since yesterday), you can check all logs for a specific service like this:
-
-```bash
-journalctl -u maas-regiond --since "24 hours ago"
+```nohighlight
+journalctl -u maas-regiond
 ```
 
-This command may isolate any recent updates or changes that affected your system.
+### Rackd (ex-rackd.log)
 
-#### Example 4: Checking NTP synchronization issues
+For the snap, use:: 
 
-If your machines show incorrect times, NTP (Network Time Protocol) might be the issue, so check the **NTP (chrony)** logs:
-
-- **Snap installation:**
-  ```bash
-  journalctl -u snap.maas.pebble -t chronyd
-  ```
-- **Debian package:**
-  ```bash
-  journalctl -u chrony
-  ```
-
-Look for entries related to time synchronization errors or failures.
-
-### Advanced logging techniques
-
-#### Filtering logs by machine or IP
-
-Use a filtering tool (like the `-g` option to `journalctl`) to find log entries for a specific machine. For example:
-
-```bash
-journalctl -u maas-regiond --since "30 minutes ago" -g "MAAS_MACHINE_HOSTNAME=example-machine"
+```nohighlight
+journalctl -u snap.maas.pebble -t maas-rackd
 ```
 
-This command finds entries only for `example-machine` in the last 30 minutes. You can filter by anything that shows up in the log entries (like IP address).
+For the debian packages, use: 
 
-#### Custom log searches with specific tags
-
-Sometimes specific tags will help pinpoint issues quickly:
-
-```bash
-journalctl -u maas-agent --since "1 day ago" -g "MAAS_MACHINE_SYSLOG_TAG=commissioning"
+```nohighlight
+journalctl -u maas-rackd
 ```
 
-This command searches the MAAS Agent logs for any commissioning-related tags.
+### MAAS Agent
 
-### Logging for MAAS versions pre-3.5
+For the snap, use:: 
 
-Before version 3.5, MAAS used custom log files for each major component. Here’s how you can access those logs:
+```nohighlight
+journalctl -u snap.maas.pebble -t maas-agent
+```
 
-#### Regiond
+For the debian packages, use: 
 
-- **Snap installation:**
-  ```bash
-  less /var/snap/maas/common/log/regiond.log
-  ```
-- **Debian package:**
-  ```bash
-  less /var/log/maas/regiond.log
-  ```
+```nohighlight
+journalctl -u maas-agent
+```
 
-#### Rackd
+### maas.log
 
-- **Snap installation:**
-  ```bash
-  less /var/snap/maas/common/log/rackd.log
-  ```
-- **Debian package:**
-  ```bash
-  less /var/log/maas/rackd.log
-  ```
+For the snap, use:: 
 
-### Best practices for log management
+```nohighlight
+journalctl -u snap.maas.pebble -t maas-log
+```
 
-#### Rotate logs
+For the debian packages, use: 
 
-To keep your logs from filling your disk, rotate them regularly. Use the `logrotate` tool, which automatically rotates, compresses, and removes old logs.
+```nohighlight
+journalctl -u maas-syslog -t maas-log
+```
 
-#### Set up alerts
+### API server
 
-You can also set up alerts to notify you about specific log entries. Tools like Nagios or Prometheus can scan your logs and alert you if something goes wrong.
+For the snap, use:: 
 
-#### Secure logs
+```nohighlight
+journalctl -u snap.maas.pebble -t maas-apiserver
+```
 
-Make sure your log files are stored securely and have the right permissions. This prevents unauthorized users from accessing sensitive information.
+For the debian packages, use: 
+
+```nohighlight
+journalctl -u maas-apiserver
+```
+
+### Temporal
+
+For the snap, use:: 
+
+```nohighlight
+journalctl -u snap.maas.pebble -t maas-temporal
+```
+
+For the debian packages, use: 
+
+```nohighlight
+journalctl -u maas-temporal
+```
+
+### HTTP (nginx)
+
+For the snap, use:: 
+
+```nohighlight
+journalctl -u snap.maas.pebble -t maas-http
+```
+
+For the debian packages, use: 
+
+```nohighlight
+journalctl -u maas-http
+```
+
+### Proxy (squid)
+
+For the snap, use:: 
+
+```nohighlight
+journalctl -u snap.maas.pebble -t maas-proxy
+```
+
+For the debian packages, use: 
+
+```nohighlight
+journalctl -u maas-proxy
+```
+
+### NTP (chrony)
+
+For the snap, use:: 
+
+```nohighlight
+journalctl -u snap.maas.pebble -t chronyd
+```
+
+For the debian packages, use: 
+
+```nohighlight
+journalctl -u chrony
+```
+
+### DNS (bind9)
+
+For the snap, use:: 
+
+```nohighlight
+journalctl -u snap.maas.pebble -t named
+```
+
+For the debian packages, use: 
+
+```nohighlight
+journalctl -u named
+```
+
+### Syslog (rsyslog)
+
+For the snap, use:: 
+
+```nohighlight
+journalctl -u snap.maas.pebble -t maas-machine
+```
+
+For the debian packages, use: 
+
+```nohighlight
+journalctl -u maas-syslog
+```
+
+* Fields to filter over:
+  * MAAS_MACHINE_IP
+  * MAAS_MACHINE_HOSTNAME
+  * MAAS_MACHINE_SYSLOG_TAG
+  * MAAS_MACHINE_PID (to filter over remote machine process IDs)
+  * MAAS_MACHINE_TIMESTAMP (to troubleshoot possible time sync issues)
+
+For example, if using the snap, use a command like this:
+
+```nohighlight
+journalctl -u snap.maas.pebble -t maas-machine --since "-15m" MAAS_MACHINE_HOSTNAME=ace-cougar MAAS_MACHINE_SYSLOG_TAG=systemd
+```
+
+On the other hand, if using debian packages, use a command similar to:
+
+```nohighlight
+journalctl -u maas-syslog -t maas-machine --since "-15m" MAAS_MACHINE_HOSTNAME=ace-cougar MAAS_MACHINE_SYSLOG_TAG=systemd
+```
+
+### DHCP (dhcpd, dhcpd6)
+
+For the snap, use:: 
+
+```nohighlight
+journalctl -u snap.maas.pebble -t dhcpd
+```
+
+For the debian packages, use: 
+
+```nohighlight
+journalctl -u maas-dhcpd
+```
+
+## Pre-3.5 log commands
+
+### Supervisor (snap-only)
+
+For the snap, use:
+
+```nohighlight
+less /var/snap/maas/common/log/supervisor-run.log
+```
+
+```nohighlight
+journalctl -u snap.maas.supervisor
+```
+
+### Regiond
+
+For the snap, use:
+
+```nohighlight
+less /var/snap/maas/common/log/regiond.log
+```
+
+For the debian packages, use: 
+
+```nohighlight
+less /var/log/maas/regiond.log
+```
+
+### Rackd
+
+For the snap, use:: 
+
+```nohighlight
+less /var/snap/maas/common/log/rackd.log
+```
+
+For the debian packages, use: 
+
+```nohighlight
+less /var/log/maas/rackd.log
+```
+
+### maas.log
+
+For the snap, use:: 
+
+```nohighlight
+less /var/snap/maas/common/log/maas.log
+```
+
+For the debian packages, use: 
+
+```nohighlight
+less /var/log/maas/maas.log
+```
+
+### HTTP (nginx)
+
+For the snap, use::
+
+```nohighlight
+less /var/snap/maas/common/log/http/access.log (or error.log)
+```
+
+```nohighlight
+less /var/snap/maas/common/log/nginx.log
+```
+
+For the debian packages, use:
+
+```nohighlight
+less /var/log/maas/http/access.log (or error.log)
+```
+
+```nohighlight
+journalctl -u maas-http
+```
+
+### Proxy (squid)
+
+For the snap, use:: 
+
+```nohighlight
+less /var/snap/maas/common/log/proxy/access.log (or cache.log or storage.log)
+```
+
+For the debian packages, use: 
+
+```nohighlight
+less /var/log/maas/proxy/access.log (or cache.log or storage.log)
+```
+
+### NTP (chrony)
+
+For the debian packages, use: 
+
+```nohighlight
+journalctl -u chrony
+```
+
+### DNS (bind9)
+
+For the snap, use:: 
+
+```nohighlight
+less /var/snap/maas/common/log/named.log
+```
+
+For the debian packages, use: 
+
+```nohighlight
+journalctl -u named
+```
+
+### Syslog (rsyslog)
+
+For the snap, use::
+
+```nohighlight
+less /var/snap/maas/common/log/rsyslog.log
+```
+
+```nohighlight
+less /var/snap/maas/common/log/rsyslog/MACHINE_HOSTNAME/DATE/messages
+```
+
+For the debian packages, use:
+
+```nohighlight
+journalctl -u maas-syslog
+```
+```nohighlight
+less /var/log/maas/rsyslog/MACHINE_HOSTNAME/DATE/messages
+```
+
+### DHCP (dhcpd, dhcpd6)
+
+For the snap, use:: 
+
+```nohighlight
+less /var/snap/maas/common/log/dhcpd.log
+```
+
+For the debian packages, use: 
+
+```nohighlight
+journalctl -u dhcpd
+```
