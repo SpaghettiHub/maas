@@ -31,7 +31,12 @@ from maasserver.models.node import RegionController
 from maasserver.models.timestampedmodel import TimestampedModel
 from maasserver.utils.bootresource import LocalBootResourceFile
 from maasserver.workflow import execute_workflow
-from maasserver.workflow.bootresource import ResourceDeleteParam
+from maasserver.workflow.bootresource import (
+    ResourceDeleteParam,
+    ResourceIdentifier,
+)
+
+SHORTSHA256_MIN_PREFIX_LEN = 7
 
 
 class BootResourceFileManager(Manager):
@@ -41,9 +46,40 @@ class BootResourceFileManager(Manager):
             execute_workflow(
                 "delete-bootresource",
                 f"bootresource-del:{rfile.id}",
-                ResourceDeleteParam(files=[rfile.sha256]),
+                ResourceDeleteParam(
+                    files=[
+                        ResourceIdentifier(
+                            sha256=str(rfile.sha256),
+                            filename_on_disk=str(rfile.filename_on_disk),
+                        )
+                    ]
+                ),
             )
         rfile.bootresourcefilesync_set.all().delete()
+
+    def calculate_filename_on_disk(self, sha256: str):
+        # If a file with the same sha already exists, then we have to use the same filename_on_disk id.
+        matching_resource = BootResourceFile.objects.filter(
+            sha256=sha256
+        ).first()
+        if matching_resource:
+            return matching_resource.filename_on_disk
+
+        collisions = list(
+            BootResourceFile.objects.filter(
+                filename_on_disk__startswith=sha256[
+                    :SHORTSHA256_MIN_PREFIX_LEN
+                ]
+            ).values_list("filename_on_disk", flat=True)
+        )
+        if len(collisions) > 0:
+            # Keep adding chars until we don't have a collision. We are going to find a suitable prefix here since we
+            # have already excluded that there is an image with the same full sha.
+            for i in range(SHORTSHA256_MIN_PREFIX_LEN + 1, 64):
+                if all(not f.startswith(sha256[:i]) for f in collisions):
+                    return sha256[:i]
+        else:
+            return sha256[:SHORTSHA256_MIN_PREFIX_LEN]
 
     def filestore_remove_files(self, rfile_qs: QuerySet):
         other_res = self.filter(sha256=OuterRef("sha256")).exclude(
@@ -123,6 +159,8 @@ class BootResourceFile(CleanSave, TimestampedModel):
 
     sha256 = CharField(max_length=64, blank=True)
 
+    filename_on_disk = CharField(max_length=64, blank=True)
+
     size = BigIntegerField(default=0)
 
     @property
@@ -166,7 +204,9 @@ class BootResourceFile(CleanSave, TimestampedModel):
         ]
 
     def local_file(self) -> LocalBootResourceFile:
-        return LocalBootResourceFile(self.sha256, self.size)
+        return LocalBootResourceFile(
+            self.sha256, self.filename_on_disk, self.size
+        )
 
     def __str__(self):
         return f"<BootResourceFile {self.filename}/{self.filetype}>"

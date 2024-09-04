@@ -37,6 +37,7 @@ class ResourceDownloadParam:
     rfile_ids: list[int]
     source_list: list[str]
     sha256: str
+    filename_on_disk: str
     total_size: int
     size: int = 0
     force: bool = False
@@ -70,8 +71,14 @@ class SyncRequestParam:
 
 
 @dataclass
+class ResourceIdentifier:
+    sha256: str
+    filename_on_disk: str
+
+
+@dataclass
 class ResourceDeleteParam:
-    files: Sequence[str]
+    files: Sequence[ResourceIdentifier]
 
 
 @dataclass
@@ -167,7 +174,7 @@ class BootResourcesActivity(MAASAPIClient):
         """
 
         lfile = LocalBootResourceFile(
-            param.sha256, param.total_size, param.size
+            param.sha256, param.filename_on_disk, param.total_size, param.size
         )
 
         url = param.source_list[
@@ -251,7 +258,9 @@ class BootResourcesActivity(MAASAPIClient):
         """Delete files from disk"""
         for file in param.files:
             activity.logger.debug(f"attempt to delete {file}")
-            lfile = LocalBootResourceFile(file, 0)
+            lfile = LocalBootResourceFile(
+                file.sha256, file.filename_on_disk, 0
+            )
             try:
                 while not lfile.acquire_lock(try_lock=True):
                     activity.heartbeat()
