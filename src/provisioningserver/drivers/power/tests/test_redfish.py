@@ -612,18 +612,15 @@ class TestRedfishPowerDriver(MAASTestCase):
         mock_redfish_request = self.patch(driver, "redfish_request")
         mock_redfish_request.return_value = (SAMPLE_JSON_SYSTEMS, None)
         mock_set_pxe_boot = self.patch(driver, "set_pxe_boot")
-        mock_power_query = self.patch(driver, "power_query")
+        mock_power_query = self.patch(driver, "_power_query")
         mock_power_query.return_value = "on"
         mock_power = self.patch(driver, "power")
 
         yield driver.power_on(node_id, context)
-        self.assertThat(
-            mock_set_pxe_boot, MockCalledOnceWith(url, node_id, headers)
-        )
-        self.assertThat(mock_power_query, MockCalledOnceWith(node_id, context))
-        self.assertThat(
-            mock_power,
-            MockCallsMatch(
+        mock_set_pxe_boot.assert_called_once_with(url, node_id, headers)
+        mock_power_query.assert_called_once_with(url, node_id, headers)
+        mock_power.assert_has_calls(
+            [
                 call("ForceOff", url, node_id, headers),
                 call("On", url, node_id, headers),
             ),
@@ -639,7 +636,7 @@ class TestRedfishPowerDriver(MAASTestCase):
         mock_redfish_request = self.patch(driver, "redfish_request")
         mock_redfish_request.return_value = (SAMPLE_JSON_SYSTEMS, None)
         mock_set_pxe_boot = self.patch(driver, "set_pxe_boot")
-        mock_power_query = self.patch(driver, "power_query")
+        mock_power_query = self.patch(driver, "_power_query")
         mock_power_query.return_value = "on"
         mock_power = self.patch(driver, "power")
 
@@ -661,7 +658,7 @@ class TestRedfishPowerDriver(MAASTestCase):
         mock_redfish_request = self.patch(driver, "redfish_request")
         mock_redfish_request.return_value = (SAMPLE_JSON_SYSTEMS, None)
         mock_set_pxe_boot = self.patch(driver, "set_pxe_boot")
-        mock_power_query = self.patch(driver, "power_query")
+        mock_power_query = self.patch(driver, "_power_query")
         mock_power_query.return_value = "off"
         mock_power = self.patch(driver, "power")
 
@@ -684,19 +681,59 @@ class TestRedfishPowerDriver(MAASTestCase):
             (SAMPLE_JSON_SYSTEMS, None),
             (NODE_POWERED_ON, None),
         ]
-        power_state = yield driver.power_query(system_id, context)
-        self.assertEqual(power_state, power_change.lower())
+        for value, expected in param_tests:
+            NODE_POWERED["PowerState"] = value
+            mock_redfish_request.side_effect = [
+                (SAMPLE_JSON_SYSTEMS, None),
+                (NODE_POWERED, None),
+            ]
+            power_state = yield driver.power_query(system_id, context)
+            self.assertEqual(power_state, expected)
 
     @inlineCallbacks
-    def test_power_query_queries_off(self):
+    def test_power_query_retriable_status_success_after_retries(self):
         driver = RedfishPowerDriver()
-        power_change = "Off"
-        system_id = factory.make_name("system_id")
         context = make_context()
+        url = driver.get_url(context)
+        node_id = b"1"
+        headers = driver.make_auth_headers(**context)
         mock_redfish_request = self.patch(driver, "redfish_request")
-        mock_redfish_request.side_effect = [
-            (SAMPLE_JSON_SYSTEMS, None),
-            (SAMPLE_JSON_SYSTEM, None),
-        ]
-        power_state = yield driver.power_query(system_id, context)
-        self.assertEqual(power_state, power_change.lower())
+        NODE_RESET = deepcopy(SAMPLE_JSON_SYSTEM)
+        NODE_RESET["PowerState"] = "Reset"
+        NODE_UNKNOWN = deepcopy(SAMPLE_JSON_SYSTEM)
+        NODE_UNKNOWN["PowerState"] = "Unknown"
+        NODE_WITHOUT_POWER_STATE = deepcopy(SAMPLE_JSON_SYSTEM)
+        del NODE_WITHOUT_POWER_STATE["PowerState"]
+        NODE_NULL = deepcopy(SAMPLE_JSON_SYSTEM)
+        NODE_NULL["PowerState"] = None
+        # 7 consequent responses with the Reset, Unknown and Null status, the 8th returns Off.
+        redfish_responses = (
+            [(NODE_RESET, None)] * 2
+            + [(NODE_UNKNOWN, None)] * 2
+            + [(NODE_WITHOUT_POWER_STATE, None)] * 2
+            + [(NODE_NULL, None)] * 1
+            + [(SAMPLE_JSON_SYSTEM, None)]
+        )
+        mock_redfish_request.side_effect = redfish_responses
+
+        power_state = yield driver._power_query(url, node_id, headers)
+        self.assertEqual(power_state, POWER_STATE.OFF)
+        self.assertEqual(len(mock_redfish_request.mock_calls), 8)
+
+    @inlineCallbacks
+    def test_power_query_retriable_status_fail_after_retries(self):
+        driver = RedfishPowerDriver()
+        context = make_context()
+        url = driver.get_url(context)
+        node_id = b"1"
+        headers = driver.make_auth_headers(**context)
+        mock_redfish_request = self.patch(driver, "redfish_request")
+        NODE_RESET = deepcopy(SAMPLE_JSON_SYSTEM)
+        NODE_RESET["PowerState"] = "Reset"
+        mock_redfish_request.side_effect = lambda *args, **kwargs: (
+            NODE_RESET,
+            None,
+        )
+
+        power_state = yield driver._power_query(url, node_id, headers)
+        self.assertEqual(power_state, POWER_STATE.ERROR)
