@@ -20,7 +20,6 @@ from maasservicelayer.exceptions.constants import (
 from maasservicelayer.models.base import ListResult
 from maasservicelayer.models.zones import Zone
 from maasservicelayer.services import (
-    BmcService,
     NodesService,
     VmClustersService,
     ZonesService,
@@ -54,7 +53,9 @@ class TestZonesService:
         zones_repository.find_by_id = AsyncMock()
         zones_repository.find_by_id.side_effect = [TEST_ZONE, None]
         zones_service = ZonesService(
-            db_connection, zones_repository=zones_repository
+            db_connection,
+            zones_repository=zones_repository,
+            nodes_service=Mock(NodesService),
         )
 
         await zones_service.delete(TEST_ZONE.id)
@@ -68,7 +69,9 @@ class TestZonesService:
         zones_repository.find_by_id = AsyncMock()
         zones_repository.find_by_id.side_effect = [TEST_ZONE, None]
         zones_service = ZonesService(
-            db_connection, zones_repository=zones_repository
+            db_connection,
+            zones_repository=zones_repository,
+            nodes_service=Mock(NodesService),
         )
 
         Zone.etag = Mock()
@@ -83,7 +86,9 @@ class TestZonesService:
         zones_repository.find_by_id = AsyncMock()
         zones_repository.find_by_id.return_value = TEST_ZONE
         zones_service = ZonesService(
-            db_connection, zones_repository=zones_repository
+            db_connection,
+            zones_repository=zones_repository,
+            nodes_service=Mock(NodesService),
         )
 
         Zone.etag = Mock()
@@ -103,7 +108,9 @@ class TestZonesService:
         zones_repository.get_default_zone = AsyncMock()
         zones_repository.get_default_zone.return_value = DEFAULT_ZONE
         zones_service = ZonesService(
-            db_connection, zones_repository=zones_repository
+            db_connection,
+            zones_repository=zones_repository,
+            nodes_service=Mock(NodesService),
         )
 
         with pytest.raises(BadRequestException) as excinfo:
@@ -119,8 +126,7 @@ class TestZonesService:
         db_connection = Mock(AsyncConnection)
         nodes_service_mock = Mock(NodesService)
         nodes_service_mock.move_to_zone = AsyncMock()
-        bmc_service_mock = Mock(BmcService)
-        bmc_service_mock.move_to_zone = AsyncMock()
+        nodes_service_mock.move_bmcs_to_zone = AsyncMock()
         vmclusters_service_mock = Mock(VmClustersService)
         vmclusters_service_mock.move_to_zone = AsyncMock()
         zones_repository = Mock(ZonesRepository)
@@ -134,7 +140,6 @@ class TestZonesService:
         zones_service = ZonesService(
             db_connection,
             nodes_service=nodes_service_mock,
-            bmc_service=bmc_service_mock,
             vmcluster_service=vmclusters_service_mock,
             zones_repository=zones_repository,
         )
@@ -144,7 +149,7 @@ class TestZonesService:
         nodes_service_mock.move_to_zone.assert_called_once_with(
             TEST_ZONE.id, DEFAULT_ZONE.id
         )
-        bmc_service_mock.move_to_zone.assert_called_once_with(
+        nodes_service_mock.move_bmcs_to_zone.assert_called_once_with(
             TEST_ZONE.id, DEFAULT_ZONE.id
         )
         vmclusters_service_mock.move_to_zone.assert_called_once_with(
@@ -160,6 +165,7 @@ class TestZonesService:
         resource_pools_service = ZonesService(
             connection=db_connection,
             zones_repository=zones_repository_mock,
+            nodes_service=Mock(NodesService),
         )
         query_mock = Mock(FilterQuery)
         resource_pools_list = await resource_pools_service.list(
