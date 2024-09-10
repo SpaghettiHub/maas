@@ -17,17 +17,17 @@ package dhcp
 
 import (
 	"context"
-	"net/http"
 	"time"
 
 	"go.temporal.io/sdk/activity"
 	tworkflow "go.temporal.io/sdk/workflow"
+	"maas.io/core/src/maasagent/internal/apiclient"
 )
 
 // DHCPService is a service that is responsible for setting up DHCP on MAAS Agent.
 type DHCPService struct {
 	fatal    chan error
-	client   *http.Client
+	client   *apiclient.APIClient
 	systemID string
 	running  bool
 }
@@ -46,9 +46,9 @@ func NewDHCPService(systemID string, options ...DHCPServiceOption) *DHCPService 
 	return s
 }
 
-// WithHTTPClient allows setting HTTP client that will be used for communication
-// with MAAS Region Controller.
-func WithHTTPClient(c *http.Client) DHCPServiceOption {
+// WithAPIClient allows setting internal API client that will be used for
+// communication with MAAS Region Controller.
+func WithAPIClient(c *apiclient.APIClient) DHCPServiceOption {
 	return func(s *DHCPService) {
 		s.client = c
 	}
