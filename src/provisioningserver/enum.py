@@ -3,6 +3,8 @@
 
 """Enumerations meaningful to the rack contoller (and possibly the region)."""
 
+from typing import Callable, cast
+
 
 def enum_choices(enum, transform=lambda value: value):
     """Return sequence of tuples for Django's `choices` field from an enum-like class.
@@ -59,3 +61,15 @@ class LIBVIRT_NETWORK:
 
 
 LIBVIRT_NETWORK_CHOICES = enum_choices(LIBVIRT_NETWORK)
+
+
+class POWER_STATE:
+    ON = "on"  # Node is on
+    OFF = "off"  # Node is off
+    UNKNOWN = "unknown"  # Node power state is unknown
+    ERROR = "error"  # Error getting the node power state
+
+
+POWER_STATE_CHOICES = enum_choices(
+    POWER_STATE, transform=cast(Callable[[str], str], str.capitalize)
+)

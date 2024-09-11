@@ -22,12 +22,7 @@ from maasserver.compose_preseed import (
     compose_preseed,
     get_apt_proxy,
 )
-from maasserver.enum import (
-    NODE_STATUS,
-    NODE_STATUS_CHOICES,
-    POWER_STATE,
-    PRESEED_TYPE,
-)
+from maasserver.enum import NODE_STATUS, NODE_STATUS_CHOICES, PRESEED_TYPE
 from maasserver.models import NodeKey, PackageRepository
 from maasserver.models.config import Config
 from maasserver.rpc.testing.fixtures import RunningClusterRPCFixture
@@ -37,6 +32,7 @@ from maasserver.testing.testcase import MAASServerTestCase
 from maastesting.http import make_HttpRequest
 from maastesting.matchers import MockCalledOnceWith
 from provisioningserver.drivers.osystem import BOOT_IMAGE_PURPOSE
+from provisioningserver.enum import POWER_STATE
 from provisioningserver.rpc.exceptions import (
     NoConnectionsAvailable,
     NoSuchOperatingSystem,

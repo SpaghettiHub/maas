@@ -39,7 +39,6 @@ from maasserver.enum import (
     NODE_STATUS,
     NODE_TYPE,
     PARTITION_TABLE_TYPE,
-    POWER_STATE,
     RDNS_MODE,
 )
 from maasserver.fields import LargeObjectFile
@@ -144,6 +143,7 @@ from metadataserver.enum import (
 from metadataserver.fields import Bin
 from provisioningserver.boot import BootMethodRegistry
 from provisioningserver.drivers.osystem import OperatingSystemRegistry
+from provisioningserver.enum import POWER_STATE
 from provisioningserver.security import to_hex
 from provisioningserver.utils.enum import map_enum
 from provisioningserver.utils.network import inet_ntop

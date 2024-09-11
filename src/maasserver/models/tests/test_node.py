@@ -64,7 +64,6 @@ from maasserver.enum import (
     NODE_TYPE,
     NODE_TYPE_CHOICES,
     PARTITION_TABLE_TYPE,
-    POWER_STATE,
     SERVICE_STATUS,
 )
 from maasserver.exceptions import (
@@ -186,6 +185,7 @@ from metadataserver.enum import (
 from provisioningserver.drivers.pod import Capabilities, DiscoveredPodHints
 from provisioningserver.drivers.power.ipmi import IPMI_BOOT_TYPE
 from provisioningserver.drivers.power.registry import PowerDriverRegistry
+from provisioningserver.enum import POWER_STATE
 from provisioningserver.events import EVENT_DETAILS, EVENT_TYPES
 from provisioningserver.refresh.node_info_scripts import (
     COMMISSIONING_OUTPUT_NAME,

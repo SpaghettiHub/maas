@@ -13,13 +13,14 @@ import yaml
 
 from maasserver.clusterrpc.osystems import get_preseed_data
 from maasserver.dns.config import get_resource_name_for_subnet
-from maasserver.enum import NODE_STATUS, POWER_STATE, PRESEED_TYPE
+from maasserver.enum import NODE_STATUS, PRESEED_TYPE
 from maasserver.models import PackageRepository
 from maasserver.models.config import Config
 from maasserver.models.subnet import get_boot_rackcontroller_ips, Subnet
 from maasserver.node_status import COMMISSIONING_LIKE_STATUSES
 from maasserver.server_address import get_maas_facing_server_host
 from maasserver.utils import get_default_region_ip, get_remote_ip
+from provisioningserver.enum import POWER_STATE
 from provisioningserver.rpc.exceptions import (
     NoConnectionsAvailable,
     NoSuchOperatingSystem,
