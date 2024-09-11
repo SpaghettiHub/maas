@@ -24,7 +24,6 @@ from twisted.internet.defer import (
 )
 from twisted.internet.error import ConnectError, ConnectionClosed, ProcessDone
 from twisted.internet.threads import deferToThread
-from twisted.protocols import amp
 from twisted.python.reflect import fullyQualifiedName
 from twisted.web.client import Agent, readBody
 from twisted.web.http_headers import Headers
@@ -69,10 +68,7 @@ from provisioningserver.rpc.common import (
 from provisioningserver.rpc.connectionpool import ConnectionPool
 from provisioningserver.rpc.exceptions import CannotConfigureDHCP
 from provisioningserver.rpc.interfaces import IConnectionToRegion
-from provisioningserver.rpc.power import (
-    get_power_state,
-    maybe_change_power_state,
-)
+from provisioningserver.rpc.power import get_power_state
 from provisioningserver.security import calculate_digest, fernet_decrypt_psk
 from provisioningserver.service_monitor import service_monitor
 from provisioningserver.utils import sudo
@@ -299,41 +295,6 @@ class Cluster(SecuredRPCProtocol):
             )
         }
 
-    @cluster.PowerOn.responder
-    def power_on(self, system_id, hostname, power_type, context):
-        """Turn a node on."""
-        d = maybe_change_power_state(
-            system_id, hostname, power_type, power_change="on", context=context
-        )
-        d.addCallback(lambda _: {})
-        return d
-
-    @cluster.PowerOff.responder
-    def power_off(self, system_id, hostname, power_type, context):
-        """Turn a node off."""
-        d = maybe_change_power_state(
-            system_id,
-            hostname,
-            power_type,
-            power_change="off",
-            context=context,
-        )
-        d.addCallback(lambda _: {})
-        return d
-
-    @cluster.PowerCycle.responder
-    def power_cycle(self, system_id, hostname, power_type, context):
-        """Power cycle a node."""
-        d = maybe_change_power_state(
-            system_id,
-            hostname,
-            power_type,
-            power_change="cycle",
-            context=context,
-        )
-        d.addCallback(lambda _: {})
-        return d
-
     @cluster.PowerQuery.responder
     def power_query(self, system_id, hostname, power_type, context):
         d = get_power_state(system_id, hostname, power_type, context=context)
@@ -507,22 +468,6 @@ class Cluster(SecuredRPCProtocol):
         )
         d.addCallback(lambda ret: {"errors": ret} if ret is not None else {})
         return d
-
-    @amp.StartTLS.responder
-    def get_tls_parameters(self):
-        """get_tls_parameters()
-
-        Implementation of
-        :py:class:`~twisted.protocols.amp.StartTLS`.
-        """
-        try:
-            from provisioningserver.rpc.testing import tls
-        except ImportError:
-            # This is not a development/test environment.
-            # XXX: Return production TLS parameters.
-            return {}
-        else:
-            return tls.get_tls_parameters_for_cluster()
 
     @cluster.AddChassis.responder
     def add_chassis(
@@ -1041,28 +986,6 @@ class ClusterClient(Cluster):
     def connectionLost(self, reason):
         self.service.remove_connection(self.eventloop, self)
         super().connectionLost(reason)
-
-    @inlineCallbacks
-    def secureConnection(self):
-        yield self.callRemote(amp.StartTLS, **self.get_tls_parameters())
-
-        # For some weird reason (it's mentioned in Twisted's source),
-        # TLS negotiation does not complete until we do something with
-        # the connection. Here we check that the remote event-loop is
-        # who we expected it to be.
-        response = yield self.callRemote(region.Identify)
-        remote_name = response.get("ident")
-        if remote_name != self.eventloop:
-            log.msg(
-                "The remote event-loop identifies itself as %s, but "
-                "%s was expected." % (remote_name, self.eventloop)
-            )
-            self.transport.loseConnection()
-            return
-
-        # We should now have a full set of parameters for the transport.
-        log.msg("Host certificate: %r" % self.hostCertificate)
-        log.msg("Peer certificate: %r" % self.peerCertificate)
 
 
 class ClusterClientService(TimerService):
