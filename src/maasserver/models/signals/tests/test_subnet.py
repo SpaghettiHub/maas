@@ -3,8 +3,7 @@
 
 """Test the behaviour of subnet signals."""
 
-
-from maasserver.enum import IPADDRESS_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
 from maasserver.testing.factory import factory
 from maasserver.testing.testcase import MAASServerTestCase
 

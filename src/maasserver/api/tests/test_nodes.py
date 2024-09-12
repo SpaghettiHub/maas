@@ -12,16 +12,16 @@ from django.conf import settings
 from django.http import QueryDict
 from django.urls import reverse
 
-from maasserver.api import auth
-from maasserver.api import nodes as nodes_module
-from maasserver.api.utils import get_overridden_query_dict
-from maasserver.enum import (
-    INTERFACE_TYPE,
+from maascommon.enums.interface import INTERFACE_TYPE
+from maascommon.enums.node import (
     NODE_STATUS,
     NODE_STATUS_CHOICES,
     NODE_TYPE,
     NODE_TYPE_CHOICES,
 )
+from maasserver.api import auth
+from maasserver.api import nodes as nodes_module
+from maasserver.api.utils import get_overridden_query_dict
 from maasserver.exceptions import MAASAPIValidationError
 from maasserver.testing.api import APITestCase
 from maasserver.testing.factory import factory

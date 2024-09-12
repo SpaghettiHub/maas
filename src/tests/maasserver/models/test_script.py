@@ -1,12 +1,13 @@
 from django.core.exceptions import ValidationError
 import pytest
 
+from maascommon.enums.node import HARDWARE_TYPE
 from maasserver.models.script import (
     translate_hardware_type,
     translate_script_parallel,
     translate_script_type,
 )
-from metadataserver.enum import HARDWARE_TYPE, SCRIPT_PARALLEL, SCRIPT_TYPE
+from metadataserver.enum import SCRIPT_PARALLEL, SCRIPT_TYPE
 
 
 def iter_test_values(*values):

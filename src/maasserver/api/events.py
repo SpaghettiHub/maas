@@ -9,10 +9,10 @@ import urllib.request
 from django.urls import reverse
 from formencode.validators import Int
 
+from maascommon.enums.node import NODE_TYPE
 from maasserver.api.nodes import filtered_nodes_list_from_request
 from maasserver.api.support import operation, OperationsHandler
 from maasserver.api.utils import get_optional_param, get_overridden_query_dict
-from maasserver.enum import NODE_TYPE
 from maasserver.exceptions import MAASAPIBadRequest
 from maasserver.models import Event
 from maasserver.models.eventtype import LOGGING_LEVELS, LOGGING_LEVELS_BY_NAME

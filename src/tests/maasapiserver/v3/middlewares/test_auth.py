@@ -31,6 +31,7 @@ from maasapiserver.v3.middlewares.auth import (
     V3AuthenticationMiddleware,
 )
 from maasapiserver.v3.middlewares.services import ServicesMiddleware
+from maascommon.enums.rbac import RbacPermission
 from maasservicelayer.auth.external_auth import (
     ExternalAuthConfig,
     ExternalAuthType,
@@ -50,7 +51,6 @@ from maasservicelayer.auth.macaroons.models.responses import (
 )
 from maasservicelayer.constants import NODE_INIT_USERNAME, WORKER_USERNAME
 from maasservicelayer.db import Database
-from maasservicelayer.enums.rbac import RbacPermission
 from maasservicelayer.exceptions.catalog import (
     DischargeRequiredException,
     ForbiddenException,

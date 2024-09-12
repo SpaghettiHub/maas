@@ -16,12 +16,9 @@ from twisted.internet.defer import (
     inlineCallbacks,
 )
 
-from maasserver.enum import (
-    INTERFACE_TYPE,
-    IPADDRESS_TYPE,
-    IPRANGE_TYPE,
-    RDNS_MODE,
-)
+from maascommon.enums.interface import INTERFACE_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maasserver.enum import IPRANGE_TYPE, RDNS_MODE
 from maasserver.models.config import Config
 from maasserver.models.dnspublication import DNSPublication
 from maasserver.models.interface import (

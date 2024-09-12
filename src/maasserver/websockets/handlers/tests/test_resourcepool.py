@@ -6,7 +6,7 @@
 
 from django.core.exceptions import ValidationError
 
-from maasserver.enum import NODE_STATUS
+from maascommon.enums.node import NODE_STATUS
 from maasserver.models.resourcepool import ResourcePool
 from maasserver.rbac import ALL_RESOURCES, FakeRBACClient, rbac
 from maasserver.secrets import SecretManager

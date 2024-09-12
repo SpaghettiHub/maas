@@ -5,12 +5,16 @@ import random
 
 from django.core.exceptions import ValidationError
 
-from maasserver.enum import BRIDGE_TYPE_CHOICES, INTERFACE_TYPE, IPADDRESS_TYPE
-from maasserver.forms.interface import (
-    AcquiredBridgeInterfaceForm,
+from maascommon.enums.interface import (
     BOND_LACP_RATE_CHOICES,
     BOND_MODE_CHOICES,
     BOND_XMIT_HASH_POLICY_CHOICES,
+    BRIDGE_TYPE_CHOICES,
+    INTERFACE_TYPE,
+)
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maasserver.forms.interface import (
+    AcquiredBridgeInterfaceForm,
     BondInterfaceForm,
     BridgeInterfaceForm,
     ControllerInterfaceForm,

@@ -18,7 +18,7 @@ from django.forms import (
 )
 from django.http import QueryDict
 
-from maasserver.enum import NODE_STATUS
+from maascommon.enums.node import NODE_STATUS
 from maasserver.models import Script
 from maasserver.node_action import get_node_action
 from maasserver.utils.forms import set_form_error

@@ -10,14 +10,10 @@ from operator import attrgetter
 from netaddr import IPAddress, IPNetwork
 import yaml
 
+from maascommon.enums.interface import BRIDGE_TYPE, INTERFACE_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_FAMILY, IPADDRESS_TYPE
+from maascommon.enums.node import NODE_STATUS
 from maasserver.dns.zonegenerator import get_dns_search_paths
-from maasserver.enum import (
-    BRIDGE_TYPE,
-    INTERFACE_TYPE,
-    IPADDRESS_FAMILY,
-    IPADDRESS_TYPE,
-    NODE_STATUS,
-)
 from maasserver.models import Interface
 from maasserver.models.staticipaddress import StaticIPAddress
 from maasserver.models.staticroute import StaticRoute

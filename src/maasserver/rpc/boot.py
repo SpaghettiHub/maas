@@ -11,9 +11,11 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import Q
 from netaddr import IPAddress
 
+from maascommon.enums.interface import INTERFACE_TYPE
+from maascommon.enums.node import NODE_STATUS
 from maasserver.compose_preseed import RSYSLOG_PORT
 from maasserver.dns.config import get_resource_name_for_subnet
-from maasserver.enum import BOOT_RESOURCE_FILE_TYPE, INTERFACE_TYPE
+from maasserver.enum import BOOT_RESOURCE_FILE_TYPE
 from maasserver.fields import normalise_macaddress
 from maasserver.models import (
     BootResource,
@@ -24,7 +26,6 @@ from maasserver.models import (
     Subnet,
     VLAN,
 )
-from maasserver.node_status import NODE_STATUS
 from maasserver.preseed import (
     compose_enlistment_preseed_url,
     compose_preseed_url,

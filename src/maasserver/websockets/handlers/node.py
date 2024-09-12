@@ -14,20 +14,24 @@ from django.core.exceptions import ValidationError
 from django.db.models import Prefetch, Subquery
 from lxml import etree
 
-from maasserver.enum import (
-    DEPLOYMENT_TARGET,
-    FILESYSTEM_FORMAT_TYPE_CHOICES,
-    FILESYSTEM_FORMAT_TYPE_CHOICES_DICT,
-    INTERFACE_TYPE,
-    IPADDRESS_TYPE,
+from maascommon.enums.interface import INTERFACE_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maascommon.enums.node import (
+    HARDWARE_TYPE,
     NODE_STATUS,
     NODE_STATUS_CHOICES_DICT,
     NODE_STATUS_SHORT_LABEL_CHOICES,
     NODE_TYPE,
+    NODE_TYPE_TO_LINK_TYPE,
     SIMPLIFIED_NODE_STATUS,
     SIMPLIFIED_NODE_STATUS_CHOICES_DICT,
     SIMPLIFIED_NODE_STATUS_LABEL_CHOICES,
     SIMPLIFIED_NODE_STATUSES_MAP_REVERSED,
+)
+from maasserver.enum import (
+    DEPLOYMENT_TARGET,
+    FILESYSTEM_FORMAT_TYPE_CHOICES,
+    FILESYSTEM_FORMAT_TYPE_CHOICES_DICT,
 )
 from maasserver.forms import list_all_usable_architectures
 from maasserver.forms.interface import (
@@ -91,7 +95,6 @@ from maasserver.websockets.handlers.timestampedmodel import (
     TimestampedModelHandler,
 )
 from metadataserver.enum import (
-    HARDWARE_TYPE,
     RESULT_TYPE,
     SCRIPT_STATUS,
     SCRIPT_STATUS_FAILED,
@@ -103,14 +106,6 @@ from provisioningserver.refresh.node_info_scripts import (
 )
 from provisioningserver.tags import merge_details_cleanly
 from provisioningserver.utils.enum import map_enum_reverse
-
-NODE_TYPE_TO_LINK_TYPE = {
-    NODE_TYPE.DEVICE: "device",
-    NODE_TYPE.MACHINE: "machine",
-    NODE_TYPE.RACK_CONTROLLER: "controller",
-    NODE_TYPE.REGION_CONTROLLER: "controller",
-    NODE_TYPE.REGION_AND_RACK_CONTROLLER: "controller",
-}
 
 
 def node_prefetch(queryset):

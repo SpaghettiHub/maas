@@ -20,7 +20,7 @@ do it, to ensure that the migrations meet validation requirements.)
 import datetime
 from textwrap import dedent
 
-from maasserver.enum import INTERFACE_TYPE
+from maascommon.enums.interface import INTERFACE_TYPE
 
 
 def find_macs_having_no_interfaces(MACAddress):

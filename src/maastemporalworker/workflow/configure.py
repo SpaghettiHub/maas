@@ -10,7 +10,7 @@ from sqlalchemy import or_, select
 from temporalio import activity, workflow
 from temporalio.common import RetryPolicy
 
-from maasserver.enum import NODE_TYPE
+from maascommon.enums.node import NODE_TYPE
 from maasservicelayer.db.tables import (
     InterfaceIPAddressTable,
     InterfaceTable,

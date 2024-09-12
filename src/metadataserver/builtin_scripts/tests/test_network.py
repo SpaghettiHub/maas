@@ -2,13 +2,9 @@ import json
 import random
 from unittest.mock import call
 
-from maasserver.enum import (
-    INTERFACE_TYPE,
-    IPADDRESS_TYPE,
-    NODE_STATUS,
-    NODE_STATUS_CHOICES,
-    NODE_TYPE,
-)
+from maascommon.enums.interface import INTERFACE_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maascommon.enums.node import NODE_STATUS, NODE_STATUS_CHOICES, NODE_TYPE
 from maasserver.models import Event, EventType
 from maasserver.models.config import Config
 from maasserver.models.fabric import Fabric

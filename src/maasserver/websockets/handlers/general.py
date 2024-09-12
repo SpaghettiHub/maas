@@ -8,14 +8,14 @@ from collections import OrderedDict
 
 import petname
 
-from maasserver.certificates import get_maas_certificate
-from maasserver.clusterrpc.driver_parameters import get_all_power_types
-from maasserver.enum import (
+from maascommon.enums.interface import (
     BOND_LACP_RATE_CHOICES,
     BOND_MODE_CHOICES,
     BOND_XMIT_HASH_POLICY_CHOICES,
-    NODE_TYPE,
 )
+from maascommon.enums.node import NODE_TYPE
+from maasserver.certificates import get_maas_certificate
+from maasserver.clusterrpc.driver_parameters import get_all_power_types
 from maasserver.models.bootresource import BootResource
 from maasserver.models.config import Config
 from maasserver.models.controllerinfo import (

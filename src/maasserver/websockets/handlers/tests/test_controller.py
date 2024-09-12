@@ -2,8 +2,8 @@
 # GNU Affero General Public License version 3 (see the file LICENSE).
 
 
+from maascommon.enums.node import NODE_TYPE
 from maasserver.config import RegionConfiguration
-from maasserver.enum import NODE_TYPE
 from maasserver.forms import ControllerForm
 from maasserver.models import Controller, ControllerInfo, VLAN
 from maasserver.secrets import SecretManager

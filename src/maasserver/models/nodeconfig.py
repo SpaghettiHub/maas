@@ -1,8 +1,8 @@
 from django.db.models import CASCADE, ForeignKey, TextField
 
+from maascommon.enums.base import enum_choices
 from maasserver.models.cleansave import CleanSave
 from maasserver.models.timestampedmodel import TimestampedModel
-from provisioningserver.enum import enum_choices
 
 
 class NODE_CONFIG_TYPE:

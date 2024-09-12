@@ -1,6 +1,6 @@
 from typing import Any
 
-from maasservicelayer.enums.power_drivers import PowerTypeEnum
+from maascommon.enums.power_driver import PowerTypeEnum
 from maasservicelayer.models.bmc import Bmc
 from maasservicelayer.models.machines import Machine
 from maasservicelayer.models.users import User

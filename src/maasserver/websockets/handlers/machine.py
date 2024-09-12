@@ -24,10 +24,11 @@ from django.db.models import (
 )
 from django.db.models.functions import Concat
 
-from maasserver.enum import (
-    BMC_TYPE,
-    INTERFACE_LINK_TYPE,
-    IPADDRESS_TYPE,
+from maascommon.enums.bmc import BMC_TYPE
+from maascommon.enums.interface import INTERFACE_LINK_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maascommon.enums.node import (
+    HARDWARE_TYPE,
     NODE_STATUS,
     NODE_STATUS_CHOICES,
     SIMPLIFIED_NODE_STATUS,
@@ -93,7 +94,7 @@ from maasserver.websockets.base import (
     HandlerValidationError,
 )
 from maasserver.websockets.handlers.node import node_prefetch, NodeHandler
-from metadataserver.enum import HARDWARE_TYPE, RESULT_TYPE
+from metadataserver.enum import RESULT_TYPE
 from provisioningserver.certificates import Certificate
 from provisioningserver.enum import POWER_STATE
 from provisioningserver.logger import LegacyLogger

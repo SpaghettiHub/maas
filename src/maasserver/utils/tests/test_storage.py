@@ -4,11 +4,11 @@
 """Tests for storage utilities."""
 
 
+from maascommon.enums.node import NODE_STATUS
 from maasserver.enum import (
     FILESYSTEM_GROUP_RAID_TYPE_CHOICES,
     FILESYSTEM_GROUP_TYPE,
     FILESYSTEM_TYPE,
-    NODE_STATUS,
 )
 from maasserver.testing.factory import factory
 from maasserver.testing.testcase import MAASServerTestCase

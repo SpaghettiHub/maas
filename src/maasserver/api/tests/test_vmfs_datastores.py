@@ -10,7 +10,8 @@ import uuid
 
 from django.urls import reverse
 
-from maasserver.enum import FILESYSTEM_GROUP_TYPE, NODE_STATUS
+from maascommon.enums.node import NODE_STATUS
+from maasserver.enum import FILESYSTEM_GROUP_TYPE
 from maasserver.models.filesystemgroup import VMFS
 from maasserver.models.partition import MIN_PARTITION_SIZE
 from maasserver.models.partitiontable import PARTITION_TABLE_EXTRA_SPACE

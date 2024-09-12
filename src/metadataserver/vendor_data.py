@@ -16,8 +16,8 @@ from netaddr import IPAddress
 import tempita
 import yaml
 
+from maascommon.enums.interface import BRIDGE_TYPE, INTERFACE_TYPE
 from maasserver import ntp
-from maasserver.enum import BRIDGE_TYPE, INTERFACE_TYPE
 from maasserver.models import Config, NodeKey, NodeMetadata
 from maasserver.models.controllerinfo import get_target_version
 from maasserver.node_status import COMMISSIONING_LIKE_STATUSES

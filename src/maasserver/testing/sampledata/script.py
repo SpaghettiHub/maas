@@ -1,4 +1,4 @@
-from maasserver.enum import NODE_STATUS
+from maascommon.enums.node import NODE_STATUS
 from maasserver.models import ScriptSet
 from provisioningserver.refresh.node_info_scripts import (
     COMMISSIONING_OUTPUT_NAME,

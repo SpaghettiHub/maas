@@ -18,13 +18,13 @@ from django.conf import settings
 from django.urls import reverse
 import yaml
 
+from maascommon.enums.node import NODE_STATUS
 from maasserver import preseed as preseed_module
 from maasserver.compose_preseed import get_archive_config, make_clean_repo_name
 from maasserver.enum import (
     BOOT_RESOURCE_FILE_TYPE,
     BOOT_RESOURCE_TYPE,
     FILESYSTEM_TYPE,
-    NODE_STATUS,
     PRESEED_TYPE,
 )
 from maasserver.exceptions import MissingBootImage

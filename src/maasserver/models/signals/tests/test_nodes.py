@@ -4,8 +4,8 @@
 
 import random
 
-from maasserver.enum import (
-    IPADDRESS_TYPE,
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maascommon.enums.node import (
     NODE_STATUS,
     NODE_STATUS_CHOICES,
     NODE_TYPE,

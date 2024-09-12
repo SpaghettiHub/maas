@@ -11,8 +11,8 @@ import random
 from django.conf import settings
 from django.urls import reverse
 
+from maascommon.enums.node import NODE_STATUS
 from maasserver.api.dnsresources import get_dnsresource_queryset
-from maasserver.enum import NODE_STATUS
 from maasserver.models.dnsdata import DNSData
 from maasserver.models.dnsresource import DNSResource
 from maasserver.models.domain import Domain

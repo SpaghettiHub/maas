@@ -6,8 +6,8 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, Field, root_validator, validator
 
+from maascommon.enums.rbac import RbacPermission
 from maasservicelayer.auth.macaroons.models.base import Resource
-from maasservicelayer.enums.rbac import RbacPermission
 
 
 class UserDetailsResponse(BaseModel):

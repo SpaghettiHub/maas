@@ -7,14 +7,9 @@ import random
 
 from django.urls import reverse
 
-from maasserver.enum import (
-    INTERFACE_LINK_TYPE,
-    INTERFACE_TYPE,
-    IPADDRESS_TYPE,
-    NODE_STATUS,
-    NODE_STATUS_CHOICES,
-    NODE_TYPE,
-)
+from maascommon.enums.interface import INTERFACE_LINK_TYPE, INTERFACE_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maascommon.enums.node import NODE_STATUS, NODE_STATUS_CHOICES, NODE_TYPE
 from maasserver.models import Interface
 from maasserver.models.vlan import DEFAULT_MTU
 from maasserver.testing.api import APITestCase, APITransactionTestCase

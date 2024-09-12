@@ -3,8 +3,7 @@
 
 """Test Zone objects."""
 
-
-from maasserver.enum import NODE_TYPE
+from maascommon.enums.node import NODE_TYPE
 from maasserver.models.defaultresource import DefaultResource
 from maasserver.models.zone import Zone
 from maasserver.testing.factory import factory

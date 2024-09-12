@@ -8,6 +8,7 @@ from macaroonbakery import bakery
 from macaroonbakery.httpbakery.agent import Agent, AuthInfo
 import pytest
 
+from maascommon.enums.rbac import RbacPermission, RbacResourceType
 from maasservicelayer.auth.macaroons.macaroon_client import (
     CandidAsyncClient,
     RbacAsyncClient,
@@ -27,7 +28,6 @@ from maasservicelayer.auth.macaroons.models.responses import (
     UpdateResourcesResponse,
     UserDetailsResponse,
 )
-from maasservicelayer.enums.rbac import RbacPermission, RbacResourceType
 
 
 @pytest.fixture

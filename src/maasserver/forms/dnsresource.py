@@ -10,7 +10,7 @@ from django import forms
 from netaddr import IPAddress
 from netaddr.core import AddrFormatError
 
-from maasserver.enum import IPADDRESS_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
 from maasserver.forms import APIEditMixin, MAASModelForm
 from maasserver.models.dnsresource import (
     DNSResource,

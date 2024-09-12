@@ -11,7 +11,8 @@ import time
 from django.utils import timezone
 from netaddr import IPAddress
 
-from maasserver.enum import INTERFACE_TYPE, IPADDRESS_FAMILY, IPADDRESS_TYPE
+from maascommon.enums.interface import INTERFACE_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_FAMILY, IPADDRESS_TYPE
 from maasserver.fields import normalise_macaddress
 from maasserver.models import DNSResource
 from maasserver.models.interface import UnknownInterface

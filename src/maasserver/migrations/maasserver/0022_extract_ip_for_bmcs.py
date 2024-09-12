@@ -2,7 +2,7 @@ import re
 
 from django.db import connection, migrations
 
-from maasserver.enum import IPADDRESS_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
 from maasserver.models import timestampedmodel
 from provisioningserver.drivers.power.registry import PowerDriverRegistry
 

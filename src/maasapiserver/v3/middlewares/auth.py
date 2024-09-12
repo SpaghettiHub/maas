@@ -15,6 +15,7 @@ from starlette.types import ASGIApp
 
 from maasapiserver.common.utils.http import extract_absolute_uri
 from maasapiserver.v3.constants import V3_API_PREFIX
+from maascommon.enums.rbac import RbacPermission
 from maasserver.macaroons import _get_macaroon_caveats_ops
 from maasservicelayer.auth.external_auth import (
     ExternalAuthConfig,
@@ -36,7 +37,6 @@ from maasservicelayer.db.repositories.users import (
     UserCreateOrUpdateResourceBuilder,
     UserProfileCreateOrUpdateResourceBuilder,
 )
-from maasservicelayer.enums.rbac import RbacPermission
 from maasservicelayer.exceptions.catalog import (
     BadRequestException,
     BaseExceptionDetail,

@@ -6,7 +6,8 @@
 
 import random
 
-from maasserver.enum import NODE_TYPE, SERVICE_STATUS, SERVICE_STATUS_CHOICES
+from maascommon.enums.node import NODE_TYPE
+from maasserver.enum import SERVICE_STATUS, SERVICE_STATUS_CHOICES
 from maasserver.models.service import (
     DEAD_STATUSES,
     RACK_SERVICES,

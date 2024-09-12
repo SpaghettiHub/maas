@@ -8,6 +8,8 @@ import logging
 from django.db.utils import DatabaseError
 from twisted.internet.defer import inlineCallbacks
 
+from maascommon.enums.interface import INTERFACE_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
 from maasserver import locks, security
 from maasserver.bootresources import initialize_image_storage
 from maasserver.config import get_db_creds_vault_path, RegionConfiguration
@@ -15,7 +17,6 @@ from maasserver.deprecations import (
     log_deprecations,
     sync_deprecation_notifications,
 )
-from maasserver.enum import INTERFACE_TYPE, IPADDRESS_TYPE
 from maasserver.models import (
     Config,
     ControllerInfo,

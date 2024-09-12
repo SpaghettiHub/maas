@@ -9,15 +9,10 @@ from maasapiserver.v3.api.public.models.responses.base import (
     HalResponse,
     TokenPaginatedResponse,
 )
-from maasservicelayer.enums.power_drivers import PowerTypeEnum
+from maascommon.enums.node import NODE_STATUS
+from maascommon.enums.power_driver import PowerTypeEnum
 from maasservicelayer.models.bmc import Bmc
-from maasservicelayer.models.machines import (
-    HardwareDeviceTypeEnum,
-    Machine,
-    MachineStatusEnum,
-    PciDevice,
-    UsbDevice,
-)
+from maasservicelayer.models.machines import Machine, PciDevice, UsbDevice
 
 
 class MachineResponse(HalResponse[BaseHal]):
@@ -34,7 +29,7 @@ class MachineResponse(HalResponse[BaseHal]):
     hwe_kernel: Optional[str]
     locked: bool
     cpu_count: int
-    status: MachineStatusEnum
+    status: NODE_STATUS
     power_type: Optional[PowerTypeEnum]
     fqdn: str
 
@@ -73,7 +68,6 @@ class MachinesListResponse(TokenPaginatedResponse[MachineResponse]):
 class UsbDeviceResponse(HalResponse[BaseHal]):
     kind = "MachineHardwareDevice"
     id: int
-    type: HardwareDeviceTypeEnum
     vendor_id: str
     product_id: str
     vendor_name: str
@@ -88,7 +82,6 @@ class UsbDeviceResponse(HalResponse[BaseHal]):
     ) -> "UsbDeviceResponse":
         return cls(
             id=usb_device.id,
-            type=usb_device.hardware_type,
             vendor_id=usb_device.vendor_id,
             product_id=usb_device.product_id,
             vendor_name=usb_device.vendor_name,
@@ -111,7 +104,6 @@ class UsbDevicesListResponse(TokenPaginatedResponse[UsbDeviceResponse]):
 class PciDeviceResponse(HalResponse[BaseHal]):
     kind = "MachinePciDevice"
     id: int
-    type: HardwareDeviceTypeEnum
     vendor_id: str
     product_id: str
     vendor_name: str
@@ -127,7 +119,6 @@ class PciDeviceResponse(HalResponse[BaseHal]):
     ) -> "PciDeviceResponse":
         return cls(
             id=pci_device.id,
-            type=pci_device.hardware_type,
             vendor_id=pci_device.vendor_id,
             product_id=pci_device.product_id,
             vendor_name=pci_device.vendor_name,

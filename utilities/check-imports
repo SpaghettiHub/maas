@@ -193,6 +193,7 @@ APIServerRule = Rule(
     Allow("fastapi|fastapi.**"),
     Allow("jose|jose.**"),
     Allow("maasapiserver|maasapiserver.**"),
+    Allow("maascommon|maascommon.**"),
     # TODO: Remove when we finally move everything to the maasservicelayer
     Allow("maasserver.config.**"),
     Allow("maasserver.enum.**"),
@@ -224,6 +225,7 @@ APIServerRule = Rule(
 
 Common = files("src/maascommon/**/*.py")
 CommonRule = Rule(
+    Allow("maascommon|maascommon.**"),
     Allow(StandardLibraries),
 )
 
@@ -600,6 +602,7 @@ checks = [
             Allow("petname"),
             Allow("piston3.models"),
             Allow(StandardLibraries),
+            Allow("maascommon|maascommon.**"),
             # XXX: The following three permissions are temporary;
             # they MUST be eliminated before MAAS 2.0 release.
             Allow("maasserver|maasserver.**"),

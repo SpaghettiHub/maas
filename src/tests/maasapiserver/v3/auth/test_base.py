@@ -16,9 +16,9 @@ from maasapiserver.v3.auth.base import (
 )
 from maasapiserver.v3.constants import V3_API_PREFIX
 from maasapiserver.v3.middlewares.services import ServicesMiddleware
+from maascommon.enums.rbac import RbacPermission
 from maasservicelayer.auth.jwt import UserRole
 from maasservicelayer.db import Database
-from maasservicelayer.enums.rbac import RbacPermission
 from maasservicelayer.exceptions.catalog import (
     DischargeRequiredException,
     ForbiddenException,

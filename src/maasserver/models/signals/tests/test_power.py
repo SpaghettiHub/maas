@@ -9,10 +9,11 @@ from unittest.mock import ANY
 from twisted.internet import defer
 from twisted.internet.task import Clock
 
+from maascommon.enums.node import NODE_STATUS
 from maasserver.exceptions import PowerProblem
 from maasserver.models.node import Node
 from maasserver.models.signals import power
-from maasserver.node_status import get_failed_status, NODE_STATUS
+from maasserver.node_status import get_failed_status
 from maasserver.testing.factory import factory
 from maasserver.testing.testcase import (
     MAASServerTestCase,

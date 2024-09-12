@@ -8,13 +8,10 @@ from unittest.mock import ANY
 from django.http import HttpRequest
 from netaddr import IPAddress, IPNetwork
 
-from maasserver.enum import (
-    DEVICE_IP_ASSIGNMENT_TYPE,
-    INTERFACE_LINK_TYPE,
-    INTERFACE_TYPE,
-    IPADDRESS_TYPE,
-    NODE_TYPE,
-)
+from maascommon.enums.interface import INTERFACE_LINK_TYPE, INTERFACE_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maascommon.enums.node import NODE_TYPE, NODE_TYPE_TO_LINK_TYPE
+from maasserver.enum import DEVICE_IP_ASSIGNMENT_TYPE
 from maasserver.exceptions import NodeActionError
 from maasserver.forms import DeviceForm, DeviceWithMACsForm
 from maasserver.models import Interface, StaticIPAddress
@@ -31,7 +28,6 @@ from maasserver.websockets.base import (
     HandlerValidationError,
 )
 from maasserver.websockets.handlers.device import DeviceHandler
-from maasserver.websockets.handlers.node import NODE_TYPE_TO_LINK_TYPE
 from maastesting.djangotestcase import count_queries
 
 

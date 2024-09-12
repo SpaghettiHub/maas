@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncConnection
 from sqlalchemy.sql.expression import func
 from sqlalchemy.sql.operators import eq, le
 
-from maasserver.enum import IPADDRESS_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
 from maasservicelayer.db.tables import (  # TODO; VlanTable,
     InterfaceIPAddressTable,
     InterfaceTable,

@@ -6,11 +6,9 @@
 from django.core.exceptions import ValidationError
 from netaddr import EUI
 
-from maasserver.enum import (
-    DEVICE_IP_ASSIGNMENT_TYPE,
-    INTERFACE_LINK_TYPE,
-    IPADDRESS_TYPE,
-)
+from maascommon.enums.interface import INTERFACE_LINK_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maasserver.enum import DEVICE_IP_ASSIGNMENT_TYPE
 from maasserver.exceptions import NodeActionError
 from maasserver.forms import DeviceForm, DeviceWithMACsForm
 from maasserver.forms.interface import InterfaceForm, PhysicalInterfaceForm

@@ -11,8 +11,8 @@ from typing import Optional
 
 from django.db.models import Q
 
+from maascommon.enums.node import NODE_STATUS, NODE_TYPE
 from maasserver import locks, worker_user
-from maasserver.enum import NODE_STATUS, NODE_TYPE
 from maasserver.models import (
     Controller,
     ControllerInfo,

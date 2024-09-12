@@ -12,7 +12,7 @@ from django.core.management.base import BaseCommand, CommandError
 import yaml
 
 from maascli.init import prompt_yes_no
-from maasserver.enum import NODE_TYPE
+from maascommon.enums.node import NODE_TYPE
 from maasserver.listener import notify
 from maasserver.locks import startup
 from maasserver.models import (

@@ -6,7 +6,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncConnection
 
-from maasserver.enum import NODE_STATUS, NODE_TYPE
+from maascommon.enums.node import NODE_STATUS, NODE_TYPE
 from maasservicelayer.db.tables import NodeTable
 from maastesting.factory import factory
 from provisioningserver.enum import POWER_STATE

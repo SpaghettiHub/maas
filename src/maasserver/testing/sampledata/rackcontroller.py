@@ -3,7 +3,7 @@ import json
 import random
 from typing import List
 
-from maasserver.enum import NODE_STATUS
+from maascommon.enums.node import NODE_STATUS
 from maasserver.models import ControllerInfo, RackController, Tag
 from maasserver.testing.commissioning import FakeCommissioningData
 from metadataserver.builtin_scripts import hooks

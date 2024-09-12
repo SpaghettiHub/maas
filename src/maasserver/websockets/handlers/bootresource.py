@@ -13,6 +13,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q
 from twisted.internet.defer import Deferred
 
+from maascommon.enums.node import NODE_STATUS, NODE_TYPE
 from maasserver.bootresources import (
     import_resources,
     is_import_resources_running,
@@ -22,7 +23,7 @@ from maasserver.bootsources import (
     get_os_info_from_boot_sources,
     set_simplestreams_env,
 )
-from maasserver.enum import BOOT_RESOURCE_TYPE, NODE_STATUS, NODE_TYPE
+from maasserver.enum import BOOT_RESOURCE_TYPE
 from maasserver.import_images.download_descriptions import (
     download_all_image_descriptions,
     image_passes_filter,

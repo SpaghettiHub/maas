@@ -22,7 +22,7 @@ from temporalio.exceptions import ApplicationError
 from temporalio.workflow import ParentClosePolicy
 import yaml
 
-from maasserver.enum import NODE_STATUS, NODE_TYPE
+from maascommon.enums.node import NODE_STATUS, NODE_TYPE
 from maasservicelayer.db import Database
 from maasservicelayer.db.tables import NodeTable
 from maastemporalworker.workflow.activity import ActivityBase

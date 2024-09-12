@@ -7,7 +7,7 @@ from sqlalchemy import and_, desc, select, Select
 from sqlalchemy.sql.expression import func
 from sqlalchemy.sql.operators import eq, le
 
-from maasserver.enum import NODE_DEVICE_BUS, NODE_TYPE
+from maascommon.enums.node import NODE_DEVICE_BUS, NODE_TYPE
 from maasservicelayer.db.filters import FilterQuery
 from maasservicelayer.db.repositories.base import (
     BaseRepository,

@@ -8,8 +8,10 @@ from urllib.parse import urlparse
 
 from fixtures import FakeLogger
 
+from maascommon.enums.interface import INTERFACE_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maascommon.enums.node import NODE_TYPE
 from maasserver import locks, worker_user
-from maasserver.enum import INTERFACE_TYPE, IPADDRESS_TYPE, NODE_TYPE
 from maasserver.models import RackController, RegionController
 from maasserver.rpc import rackcontrollers
 from maasserver.rpc.rackcontrollers import (

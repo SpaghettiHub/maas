@@ -4,9 +4,10 @@
 
 from crochet import TimeoutError
 
+from maascommon.enums.node import NODE_STATUS
 from maasserver import forms
 from maasserver.clusterrpc.driver_parameters import get_driver_choices
-from maasserver.enum import BOOT_RESOURCE_TYPE, NODE_STATUS
+from maasserver.enum import BOOT_RESOURCE_TYPE
 from maasserver.forms import (
     AdminMachineForm,
     AdminMachineWithMACAddressesForm,

@@ -10,7 +10,8 @@ from django.conf import settings
 from django.urls import reverse
 from netaddr import IPAddress
 
-from maasserver.enum import INTERFACE_LINK_TYPE, INTERFACE_TYPE, IPADDRESS_TYPE
+from maascommon.enums.interface import INTERFACE_LINK_TYPE, INTERFACE_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
 from maasserver.models import DNSResource, StaticIPAddress
 from maasserver.testing.api import APITestCase, APITransactionTestCase
 from maasserver.testing.factory import factory

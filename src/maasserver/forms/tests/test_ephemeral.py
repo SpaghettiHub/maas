@@ -5,7 +5,7 @@
 
 import random
 
-from maasserver.enum import NODE_STATUS, NODE_TYPE, NODE_TYPE_CHOICES
+from maascommon.enums.node import NODE_STATUS, NODE_TYPE, NODE_TYPE_CHOICES
 from maasserver.forms.ephemeral import CommissionForm, TestForm
 from maasserver.testing.factory import factory
 from maasserver.testing.testcase import MAASServerTestCase

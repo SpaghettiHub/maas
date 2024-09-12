@@ -36,15 +36,14 @@ from django.db.models import (
 from django.db.models.query import QuerySet
 from netaddr import AddrFormatError, EUI, IPAddress, IPNetwork
 
-from maasserver.enum import (
+from maascommon.enums.interface import (
     BRIDGE_TYPE,
     INTERFACE_LINK_TYPE,
     INTERFACE_TYPE,
     INTERFACE_TYPE_CHOICES,
-    IPADDRESS_TYPE,
-    NODE_STATUS,
-    NODE_TYPE,
 )
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maascommon.enums.node import NODE_STATUS, NODE_TYPE
 from maasserver.exceptions import (
     StaticIPAddressOutOfRange,
     StaticIPAddressUnavailable,

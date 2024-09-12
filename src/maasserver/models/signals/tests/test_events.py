@@ -3,11 +3,10 @@
 
 """Tests for node transition event."""
 
-
-from maasserver.enum import NODE_STATUS_CHOICES_DICT
+from maascommon.enums.node import NODE_STATUS, NODE_STATUS_CHOICES_DICT
 from maasserver.models import Event
 from maasserver.models.signals import power as node_query
-from maasserver.node_status import get_failed_status, NODE_STATUS
+from maasserver.node_status import get_failed_status
 from maasserver.testing.factory import factory
 from maasserver.testing.testcase import MAASServerTestCase
 from provisioningserver.events import EVENT_DETAILS, EVENT_TYPES

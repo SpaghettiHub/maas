@@ -1,6 +1,6 @@
 import logging
 
-from maasserver.enum import NODE_STATUS
+from maascommon.enums.node import NODE_STATUS
 
 
 def test_node_mark_failed_deployment_logs_failure(factory, caplog):

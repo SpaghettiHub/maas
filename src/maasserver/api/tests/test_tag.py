@@ -10,7 +10,7 @@ from django.conf import settings
 from django.urls import reverse
 
 from apiclient.creds import convert_tuple_to_string
-from maasserver.enum import NODE_STATUS
+from maascommon.enums.node import NODE_STATUS
 from maasserver.models import Event, Tag
 from maasserver.models.node import generate_node_system_id
 from maasserver.models.user import (

@@ -16,22 +16,23 @@ from netaddr import IPAddress, IPNetwork
 from twisted.internet import defer
 import yaml
 
-from maasserver import forms
-from maasserver.api import auth
-from maasserver.api import machines as machines_module
-from maasserver.enum import (
+from maascommon.enums.interface import (
     BRIDGE_TYPE,
-    FILESYSTEM_FORMAT_TYPE_CHOICES,
-    FILESYSTEM_TYPE,
     INTERFACE_LINK_TYPE,
     INTERFACE_TYPE,
-    IPADDRESS_TYPE,
+)
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maascommon.enums.node import (
     NODE_STATUS,
     NODE_STATUS_CHOICES,
     NODE_STATUS_CHOICES_DICT,
     NODE_TYPE,
     NODE_TYPE_CHOICES,
 )
+from maasserver import forms
+from maasserver.api import auth
+from maasserver.api import machines as machines_module
+from maasserver.enum import FILESYSTEM_FORMAT_TYPE_CHOICES, FILESYSTEM_TYPE
 from maasserver.exceptions import StaticIPAddressExhaustion
 from maasserver.models import Config, Domain, Filesystem, Machine, Node
 from maasserver.models import node as node_module

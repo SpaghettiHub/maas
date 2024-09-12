@@ -9,7 +9,7 @@ import datetime
 from django.contrib.auth.models import User
 from testtools.testcase import TestCase
 
-from maasserver.enum import NODE_STATUS
+from maascommon.enums.node import NODE_STATUS
 from maasserver.models.event import Event
 from maasserver.models.user import SYSTEM_USERS
 from maasserver.permissions import (

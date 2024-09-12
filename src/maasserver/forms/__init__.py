@@ -92,6 +92,8 @@ from formencode.validators import StringBool
 from lxml import etree
 from netaddr import IPNetwork, valid_ipv6
 
+from maascommon.enums.interface import INTERFACE_TYPE
+from maascommon.enums.node import NODE_STATUS, NODE_TYPE
 from maasserver.api.utils import get_optional_param, get_overridden_query_dict
 from maasserver.audit import create_audit_event
 from maasserver.clusterrpc.driver_parameters import (
@@ -108,9 +110,6 @@ from maasserver.enum import (
     FILESYSTEM_FORMAT_TYPE_CHOICES_DICT,
     FILESYSTEM_GROUP_RAID_TYPE_CHOICES,
     FILESYSTEM_TYPE,
-    INTERFACE_TYPE,
-    NODE_STATUS,
-    NODE_TYPE,
 )
 from maasserver.fields import MACAddressFormField
 from maasserver.forms.settings import (

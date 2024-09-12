@@ -9,11 +9,11 @@ from textwrap import dedent
 from testtools.content import text_content
 import yaml
 
+from maascommon.enums.node import NODE_STATUS
 from maasserver.enum import (
     CACHE_MODE_TYPE,
     FILESYSTEM_GROUP_TYPE,
     FILESYSTEM_TYPE,
-    NODE_STATUS,
     PARTITION_TABLE_TYPE,
 )
 from maasserver.models import Bcache, Filesystem, RAID, VMFS, VolumeGroup

@@ -4,7 +4,8 @@
 import random
 from unittest.mock import call
 
-from maasserver.enum import INTERFACE_TYPE, IPADDRESS_TYPE
+from maascommon.enums.interface import INTERFACE_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
 from maasserver.models import Controller, Interface
 from maasserver.models.config import Config, NetworkDiscoveryConfig
 from maasserver.models.signals.interfaces import ensure_link_up

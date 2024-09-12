@@ -10,8 +10,8 @@ from unittest.mock import call
 from twisted.internet.defer import maybeDeferred
 from twisted.internet.task import Clock
 
+from maascommon.enums.node import NODE_STATUS
 from maasserver import status_monitor
-from maasserver.enum import NODE_STATUS
 from maasserver.models import Config, Node
 from maasserver.models.signals.testing import SignalsDisabled
 from maasserver.models.timestampedmodel import now

@@ -5,8 +5,9 @@
 
 from piston3.utils import rc
 
+from maascommon.enums.node import NODE_STATUS
 from maasserver.api.support import OperationsHandler
-from maasserver.enum import FILESYSTEM_TYPE, NODE_STATUS
+from maasserver.enum import FILESYSTEM_TYPE
 from maasserver.exceptions import MAASAPIValidationError, NodeStateViolation
 from maasserver.forms import CreateRaidForm, UpdateRaidForm
 from maasserver.models import Machine, RAID

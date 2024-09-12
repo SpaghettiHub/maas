@@ -10,7 +10,7 @@ from unittest.mock import PropertyMock
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 
-from maasserver.enum import NODE_STATUS, NODE_TYPE
+from maascommon.enums.node import NODE_STATUS, NODE_TYPE
 from maasserver.exceptions import NoScriptsFound
 from maasserver.models import (
     Config,

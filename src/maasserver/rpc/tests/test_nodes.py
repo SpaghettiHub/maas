@@ -13,8 +13,9 @@ from unittest.mock import sentinel
 
 from django.core.exceptions import ValidationError
 
+from maascommon.enums.interface import INTERFACE_TYPE
+from maascommon.enums.node import NODE_STATUS, NODE_TYPE
 from maasserver import ntp
-from maasserver.enum import INTERFACE_TYPE, NODE_STATUS, NODE_TYPE
 from maasserver.models.node import Node
 from maasserver.models.timestampedmodel import now
 from maasserver.rpc.nodes import (

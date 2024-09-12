@@ -10,6 +10,8 @@ from urllib.parse import urlparse
 from netaddr import IPAddress, IPNetwork
 from testtools import TestCase
 
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maascommon.enums.node import NODE_STATUS
 from maasserver import server_address
 from maasserver.dns import zonegenerator
 from maasserver.dns.zonegenerator import (
@@ -26,7 +28,7 @@ from maasserver.dns.zonegenerator import (
     WARNING_MESSAGE,
     ZoneGenerator,
 )
-from maasserver.enum import IPADDRESS_TYPE, NODE_STATUS, RDNS_MODE
+from maasserver.enum import RDNS_MODE
 from maasserver.exceptions import UnresolvableHost
 from maasserver.models import Config, Domain, Subnet
 from maasserver.models.dnsdata import HostnameRRsetMapping

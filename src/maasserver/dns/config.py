@@ -9,13 +9,14 @@ from collections import defaultdict
 from django.conf import settings
 from netaddr import IPAddress, IPNetwork
 
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
 from maasserver.dns.zonegenerator import (
     InternalDomain,
     InternalDomainResourse,
     InternalDomainResourseRecord,
     ZoneGenerator,
 )
-from maasserver.enum import IPADDRESS_TYPE, RDNS_MODE
+from maasserver.enum import RDNS_MODE
 from maasserver.models.config import Config
 from maasserver.models.dnsdata import DNSData
 from maasserver.models.dnspublication import DNSPublication

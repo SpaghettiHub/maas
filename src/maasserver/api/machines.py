@@ -27,6 +27,17 @@ from piston3.models import Token
 from piston3.utils import rc
 import yaml
 
+from maascommon.enums.bmc import BMC_TYPE
+from maascommon.enums.interface import (
+    BRIDGE_TYPE,
+    BRIDGE_TYPE_CHOICES,
+    BRIDGE_TYPE_CHOICES_DICT,
+)
+from maascommon.enums.node import (
+    NODE_STATUS,
+    NODE_STATUS_CHOICES_DICT,
+    NODE_TYPE,
+)
 from maasserver import locks
 from maasserver.api.logger import maaslog
 from maasserver.api.nodes import (
@@ -45,15 +56,6 @@ from maasserver.api.utils import (
     get_optional_param,
 )
 from maasserver.clusterrpc.driver_parameters import get_all_power_types
-from maasserver.enum import (
-    BMC_TYPE,
-    BRIDGE_TYPE,
-    BRIDGE_TYPE_CHOICES,
-    BRIDGE_TYPE_CHOICES_DICT,
-    NODE_STATUS,
-    NODE_STATUS_CHOICES_DICT,
-    NODE_TYPE,
-)
 from maasserver.exceptions import (
     MAASAPIBadRequest,
     MAASAPIForbidden,

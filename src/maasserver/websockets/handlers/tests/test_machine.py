@@ -17,26 +17,33 @@ from lxml import etree
 from testtools.content import text_content
 from twisted.internet.defer import inlineCallbacks
 
-from maasserver.enum import (
-    BMC_TYPE,
+from maascommon.enums.bmc import BMC_TYPE
+from maascommon.enums.interface import (
     BOND_MODE,
     BRIDGE_TYPE,
     BRIDGE_TYPE_CHOICES,
+    INTERFACE_LINK_TYPE,
+    INTERFACE_TYPE,
+)
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maascommon.enums.node import (
+    HARDWARE_TYPE,
+    HARDWARE_TYPE_CHOICES,
+    NODE_STATUS,
+    NODE_STATUS_CHOICES,
+    NODE_STATUS_SHORT_LABEL_CHOICES,
+    NODE_TYPE,
+    NODE_TYPE_TO_LINK_TYPE,
+    SIMPLIFIED_NODE_STATUS,
+    SIMPLIFIED_NODE_STATUS_CHOICES,
+)
+from maasserver.enum import (
     CACHE_MODE_TYPE,
     FILESYSTEM_FORMAT_TYPE_CHOICES,
     FILESYSTEM_FORMAT_TYPE_CHOICES_DICT,
     FILESYSTEM_GROUP_TYPE,
     FILESYSTEM_TYPE,
-    INTERFACE_LINK_TYPE,
-    INTERFACE_TYPE,
-    IPADDRESS_TYPE,
-    NODE_STATUS,
-    NODE_STATUS_CHOICES,
-    NODE_STATUS_SHORT_LABEL_CHOICES,
-    NODE_TYPE,
     PARTITION_TABLE_TYPE,
-    SIMPLIFIED_NODE_STATUS,
-    SIMPLIFIED_NODE_STATUS_CHOICES,
 )
 from maasserver.exceptions import NodeActionError, NodeStateViolation
 from maasserver.forms import AdminMachineWithMACAddressesForm
@@ -107,15 +114,12 @@ from maasserver.websockets.handlers import node as node_module
 from maasserver.websockets.handlers.event import dehydrate_event_type_level
 from maasserver.websockets.handlers.machine import MachineHandler
 from maasserver.websockets.handlers.machine import Node as node_model
-from maasserver.websockets.handlers.node import NODE_TYPE_TO_LINK_TYPE
 from maasserver.websockets.handlers.node_result import NodeResultHandler
 from maasserver.workflow import power as power_workflow
 from maastesting.crochet import wait_for
 from maastesting.djangotestcase import count_queries
 from maastesting.twisted import TwistedLoggerFixture
 from metadataserver.enum import (
-    HARDWARE_TYPE,
-    HARDWARE_TYPE_CHOICES,
     RESULT_TYPE,
     SCRIPT_STATUS,
     SCRIPT_STATUS_FAILED,

@@ -9,16 +9,12 @@ from textwrap import dedent
 from netaddr import IPAddress
 import yaml
 
+from maascommon.enums.interface import BRIDGE_TYPE, INTERFACE_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_FAMILY, IPADDRESS_TYPE
+from maascommon.enums.node import NODE_STATUS
 from maasserver import preseed_network as preseed_network_module
 from maasserver import server_address
 from maasserver.dns.zonegenerator import get_dns_search_paths
-from maasserver.enum import (
-    BRIDGE_TYPE,
-    INTERFACE_TYPE,
-    IPADDRESS_FAMILY,
-    IPADDRESS_TYPE,
-    NODE_STATUS,
-)
 from maasserver.models import Domain, Node
 from maasserver.preseed_network import (
     compose_curtin_network_config,

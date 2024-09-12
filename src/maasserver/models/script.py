@@ -25,12 +25,11 @@ from django.db.models import (
     TextField,
 )
 
+from maascommon.enums.node import HARDWARE_TYPE, HARDWARE_TYPE_CHOICES
 from maasserver.models.cleansave import CleanSave
 from maasserver.models.timestampedmodel import TimestampedModel
 from maasserver.models.versionedtextfile import VersionedTextFile
 from metadataserver.enum import (
-    HARDWARE_TYPE,
-    HARDWARE_TYPE_CHOICES,
     SCRIPT_PARALLEL,
     SCRIPT_PARALLEL_CHOICES,
     SCRIPT_TYPE,

@@ -6,8 +6,9 @@ import http.client
 
 from django.urls import reverse
 
+from maascommon.enums.interface import INTERFACE_TYPE
+from maascommon.enums.node import NODE_STATUS
 from maasserver.auth import MAASAuthorizationBackend
-from maasserver.enum import INTERFACE_TYPE, NODE_STATUS
 from maasserver.middleware import ExternalAuthInfoMiddleware
 from maasserver.models import Node
 from maasserver.permissions import (

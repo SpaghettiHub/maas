@@ -8,8 +8,8 @@ from unittest.mock import MagicMock
 from twisted.internet.defer import succeed
 from twisted.internet.threads import deferToThread
 
+from maascommon.enums.interface import INTERFACE_TYPE
 from maasserver import vmhost
-from maasserver.enum import INTERFACE_TYPE
 from maasserver.forms import pods
 from maasserver.models import Pod, PodStoragePool
 from maasserver.models.virtualmachine import MB, VirtualMachineInterface

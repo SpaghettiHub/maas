@@ -12,7 +12,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import Q
 from django.forms import Field, Form
 
-from maasserver.enum import NODE_STATUS
+from maascommon.enums.node import NODE_STATUS
 from maasserver.models import Config
 from maasserver.utils.dns import validate_url
 from maasserver.utils.forms import set_form_error

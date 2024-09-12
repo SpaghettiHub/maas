@@ -3,7 +3,9 @@
 
 import random
 
-from maasserver.enum import INTERFACE_TYPE, IPADDRESS_TYPE, NODE_STATUS
+from maascommon.enums.interface import INTERFACE_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maascommon.enums.node import NODE_STATUS
 from maasserver.forms.parameters import (
     DEFAULTS_FROM_MAAS_CONFIG,
     ParametersForm,

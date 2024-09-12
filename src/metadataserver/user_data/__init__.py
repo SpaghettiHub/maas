@@ -17,7 +17,7 @@ import os.path
 
 import tempita
 
-from maasserver.enum import NODE_STATUS
+from maascommon.enums.node import NODE_STATUS
 from metadataserver.user_data.snippets import (
     get_snippet_context,
     get_userdata_template_dir,

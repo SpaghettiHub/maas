@@ -19,14 +19,10 @@ from django.db.models import Case, Count, F, Max, Q, When
 import requests
 from twisted.application.internet import TimerService
 
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maascommon.enums.node import NODE_STATUS, NODE_TYPE
 from maasserver.certificates import get_maas_certificate
-from maasserver.enum import (
-    IPADDRESS_TYPE,
-    IPRANGE_TYPE,
-    MSM_STATUS,
-    NODE_STATUS,
-    NODE_TYPE,
-)
+from maasserver.enum import IPRANGE_TYPE, MSM_STATUS
 from maasserver.models import (
     BMC,
     BootResourceFile,

@@ -4,7 +4,7 @@
 
 import random
 
-from maasserver.enum import INTERFACE_TYPE
+from maascommon.enums.interface import INTERFACE_TYPE
 from maasserver.models.vlan import VLAN
 from maasserver.testing.factory import factory
 from maasserver.testing.testcase import MAASServerTestCase

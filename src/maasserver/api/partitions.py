@@ -8,9 +8,9 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404
 from piston3.utils import rc
 
+from maascommon.enums.node import NODE_STATUS
 from maasserver.api.support import operation, OperationsHandler
 from maasserver.api.utils import get_mandatory_param
-from maasserver.enum import NODE_STATUS
 from maasserver.exceptions import (
     MAASAPIBadRequest,
     MAASAPIValidationError,

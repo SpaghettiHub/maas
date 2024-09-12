@@ -11,8 +11,9 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.urls import reverse
 
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maascommon.enums.node import NODE_STATUS
 import maasserver.api.auth
-from maasserver.enum import IPADDRESS_TYPE, NODE_STATUS
 from maasserver.models import Node, SSHKey, SSLKey, StaticIPAddress
 from maasserver.models.event import Event
 from maasserver.secrets import SecretManager

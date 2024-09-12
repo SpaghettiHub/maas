@@ -1,6 +1,6 @@
 from typing import List
 
-from maasserver.enum import NODE_STATUS
+from maascommon.enums.node import NODE_STATUS
 from maasserver.models import Machine, OwnerData
 
 from .common import make_name, range_one

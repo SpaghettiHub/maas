@@ -6,13 +6,13 @@ import random
 
 from django import forms
 
+from maascommon.enums.interface import INTERFACE_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maascommon.enums.node import NODE_STATUS
 from maasserver.enum import (
     DEPLOYMENT_TARGET,
     FILESYSTEM_GROUP_TYPE,
     FILESYSTEM_TYPE,
-    INTERFACE_TYPE,
-    IPADDRESS_TYPE,
-    NODE_STATUS,
 )
 from maasserver.forms import (
     UnconstrainedMultipleChoiceField,

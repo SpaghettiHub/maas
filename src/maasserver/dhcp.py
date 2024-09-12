@@ -15,16 +15,13 @@ from django.db.models import Q
 from netaddr import IPAddress, IPNetwork
 from twisted.internet.defer import inlineCallbacks
 
+from maascommon.enums.interface import INTERFACE_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
 from maasserver.dns.zonegenerator import (
     get_dns_search_paths,
     get_dns_server_addresses,
 )
-from maasserver.enum import (
-    INTERFACE_TYPE,
-    IPADDRESS_TYPE,
-    IPRANGE_TYPE,
-    SERVICE_STATUS,
-)
+from maasserver.enum import IPRANGE_TYPE, SERVICE_STATUS
 from maasserver.exceptions import UnresolvableHost
 from maasserver.models import (
     Config,

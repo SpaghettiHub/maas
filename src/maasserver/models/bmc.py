@@ -38,15 +38,11 @@ from netaddr import AddrFormatError, IPAddress
 import petname
 from twisted.internet.defer import inlineCallbacks
 
+from maascommon.enums.bmc import BMC_TYPE, BMC_TYPE_CHOICES
+from maascommon.enums.interface import INTERFACE_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maascommon.enums.node import NODE_STATUS, NODE_TYPE
 from maasserver.clusterrpc.pods import decompose_machine
-from maasserver.enum import (
-    BMC_TYPE,
-    BMC_TYPE_CHOICES,
-    INTERFACE_TYPE,
-    IPADDRESS_TYPE,
-    NODE_STATUS,
-    NODE_TYPE,
-)
 from maasserver.exceptions import PodProblem
 from maasserver.models.blockdevice import BlockDevice
 from maasserver.models.cleansave import CleanSave

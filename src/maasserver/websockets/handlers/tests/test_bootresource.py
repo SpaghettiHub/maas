@@ -8,11 +8,8 @@ from unittest.mock import ANY
 from twisted.internet import reactor
 from twisted.internet.defer import succeed
 
-from maasserver.enum import (
-    BOOT_RESOURCE_FILE_TYPE,
-    BOOT_RESOURCE_TYPE,
-    NODE_STATUS,
-)
+from maascommon.enums.node import NODE_STATUS
+from maasserver.enum import BOOT_RESOURCE_FILE_TYPE, BOOT_RESOURCE_TYPE
 from maasserver.import_images.boot_image_mapping import BootImageMapping
 from maasserver.import_images.testing.factory import (
     make_image_spec,

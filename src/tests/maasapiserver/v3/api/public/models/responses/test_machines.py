@@ -2,15 +2,14 @@
 # GNU Affero General Public License version 3 (see the file LICENSE).
 
 from maasapiserver.v3.api.public.models.responses.machines import (
-    HardwareDeviceTypeEnum,
     MachineResponse,
-    MachineStatusEnum,
     PciDeviceResponse,
     PowerDriverResponse,
     UsbDeviceResponse,
 )
 from maasapiserver.v3.constants import V3_API_PREFIX
-from maasservicelayer.enums.power_drivers import PowerTypeEnum
+from maascommon.enums.node import HARDWARE_TYPE, NODE_STATUS
+from maascommon.enums.power_driver import PowerTypeEnum
 from maasservicelayer.models.bmc import Bmc
 from maasservicelayer.models.machines import Machine, PciDevice, UsbDevice
 from maasservicelayer.utils.date import utcnow
@@ -34,7 +33,7 @@ class TestMachineResponse:
             hwe_kernel=None,
             locked=False,
             cpu_count=8,
-            status=MachineStatusEnum.new,
+            status=NODE_STATUS.NEW,
             power_type=None,
             fqdn="maas.local",
             hostname="hostname",
@@ -71,7 +70,7 @@ class TestUsbDeviceResponse:
             id=1,
             created=now,
             updated=now,
-            hardware_type=HardwareDeviceTypeEnum.node,
+            hardware_type=HARDWARE_TYPE.NODE,
             vendor_id="0000",
             product_id="0000",
             vendor_name="vendor",
@@ -87,7 +86,6 @@ class TestUsbDeviceResponse:
         )
 
         assert response.id == device.id
-        assert response.type == device.hardware_type
         assert response.vendor_id == device.vendor_id
         assert response.product_id == device.product_id
         assert response.vendor_name == device.vendor_name
@@ -108,7 +106,7 @@ class TestPciDeviceResponse:
             id=1,
             created=now,
             updated=now,
-            hardware_type=HardwareDeviceTypeEnum.node,
+            hardware_type=HARDWARE_TYPE.NODE,
             vendor_id="0000",
             product_id="0000",
             vendor_name="vendor",
@@ -125,7 +123,6 @@ class TestPciDeviceResponse:
         )
 
         assert response.id == device.id
-        assert response.type == device.hardware_type
         assert response.vendor_id == device.vendor_id
         assert response.product_id == device.product_id
         assert response.vendor_name == device.vendor_name

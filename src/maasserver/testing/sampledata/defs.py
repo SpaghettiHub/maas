@@ -1,4 +1,4 @@
-from maasserver.enum import NODE_STATUS
+from maascommon.enums.node import NODE_STATUS
 
 from .common import make_weighted_item_getter
 

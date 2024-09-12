@@ -25,12 +25,8 @@ from django.db.models import (
 from django.db.models.query import QuerySet
 from netaddr import AddrFormatError, IPAddress, IPNetwork
 
-from maasserver.enum import (
-    IPADDRESS_TYPE,
-    IPRANGE_TYPE,
-    RDNS_MODE,
-    RDNS_MODE_CHOICES,
-)
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maasserver.enum import IPRANGE_TYPE, RDNS_MODE, RDNS_MODE_CHOICES
 from maasserver.exceptions import (
     MAASAPIException,
     StaticIPAddressExhaustion,

@@ -11,6 +11,7 @@ import random
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.http import HttpRequest
 
+from maascommon.enums.node import HARDWARE_TYPE, HARDWARE_TYPE_CHOICES
 from maasserver.forms.script import (
     CommissioningScriptForm,
     ScriptForm,
@@ -20,8 +21,6 @@ from maasserver.models import Event, Script, VersionedTextFile
 from maasserver.testing.factory import factory
 from maasserver.testing.testcase import MAASServerTestCase
 from metadataserver.enum import (
-    HARDWARE_TYPE,
-    HARDWARE_TYPE_CHOICES,
     SCRIPT_PARALLEL,
     SCRIPT_PARALLEL_CHOICES,
     SCRIPT_TYPE,

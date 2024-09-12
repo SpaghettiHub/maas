@@ -8,7 +8,8 @@ from django.contrib.auth.models import User
 from piston3.models import Token
 from twisted.internet.defer import DeferredQueue, inlineCallbacks, returnValue
 
-from maasserver.enum import INTERFACE_TYPE, NODE_TYPE
+from maascommon.enums.interface import INTERFACE_TYPE
+from maascommon.enums.node import NODE_TYPE
 from maasserver.listener import PostgresListenerService
 from maasserver.models import Script, ScriptSet
 from maasserver.models.blockdevice import BlockDevice

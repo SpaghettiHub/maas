@@ -11,8 +11,9 @@ from urllib.parse import urlencode, urlparse
 from django.urls import reverse
 import yaml
 
+from maascommon.enums.node import NODE_STATUS
 from maasserver.dns.config import get_resource_name_for_subnet
-from maasserver.enum import NODE_STATUS, PRESEED_TYPE
+from maasserver.enum import PRESEED_TYPE
 from maasserver.models import PackageRepository
 from maasserver.models.config import Config
 from maasserver.models.subnet import get_boot_rackcontroller_ips, Subnet

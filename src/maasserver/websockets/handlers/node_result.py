@@ -8,6 +8,7 @@ from operator import attrgetter
 
 from django.core.exceptions import ValidationError
 
+from maascommon.enums.node import HARDWARE_TYPE
 from maasserver.models import Node, ScriptResult
 from maasserver.websockets.base import (
     dehydrate_datetime,
@@ -17,7 +18,6 @@ from maasserver.websockets.base import (
 from maasserver.websockets.handlers.timestampedmodel import (
     TimestampedModelHandler,
 )
-from metadataserver.enum import HARDWARE_TYPE
 
 
 class NodeResultHandler(TimestampedModelHandler):

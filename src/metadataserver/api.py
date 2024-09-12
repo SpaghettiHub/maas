@@ -35,6 +35,11 @@ from formencode.validators import Int, Number, String
 from piston3.utils import rc
 import yaml
 
+from maascommon.enums.node import (
+    NODE_STATUS,
+    NODE_STATUS_CHOICES_DICT,
+    NODE_TYPE,
+)
 from maasserver.api.support import (
     AnonymousOperationsHandler,
     operation,
@@ -47,7 +52,6 @@ from maasserver.api.utils import (
 )
 from maasserver.clusterrpc.driver_parameters import get_driver_types
 from maasserver.compose_preseed import get_apt_proxy
-from maasserver.enum import NODE_STATUS, NODE_STATUS_CHOICES_DICT, NODE_TYPE
 from maasserver.exceptions import (
     ClusterUnavailable,
     MAASAPIBadRequest,

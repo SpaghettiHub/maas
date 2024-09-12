@@ -1,4 +1,5 @@
-from maasserver.enum import FILESYSTEM_GROUP_TYPE, INTERFACE_TYPE
+from maascommon.enums.interface import INTERFACE_TYPE
+from maasserver.enum import FILESYSTEM_GROUP_TYPE
 from maasserver.models import PhysicalBlockDevice, VirtualBlockDevice
 from maasserver.models.nodeconfig import NODE_CONFIG_TYPE
 from maasserver.models.virtualmachine import (

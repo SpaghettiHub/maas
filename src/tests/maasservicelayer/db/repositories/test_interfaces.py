@@ -7,7 +7,7 @@ from math import ceil
 import pytest
 from sqlalchemy.ext.asyncio import AsyncConnection
 
-from maasserver.enum import IPADDRESS_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
 from maasservicelayer.db.repositories.interfaces import InterfaceRepository
 from maasservicelayer.models.base import ListResult
 from maasservicelayer.models.interfaces import Interface

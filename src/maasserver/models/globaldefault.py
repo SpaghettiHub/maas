@@ -8,7 +8,7 @@ from datetime import datetime
 
 from django.db.models import AutoField, ForeignKey, Manager, PROTECT
 
-from maasserver.enum import ALLOCATED_NODE_STATUSES, NODE_STATUS
+from maascommon.enums.node import ALLOCATED_NODE_STATUSES, NODE_STATUS
 from maasserver.models.cleansave import CleanSave
 from maasserver.models.domain import Domain
 from maasserver.models.timestampedmodel import TimestampedModel

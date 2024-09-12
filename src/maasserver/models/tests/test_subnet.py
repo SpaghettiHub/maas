@@ -10,13 +10,9 @@ from hypothesis import given, settings
 from hypothesis.strategies import integers
 from netaddr import AddrFormatError, IPAddress, IPNetwork
 
-from maasserver.enum import (
-    IPADDRESS_TYPE,
-    IPRANGE_TYPE,
-    NODE_STATUS,
-    RDNS_MODE,
-    RDNS_MODE_CHOICES,
-)
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maascommon.enums.node import NODE_STATUS
+from maasserver.enum import IPRANGE_TYPE, RDNS_MODE, RDNS_MODE_CHOICES
 from maasserver.exceptions import StaticIPAddressExhaustion
 from maasserver.models import Config, Notification, ReservedIP, Space
 from maasserver.models.subnet import (

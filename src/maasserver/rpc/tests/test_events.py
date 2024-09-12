@@ -5,7 +5,7 @@
 import datetime
 import logging
 
-from maasserver.enum import INTERFACE_TYPE
+from maascommon.enums.interface import INTERFACE_TYPE
 from maasserver.models.event import Event
 from maasserver.models.eventtype import EventType
 from maasserver.rpc import events

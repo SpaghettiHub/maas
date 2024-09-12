@@ -73,6 +73,19 @@ from twisted.internet.error import ConnectionDone
 from twisted.python.failure import Failure
 from twisted.python.threadable import isInIOThread
 
+from maascommon.enums.bmc import BMC_TYPE
+from maascommon.enums.interface import INTERFACE_LINK_TYPE, INTERFACE_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_FAMILY, IPADDRESS_TYPE
+from maascommon.enums.node import (
+    ALLOCATED_NODE_STATUSES,
+    NODE_STATUS,
+    NODE_STATUS_CHOICES,
+    NODE_STATUS_CHOICES_DICT,
+    NODE_TYPE,
+    NODE_TYPE_CHOICES,
+    SIMPLIFIED_NODE_STATUS,
+    SIMPLIFIED_NODE_STATUSES_MAP_REVERSED,
+)
 from maasserver.clusterrpc.pods import decompose_machine
 from maasserver.clusterrpc.power import (
     power_driver_check,
@@ -80,24 +93,11 @@ from maasserver.clusterrpc.power import (
     set_boot_order,
 )
 from maasserver.enum import (
-    ALLOCATED_NODE_STATUSES,
-    BMC_TYPE,
     FILESYSTEM_FORMAT_TYPE_CHOICES_DICT,
     FILESYSTEM_GROUP_TYPE,
     FILESYSTEM_TYPE,
-    INTERFACE_LINK_TYPE,
-    INTERFACE_TYPE,
-    IPADDRESS_FAMILY,
-    IPADDRESS_TYPE,
-    NODE_STATUS,
-    NODE_STATUS_CHOICES,
-    NODE_STATUS_CHOICES_DICT,
-    NODE_TYPE,
-    NODE_TYPE_CHOICES,
     POWER_WORKFLOW_ACTIONS,
     SERVICE_STATUS,
-    SIMPLIFIED_NODE_STATUS,
-    SIMPLIFIED_NODE_STATUSES_MAP_REVERSED,
 )
 from maasserver.exceptions import (
     IPAddressCheckFailed,

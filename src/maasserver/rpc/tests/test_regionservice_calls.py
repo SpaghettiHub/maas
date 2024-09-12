@@ -14,9 +14,10 @@ from urllib.parse import urlparse
 from twisted.internet.defer import inlineCallbacks, succeed
 from twisted.python.failure import Failure
 
+from maascommon.enums.interface import INTERFACE_TYPE
+from maascommon.enums.node import NODE_STATUS
 from maasserver import eventloop
 from maasserver.dns.config import get_trusted_networks
-from maasserver.enum import INTERFACE_TYPE, NODE_STATUS
 from maasserver.models import Config, Event, EventType, Node, PackageRepository
 from maasserver.models.interface import PhysicalInterface
 from maasserver.models.signals import bootsources

@@ -10,12 +10,11 @@ from django import forms
 from django.core.exceptions import ValidationError
 from netaddr import IPAddress
 
-from maasserver.enum import (
+from maascommon.enums.interface import (
     INTERFACE_LINK_TYPE,
     INTERFACE_LINK_TYPE_CHOICES,
-    IPADDRESS_FAMILY,
-    IPADDRESS_TYPE,
 )
+from maascommon.enums.ipaddress import IPADDRESS_FAMILY, IPADDRESS_TYPE
 from maasserver.fields import (
     CaseInsensitiveChoiceField,
     SpecifierOrModelChoiceField,

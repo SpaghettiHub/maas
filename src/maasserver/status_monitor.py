@@ -9,7 +9,7 @@ from datetime import timedelta
 from django.db.models import Prefetch
 from twisted.application.internet import TimerService
 
-from maasserver.enum import NODE_STATUS, NODE_STATUS_CHOICES_DICT
+from maascommon.enums.node import NODE_STATUS, NODE_STATUS_CHOICES_DICT
 from maasserver.models import Script, ScriptResult, ScriptSet
 from maasserver.models.config import Config
 from maasserver.models.node import Node

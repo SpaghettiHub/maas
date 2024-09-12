@@ -5,7 +5,7 @@ import random
 
 from django.core.exceptions import ValidationError
 
-from maasserver.enum import NODE_DEVICE_BUS
+from maascommon.enums.node import NODE_DEVICE_BUS
 from maasserver.models import NodeDevice
 from maasserver.models.nodeconfig import NODE_CONFIG_TYPE
 from maasserver.testing.factory import factory

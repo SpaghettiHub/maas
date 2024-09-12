@@ -11,10 +11,11 @@ from netaddr import IPAddress
 from netaddr.core import AddrFormatError
 from piston3.utils import rc
 
+from maascommon.enums.interface import INTERFACE_LINK_TYPE, INTERFACE_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
 from maasserver.api.interfaces import DISPLAYED_INTERFACE_FIELDS
 from maasserver.api.support import operation, OperationsHandler
 from maasserver.api.utils import get_mandatory_param, get_optional_param
-from maasserver.enum import INTERFACE_LINK_TYPE, INTERFACE_TYPE, IPADDRESS_TYPE
 from maasserver.exceptions import (
     MAASAPIBadRequest,
     MAASAPIForbidden,

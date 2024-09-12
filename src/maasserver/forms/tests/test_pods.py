@@ -12,7 +12,9 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from twisted.internet.defer import inlineCallbacks, succeed
 
-from maasserver.enum import BMC_TYPE, INTERFACE_TYPE, NODE_STATUS
+from maascommon.enums.bmc import BMC_TYPE
+from maascommon.enums.interface import INTERFACE_TYPE
+from maascommon.enums.node import NODE_STATUS
 from maasserver.exceptions import PodProblem, StaticIPAddressUnavailable
 from maasserver.forms import pods as pods_module
 from maasserver.forms.pods import (

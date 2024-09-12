@@ -7,13 +7,13 @@ from unittest.mock import sentinel
 from distro_info import UbuntuDistroInfo
 import petname
 
-from maasserver.enum import (
+from maascommon.enums.interface import (
     BOND_LACP_RATE_CHOICES,
     BOND_MODE_CHOICES,
     BOND_XMIT_HASH_POLICY_CHOICES,
-    BOOT_RESOURCE_TYPE,
-    NODE_TYPE,
 )
+from maascommon.enums.node import NODE_TYPE
+from maasserver.enum import BOOT_RESOURCE_TYPE
 from maasserver.models import Config, ControllerInfo, PackageRepository
 from maasserver.models.signals.testing import SignalsDisabled
 from maasserver.node_action import ACTIONS_DICT

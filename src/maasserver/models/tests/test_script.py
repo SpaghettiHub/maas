@@ -5,11 +5,11 @@
 from datetime import timedelta
 import random
 
+from maascommon.enums.node import HARDWARE_TYPE_CHOICES
 from maasserver.models import Script, VersionedTextFile
 from maasserver.testing.factory import factory
 from maasserver.testing.testcase import MAASServerTestCase
 from maasserver.utils.orm import reload_object
-from metadataserver.enum import HARDWARE_TYPE_CHOICES
 
 
 class TestScriptManager(MAASServerTestCase):

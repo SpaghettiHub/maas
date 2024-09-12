@@ -11,11 +11,13 @@ from django.test import RequestFactory
 from django.urls import reverse
 from twisted.internet.defer import succeed
 
+from maascommon.enums.bmc import BMC_TYPE
+from maascommon.enums.interface import BRIDGE_TYPE, INTERFACE_TYPE
+from maascommon.enums.node import NODE_STATUS
 from maasserver import eventloop
 from maasserver.api import auth
 from maasserver.api import machines as machines_module
 from maasserver.api.machines import AllocationOptions, get_allocation_options
-from maasserver.enum import BMC_TYPE, BRIDGE_TYPE, INTERFACE_TYPE, NODE_STATUS
 import maasserver.forms as forms_module
 from maasserver.forms.pods import ComposeMachineForm, ComposeMachineForPodsForm
 from maasserver.models import Config, Domain, Machine, Node

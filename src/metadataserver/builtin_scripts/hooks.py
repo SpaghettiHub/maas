@@ -21,12 +21,13 @@ from django.db import IntegrityError, transaction
 from django.db.models import Q
 from temporalio.common import RetryPolicy
 
-from maasserver.enum import (
+from maascommon.enums.node import (
+    HARDWARE_TYPE,
     NODE_DEVICE_BUS,
-    NODE_METADATA,
     NODE_STATUS,
     NODE_TYPE,
 )
+from maasserver.enum import NODE_METADATA
 from maasserver.models import (
     Event,
     Interface,
@@ -52,7 +53,7 @@ from maasserver.utils.orm import get_one
 from maasserver.utils.osystems import get_release
 from maasserver.workflow import start_workflow
 from metadataserver.builtin_scripts.network import update_node_interfaces
-from metadataserver.enum import HARDWARE_SYNC_ACTIONS, HARDWARE_TYPE
+from metadataserver.enum import HARDWARE_SYNC_ACTIONS
 from provisioningserver.events import EVENT_TYPES
 from provisioningserver.refresh.node_info_scripts import (
     COMMISSIONING_OUTPUT_NAME,

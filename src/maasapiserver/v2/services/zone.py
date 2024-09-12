@@ -1,7 +1,7 @@
 from sqlalchemy import func, select
 
 from maasapiserver.v2.models.entities.zone import Zone
-from maasserver.enum import NODE_TYPE
+from maascommon.enums.node import NODE_TYPE
 from maasservicelayer.db.tables import NodeTable, ZoneTable
 from maasservicelayer.services._base import Service
 

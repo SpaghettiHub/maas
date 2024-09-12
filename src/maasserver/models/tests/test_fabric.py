@@ -4,7 +4,7 @@
 
 from django.core.exceptions import PermissionDenied, ValidationError
 
-from maasserver.enum import INTERFACE_TYPE
+from maascommon.enums.interface import INTERFACE_TYPE
 from maasserver.models.fabric import Fabric
 from maasserver.models.vlan import DEFAULT_VID, DEFAULT_VLAN_NAME, VLAN
 from maasserver.permissions import NodePermission

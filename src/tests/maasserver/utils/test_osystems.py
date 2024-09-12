@@ -1,8 +1,8 @@
 import pytest
 
+from maascommon.enums.base import enum_choices
 from maasserver.enum import BOOT_RESOURCE_FILE_TYPE, BOOT_RESOURCE_TYPE
 from maasserver.utils.osystems import OSReleaseArchitecture
-from provisioningserver.enum import enum_choices
 
 SUPPORTED_UPLOADED_TYPES = [
     BOOT_RESOURCE_FILE_TYPE.ROOT_TGZ,

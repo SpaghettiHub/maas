@@ -5,9 +5,10 @@
 
 from piston3.utils import rc
 
+from maascommon.enums.node import NODE_STATUS
 from maasserver.api.support import OperationsHandler
 from maasserver.audit import create_audit_event
-from maasserver.enum import ENDPOINT, NODE_STATUS
+from maasserver.enum import ENDPOINT
 from maasserver.exceptions import (
     MAASAPIBadRequest,
     MAASAPIValidationError,

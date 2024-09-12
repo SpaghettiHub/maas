@@ -15,17 +15,14 @@ import time
 
 from django.urls import reverse
 
+from maascommon.enums.node import HARDWARE_TYPE, HARDWARE_TYPE_CHOICES
 from maasserver.api.scriptresults import fmt_time
 from maasserver.preseed import CURTIN_ERROR_TARFILE
 from maasserver.testing.api import APITestCase
 from maasserver.testing.factory import factory
 from maasserver.utils.converters import json_load_bytes
 from maasserver.utils.orm import reload_object
-from metadataserver.enum import (
-    HARDWARE_TYPE,
-    HARDWARE_TYPE_CHOICES,
-    RESULT_TYPE_CHOICES,
-)
+from metadataserver.enum import RESULT_TYPE_CHOICES
 
 
 class TestNodeScriptResultsAPI(APITestCase.ForUser):

@@ -5,11 +5,13 @@ import http.client
 
 from django.urls import reverse
 
-from maasserver.enum import NODE_DEVICE_BUS_CHOICES
+from maascommon.enums.node import (
+    HARDWARE_TYPE_CHOICES,
+    NODE_DEVICE_BUS_CHOICES,
+)
 from maasserver.testing.api import APITestCase
 from maasserver.testing.factory import factory
 from maasserver.utils.orm import reload_object
-from metadataserver.enum import HARDWARE_TYPE_CHOICES
 
 
 class TestNodeDevicesAPI(APITestCase.ForUser):

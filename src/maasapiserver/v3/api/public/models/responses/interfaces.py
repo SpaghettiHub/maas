@@ -11,17 +11,13 @@ from maasapiserver.v3.api.public.models.responses.base import (
     HalResponse,
     TokenPaginatedResponse,
 )
-from maasservicelayer.models.interfaces import (
-    Interface,
-    InterfaceTypeEnum,
-    Link,
-    LinkModeEnum,
-)
+from maascommon.enums.interface import INTERFACE_LINK_TYPE, INTERFACE_TYPE
+from maasservicelayer.models.interfaces import Interface, Link
 
 
 class LinkResponse(BaseModel):
     id: int
-    mode: LinkModeEnum
+    mode: INTERFACE_LINK_TYPE
     ip_address: Optional[IPvAnyAddress]
 
     @classmethod
@@ -33,7 +29,7 @@ class InterfaceResponse(HalResponse[BaseHal]):
     kind = "Interface"
     id: int
     name: str
-    type: InterfaceTypeEnum
+    type: INTERFACE_TYPE
     mac_address: Optional[str]
     # TODO
     # effective_mtu: int = 0

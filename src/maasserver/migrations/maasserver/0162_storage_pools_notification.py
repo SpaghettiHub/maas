@@ -4,7 +4,7 @@ import datetime
 
 from django.db import migrations
 
-from maasserver.enum import BMC_TYPE
+from maascommon.enums.bmc import BMC_TYPE
 
 
 def forwards(apps, schema_editor):

@@ -28,12 +28,13 @@ from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
 from twisted.python.threadable import isInIOThread
 
+from maascommon.enums.bmc import BMC_TYPE
+from maascommon.enums.interface import INTERFACE_TYPE
 from maasserver.clusterrpc import driver_parameters
 from maasserver.clusterrpc.driver_parameters import (
     get_driver_parameters_from_json,
 )
 from maasserver.clusterrpc.pods import compose_machine
-from maasserver.enum import BMC_TYPE, INTERFACE_TYPE
 from maasserver.exceptions import PodProblem
 from maasserver.forms import MAASModelForm
 from maasserver.models import (

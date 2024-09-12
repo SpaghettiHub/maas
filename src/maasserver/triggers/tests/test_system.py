@@ -7,7 +7,7 @@ from contextlib import closing
 from django.db import connection
 from twisted.internet.defer import inlineCallbacks
 
-from maasserver.enum import NODE_STATUS, NODE_TYPE
+from maascommon.enums.node import NODE_STATUS, NODE_TYPE
 from maasserver.models import Domain
 from maasserver.models.dnspublication import zone_serial
 from maasserver.testing.factory import factory

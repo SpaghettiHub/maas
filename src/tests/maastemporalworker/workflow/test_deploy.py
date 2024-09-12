@@ -13,7 +13,7 @@ from temporalio.service import RPCError
 from temporalio.testing import ActivityEnvironment, WorkflowEnvironment
 from temporalio.worker import Worker
 
-from maasserver.enum import NODE_STATUS
+from maascommon.enums.node import NODE_STATUS
 from maasserver.workflow.power import (
     PowerCycleParam,
     PowerCycleResult,

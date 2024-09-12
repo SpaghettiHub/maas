@@ -12,13 +12,13 @@ import requests as requests_module
 from twisted.application.internet import TimerService
 from twisted.internet.defer import fail
 
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maascommon.enums.node import NODE_STATUS
 from maasserver import stats
 from maasserver.enum import (
     BOOT_RESOURCE_FILE_TYPE,
     FILESYSTEM_GROUP_TYPE,
-    IPADDRESS_TYPE,
     IPRANGE_TYPE,
-    NODE_STATUS,
 )
 from maasserver.forms import AdminMachineForm
 from maasserver.models import (

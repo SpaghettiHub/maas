@@ -7,7 +7,8 @@ from django.core.exceptions import ValidationError
 from netaddr import IPNetwork
 from testtools import TestCase
 
-from maasserver.enum import IPADDRESS_TYPE, IPRANGE_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maasserver.enum import IPRANGE_TYPE
 from maasserver.models import IPRange
 from maasserver.testing.factory import factory
 from maasserver.testing.testcase import MAASServerTestCase

@@ -6,8 +6,8 @@
 
 from urllib.parse import urlparse
 
+from maascommon.enums.node import NODE_TYPE
 from maasserver.config import RegionConfiguration
-from maasserver.enum import NODE_TYPE
 from maasserver.exceptions import UnresolvableHost
 from provisioningserver.utils.env import MAAS_ID
 from provisioningserver.utils.network import resolve_hostname

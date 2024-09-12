@@ -23,8 +23,13 @@ from netaddr import IPNetwork
 from twisted.internet.defer import succeed
 import yaml
 
+from maascommon.enums.node import (
+    HARDWARE_TYPE,
+    NODE_STATUS,
+    NODE_TYPE,
+    NODE_TYPE_CHOICES,
+)
 from maasserver.api import support
-from maasserver.enum import NODE_STATUS, NODE_TYPE, NODE_TYPE_CHOICES
 from maasserver.exceptions import (
     ClusterUnavailable,
     MAASAPIBadRequest,
@@ -71,7 +76,6 @@ from metadataserver.api import (
 )
 from metadataserver.builtin_scripts import load_builtin_scripts
 from metadataserver.enum import (
-    HARDWARE_TYPE,
     RESULT_TYPE,
     SCRIPT_PARALLEL,
     SCRIPT_STATUS,

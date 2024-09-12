@@ -7,8 +7,10 @@ from unittest.mock import sentinel
 from fixtures import FakeLogger
 from netaddr import IPNetwork
 
+from maascommon.enums.interface import INTERFACE_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maascommon.enums.node import NODE_STATUS
 from maasserver.api import discoveries as discoveries_module
-from maasserver.enum import INTERFACE_TYPE, IPADDRESS_TYPE, NODE_STATUS
 from maasserver.models.subnet import Subnet
 from maasserver.testing.factory import factory
 from maasserver.testing.testcase import MAASServerTestCase

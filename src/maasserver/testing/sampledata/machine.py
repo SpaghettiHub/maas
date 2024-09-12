@@ -5,7 +5,7 @@ from typing import List
 
 from django.contrib.auth.models import User
 
-from maasserver.enum import NODE_STATUS
+from maascommon.enums.node import NODE_STATUS
 from maasserver.models import BMC, Machine, Pod, Tag
 from maasserver.testing.commissioning import FakeCommissioningData
 from metadataserver.builtin_scripts.hooks import (

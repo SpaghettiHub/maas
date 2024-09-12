@@ -34,14 +34,13 @@ from django.db.models import (
 )
 from netaddr import IPAddress
 
-from maasserver import locks
-from maasserver.enum import (
-    INTERFACE_LINK_TYPE,
-    INTERFACE_TYPE,
+from maascommon.enums.interface import INTERFACE_LINK_TYPE, INTERFACE_TYPE
+from maascommon.enums.ipaddress import (
     IPADDRESS_FAMILY,
     IPADDRESS_TYPE,
     IPADDRESS_TYPE_CHOICES_DICT,
 )
+from maasserver import locks
 from maasserver.exceptions import (
     StaticIPAddressOutOfRange,
     StaticIPAddressUnavailable,

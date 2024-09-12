@@ -25,7 +25,7 @@ from django.db.models import (
 )
 from django.db.models.query import QuerySet
 
-from maasserver.enum import IPADDRESS_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
 from maasserver.models import domain
 from maasserver.models.cleansave import CleanSave
 from maasserver.models.domain import Domain

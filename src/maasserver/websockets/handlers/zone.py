@@ -8,7 +8,7 @@ from collections import defaultdict
 
 from django.db.models import Count
 
-from maasserver.enum import NODE_TYPE
+from maascommon.enums.node import NODE_TYPE
 from maasserver.forms import ZoneForm
 from maasserver.models.zone import Zone
 from maasserver.websockets.handlers.timestampedmodel import (

@@ -8,7 +8,8 @@ from unittest.mock import MagicMock
 
 from django.http import QueryDict
 
-from maasserver.enum import INTERFACE_TYPE, NODE_STATUS
+from maascommon.enums.interface import INTERFACE_TYPE
+from maascommon.enums.node import NODE_STATUS
 from maasserver.forms import MachineWithMACAddressesForm
 from maasserver.testing.architecture import (
     make_usable_architecture,

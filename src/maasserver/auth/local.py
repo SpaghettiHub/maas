@@ -1,7 +1,7 @@
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.models import User
 
-from maasserver.enum import NODE_TYPE
+from maascommon.enums.node import NODE_TYPE
 from maasserver.models.blockdevice import BlockDevice
 from maasserver.models.bmc import Pod
 from maasserver.models.discovery import Discovery

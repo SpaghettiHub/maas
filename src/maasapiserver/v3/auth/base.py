@@ -7,8 +7,8 @@ from maasapiserver.common.utils.http import extract_absolute_uri
 from maasapiserver.v3.api import services
 from maasapiserver.v3.auth.openapi import OpenapiOAuth2PasswordBearer
 from maasapiserver.v3.constants import V3_API_PREFIX
+from maascommon.enums.rbac import RbacPermission
 from maasservicelayer.auth.jwt import UserRole
-from maasservicelayer.enums.rbac import RbacPermission
 from maasservicelayer.exceptions.catalog import (
     BaseExceptionDetail,
     ForbiddenException,

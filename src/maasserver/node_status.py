@@ -10,8 +10,7 @@ __all__ = [
     "is_failed_status",
 ]
 
-
-from maasserver.enum import NODE_STATUS
+from maascommon.enums.node import NODE_STATUS
 from maasserver.models.config import Config
 from provisioningserver.utils.enum import map_enum
 

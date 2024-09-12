@@ -10,13 +10,13 @@ from uuid import uuid4
 
 from django.urls import reverse
 
+from maascommon.enums.node import NODE_STATUS
 from maasserver.api import bcache as bcache_module
 from maasserver.enum import (
     CACHE_MODE_TYPE,
     ENDPOINT,
     FILESYSTEM_GROUP_TYPE,
     FILESYSTEM_TYPE,
-    NODE_STATUS,
 )
 from maasserver.testing.api import APITestCase
 from maasserver.testing.factory import factory

@@ -11,8 +11,12 @@ from django.conf import settings
 from django.urls import reverse
 from twisted.internet.defer import succeed
 
+from maascommon.enums.node import (
+    HARDWARE_TYPE,
+    NODE_STATUS,
+    NODE_STATUS_CHOICES,
+)
 from maasserver.api import auth
-from maasserver.enum import NODE_STATUS, NODE_STATUS_CHOICES
 from maasserver.models import Config, Node
 from maasserver.models import node as node_module
 from maasserver.models import NodeKey
@@ -28,7 +32,6 @@ from maasserver.utils import osystems
 from maasserver.utils.converters import json_load_bytes
 from maasserver.utils.orm import reload_object
 from metadataserver.enum import (
-    HARDWARE_TYPE,
     RESULT_TYPE,
     SCRIPT_STATUS,
     SCRIPT_STATUS_CHOICES,

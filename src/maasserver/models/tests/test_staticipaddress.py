@@ -13,15 +13,14 @@ from netaddr import IPAddress
 from psycopg2.errorcodes import FOREIGN_KEY_VIOLATION
 from twisted.python.failure import Failure
 
-from maasserver import locks
-from maasserver.enum import (
-    INTERFACE_LINK_TYPE,
-    INTERFACE_TYPE,
+from maascommon.enums.interface import INTERFACE_LINK_TYPE, INTERFACE_TYPE
+from maascommon.enums.ipaddress import (
     IPADDRESS_FAMILY,
     IPADDRESS_TYPE,
     IPADDRESS_TYPE_CHOICES_DICT,
-    IPRANGE_TYPE,
 )
+from maasserver import locks
+from maasserver.enum import IPRANGE_TYPE
 from maasserver.exceptions import (
     StaticIPAddressExhaustion,
     StaticIPAddressOutOfRange,

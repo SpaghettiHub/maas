@@ -14,14 +14,10 @@ from twisted.internet.defer import (
     inlineCallbacks,
 )
 
-from maasserver.enum import (
-    BMC_TYPE,
-    IPADDRESS_TYPE,
-    IPRANGE_TYPE,
-    NODE_STATUS,
-    NODE_TYPE,
-    NODE_TYPE_CHOICES,
-)
+from maascommon.enums.bmc import BMC_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maascommon.enums.node import NODE_STATUS, NODE_TYPE, NODE_TYPE_CHOICES
+from maasserver.enum import IPRANGE_TYPE
 from maasserver.listener import PostgresListenerService
 from maasserver.models import ControllerInfo, Node, OwnerData, VMCluster
 from maasserver.models.blockdevice import MIN_BLOCK_DEVICE_SIZE

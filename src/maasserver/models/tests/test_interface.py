@@ -14,14 +14,14 @@ from django.http import Http404
 from fixtures import FakeLogger
 from netaddr import EUI, IPAddress, IPNetwork
 
-from maasserver.enum import (
+from maascommon.enums.interface import (
     BRIDGE_TYPE,
     BRIDGE_TYPE_CHOICES,
     INTERFACE_LINK_TYPE,
     INTERFACE_TYPE,
-    IPADDRESS_TYPE,
-    NODE_STATUS,
 )
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maascommon.enums.node import NODE_STATUS
 from maasserver.exceptions import (
     StaticIPAddressOutOfRange,
     StaticIPAddressUnavailable,

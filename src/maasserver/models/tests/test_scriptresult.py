@@ -9,7 +9,7 @@ from unittest.mock import MagicMock
 from django.core.exceptions import ValidationError
 import yaml
 
-from maasserver.enum import NODE_STATUS
+from maascommon.enums.node import NODE_STATUS
 from maasserver.models import Event, EventType, ScriptResult
 from maasserver.models import scriptresult as scriptresult_module
 from maasserver.testing.factory import factory

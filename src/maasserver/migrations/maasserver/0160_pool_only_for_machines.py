@@ -2,7 +2,7 @@
 
 from django.db import migrations
 
-from maasserver.enum import NODE_TYPE
+from maascommon.enums.node import NODE_TYPE
 
 
 def unset_resource_pools_nodes_not_machines(apps, schema_editor):

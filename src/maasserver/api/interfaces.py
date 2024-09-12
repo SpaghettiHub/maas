@@ -7,14 +7,10 @@ from django.forms.utils import ErrorList
 from formencode.validators import StringBool
 from piston3.utils import rc
 
+from maascommon.enums.interface import INTERFACE_LINK_TYPE, INTERFACE_TYPE
+from maascommon.enums.node import NODE_STATUS, NODE_TYPE
 from maasserver.api.support import operation, OperationsHandler
 from maasserver.api.utils import get_mandatory_param, get_optional_param
-from maasserver.enum import (
-    INTERFACE_LINK_TYPE,
-    INTERFACE_TYPE,
-    NODE_STATUS,
-    NODE_TYPE,
-)
 from maasserver.exceptions import (
     MAASAPIForbidden,
     MAASAPIValidationError,

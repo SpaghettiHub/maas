@@ -12,10 +12,12 @@ from twisted.internet import defer
 from twisted.internet.defer import inlineCallbacks
 from twisted.internet.threads import deferToThread
 
+from maascommon.enums.interface import INTERFACE_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
 from maasserver import dhcp
 from maasserver import server_address as server_address_module
 from maasserver.dhcp import _get_dhcp_rackcontrollers, get_default_dns_servers
-from maasserver.enum import INTERFACE_TYPE, IPADDRESS_TYPE, SERVICE_STATUS
+from maasserver.enum import SERVICE_STATUS
 from maasserver.models import (
     Config,
     DHCPSnippet,

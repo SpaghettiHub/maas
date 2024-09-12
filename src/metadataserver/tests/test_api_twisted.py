@@ -17,7 +17,9 @@ from twisted.internet.defer import inlineCallbacks, succeed
 from twisted.web.server import NOT_DONE_YET
 from twisted.web.test.requesthelper import DummyRequest
 
-from maasserver.enum import INTERFACE_TYPE, IPADDRESS_TYPE, NODE_STATUS
+from maascommon.enums.interface import INTERFACE_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maascommon.enums.node import NODE_STATUS
 from maasserver.models import Event, NodeKey, Pod
 from maasserver.models.signals.testing import SignalsDisabled
 from maasserver.models.timestampedmodel import now

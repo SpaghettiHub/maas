@@ -8,7 +8,8 @@ import uuid
 from django.conf import settings
 from django.urls import reverse
 
-from maasserver.enum import FILESYSTEM_GROUP_TYPE, FILESYSTEM_TYPE, NODE_STATUS
+from maascommon.enums.node import NODE_STATUS
+from maasserver.enum import FILESYSTEM_GROUP_TYPE, FILESYSTEM_TYPE
 from maasserver.models.blockdevice import MIN_BLOCK_DEVICE_SIZE
 from maasserver.models.filesystem import Filesystem
 from maasserver.models.filesystemgroup import RAID, RAID_SUPERBLOCK_OVERHEAD

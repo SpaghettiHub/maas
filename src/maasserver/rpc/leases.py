@@ -8,7 +8,7 @@ from datetime import datetime
 
 from netaddr import IPAddress
 
-from maasserver.enum import IPADDRESS_FAMILY, IPADDRESS_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_FAMILY, IPADDRESS_TYPE
 from maasserver.fields import normalise_macaddress
 from maasserver.models import (
     DNSResource,

@@ -3,8 +3,7 @@
 
 """RPC helpers relating to events."""
 
-
-from maasserver.enum import INTERFACE_TYPE
+from maascommon.enums.interface import INTERFACE_TYPE
 from maasserver.models import Event, EventType, Interface, Node
 from maasserver.utils.orm import transactional
 from provisioningserver.logger import LegacyLogger

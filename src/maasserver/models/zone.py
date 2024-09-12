@@ -6,7 +6,7 @@
 from django.core.exceptions import ValidationError
 from django.db.models import CharField, TextField
 
-from maasserver.enum import NODE_TYPE
+from maascommon.enums.node import NODE_TYPE
 from maasserver.fields import MODEL_NAME_VALIDATOR
 from maasserver.models.cleansave import CleanSave
 from maasserver.models.timestampedmodel import TimestampedModel

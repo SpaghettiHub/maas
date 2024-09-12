@@ -7,7 +7,8 @@
 from django.db.models import Count
 from django.db.models.signals import m2m_changed, post_save, pre_delete
 
-from maasserver.enum import INTERFACE_TYPE, IPADDRESS_TYPE
+from maascommon.enums.interface import INTERFACE_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
 from maasserver.models import (
     BondInterface,
     BridgeInterface,

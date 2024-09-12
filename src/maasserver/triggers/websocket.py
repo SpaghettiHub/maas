@@ -15,7 +15,8 @@ E.g. "maasserver_node_node_create_notify".
 import logging
 from textwrap import dedent
 
-from maasserver.enum import BMC_TYPE, NODE_TYPE
+from maascommon.enums.bmc import BMC_TYPE
+from maascommon.enums.node import NODE_TYPE
 from maasserver.triggers import (
     EVENTS_IUD,
     EVENTS_LU,

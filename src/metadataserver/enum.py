@@ -5,8 +5,6 @@
 
 __all__ = [
     "HARDWARE_SYNC_ACTIONS",
-    "HARDWARE_TYPE",
-    "HARDWARE_TYPE_CHOICES",
     "RESULT_TYPE",
     "RESULT_TYPE_CHOICES",
     "SCRIPT_PARALLEL",
@@ -20,8 +18,7 @@ __all__ = [
     "SIGNAL_STATUS_CHOICES",
 ]
 
-
-from provisioningserver.enum import enum_choices
+from maascommon.enums.base import enum_choices
 
 
 class SIGNAL_STATUS:
@@ -121,26 +118,6 @@ SCRIPT_STATUS_FAILED = {
     SCRIPT_STATUS.FAILED_INSTALLING,
     SCRIPT_STATUS.FAILED_APPLYING_NETCONF,
 }
-
-
-class HARDWARE_TYPE:
-    NODE = 0
-    CPU = 1
-    MEMORY = 2
-    STORAGE = 3
-    NETWORK = 4
-    GPU = 5
-
-
-# Labels are also used for autotagging scripts.
-HARDWARE_TYPE_CHOICES = (
-    (HARDWARE_TYPE.NODE, "Node"),
-    (HARDWARE_TYPE.CPU, "CPU"),
-    (HARDWARE_TYPE.MEMORY, "Memory"),
-    (HARDWARE_TYPE.STORAGE, "Storage"),
-    (HARDWARE_TYPE.NETWORK, "Network"),
-    (HARDWARE_TYPE.GPU, "GPU"),
-)
 
 
 class SCRIPT_PARALLEL:

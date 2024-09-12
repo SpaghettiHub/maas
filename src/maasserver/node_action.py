@@ -20,17 +20,16 @@ from crochet import TimeoutError
 from django.core.exceptions import ValidationError
 from django.http.request import HttpRequest
 
-from maasserver import locks
-from maasserver.audit import create_audit_event
-from maasserver.enum import (
-    ENDPOINT,
-    NODE_ACTION_TYPE,
+from maascommon.enums.node import (
     NODE_STATUS,
     NODE_STATUS_CHOICES_DICT,
     NODE_TYPE,
     NODE_TYPE_CHOICES,
     NODE_TYPE_CHOICES_DICT,
 )
+from maasserver import locks
+from maasserver.audit import create_audit_event
+from maasserver.enum import ENDPOINT, NODE_ACTION_TYPE
 from maasserver.exceptions import (
     IPAddressCheckFailed,
     NodeActionError,

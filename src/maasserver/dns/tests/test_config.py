@@ -9,6 +9,8 @@ from django.conf import settings
 import dns.resolver
 from netaddr import IPAddress, IPNetwork
 
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maascommon.enums.node import NODE_STATUS
 from maasserver.config import RegionConfiguration
 from maasserver.dns import config as dns_config_module
 from maasserver.dns.config import (
@@ -26,7 +28,6 @@ from maasserver.dns.config import (
 )
 from maasserver.dns.config import current_zone_serial, dns_force_reload
 from maasserver.dns.zonegenerator import InternalDomainResourseRecord
-from maasserver.enum import IPADDRESS_TYPE, NODE_STATUS
 from maasserver.listener import PostgresListenerService
 from maasserver.models import Config, Domain
 from maasserver.models.dnspublication import DNSPublication

@@ -7,7 +7,7 @@
 from django.db.models import Manager, Model
 from django.db.models.fields import CharField, DateTimeField, IntegerField
 
-from provisioningserver.enum import enum_choices
+from maascommon.enums.base import enum_choices
 
 
 class RBAC_ACTION:

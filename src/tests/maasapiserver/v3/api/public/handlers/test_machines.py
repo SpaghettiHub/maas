@@ -11,15 +11,14 @@ from maasapiserver.v3.api.public.models.requests.query import (
     TokenPaginationParams,
 )
 from maasapiserver.v3.api.public.models.responses.machines import (
-    HardwareDeviceTypeEnum,
     MachinesListResponse,
-    MachineStatusEnum,
     PciDevicesListResponse,
     PowerDriverResponse,
     UsbDevicesListResponse,
 )
 from maasapiserver.v3.constants import V3_API_PREFIX
-from maasservicelayer.enums.power_drivers import PowerTypeEnum
+from maascommon.enums.node import HARDWARE_TYPE, NODE_STATUS
+from maascommon.enums.power_driver import PowerTypeEnum
 from maasservicelayer.models.base import ListResult
 from maasservicelayer.models.bmc import Bmc
 from maasservicelayer.models.machines import Machine, PciDevice, UsbDevice
@@ -46,7 +45,7 @@ TEST_MACHINE = Machine(
     hwe_kernel=None,
     locked=False,
     cpu_count=8,
-    status=MachineStatusEnum.new,
+    status=NODE_STATUS.NEW,
     power_type=None,
     fqdn="maas.local",
     hostname="hostname",
@@ -67,7 +66,7 @@ TEST_MACHINE_2 = Machine(
     hwe_kernel=None,
     locked=False,
     cpu_count=8,
-    status=MachineStatusEnum.new,
+    status=NODE_STATUS.NEW,
     power_type=None,
     fqdn="maas.local",
     hostname="hostname",
@@ -77,7 +76,7 @@ TEST_USB_DEVICE = UsbDevice(
     id=1,
     created=utcnow(),
     updated=utcnow(),
-    hardware_type=HardwareDeviceTypeEnum.node,
+    hardware_type=HARDWARE_TYPE.NODE,
     vendor_id="0000",
     product_id="0000",
     vendor_name="vendor",
@@ -90,7 +89,7 @@ TEST_USB_DEVICE_2 = UsbDevice(
     id=2,
     created=utcnow(),
     updated=utcnow(),
-    hardware_type=HardwareDeviceTypeEnum.node,
+    hardware_type=HARDWARE_TYPE.NODE,
     vendor_id="0000",
     product_id="0000",
     vendor_name="vendor_2",
@@ -104,7 +103,7 @@ TEST_PCI_DEVICE = PciDevice(
     id=1,
     created=utcnow(),
     updated=utcnow(),
-    hardware_type=HardwareDeviceTypeEnum.node,
+    hardware_type=HARDWARE_TYPE.NODE,
     vendor_id="0000",
     product_id="0000",
     vendor_name="vendor",
@@ -118,7 +117,7 @@ TEST_PCI_DEVICE_2 = PciDevice(
     id=2,
     created=utcnow(),
     updated=utcnow(),
-    hardware_type=HardwareDeviceTypeEnum.node,
+    hardware_type=HARDWARE_TYPE.NODE,
     vendor_id="0000",
     product_id="0000",
     vendor_name="vendor_2",

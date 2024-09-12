@@ -15,8 +15,8 @@ from twisted.internet import reactor
 from twisted.web.resource import Resource
 from twisted.web.server import NOT_DONE_YET
 
+from maascommon.enums.node import NODE_STATUS, NODE_TYPE
 from maasserver.api.utils import extract_oauth_key_from_auth_header
-from maasserver.enum import NODE_STATUS, NODE_TYPE
 from maasserver.forms.pods import PodForm
 from maasserver.models import Interface, Node, NodeKey
 from maasserver.preseed import CURTIN_INSTALL_LOG

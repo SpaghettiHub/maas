@@ -9,18 +9,18 @@ from django.db import transaction
 from netaddr import IPNetwork
 import pytest
 
-from maasserver import locks
-from maasserver.clusterrpc.utils import get_error_message_for_exception
-from maasserver.enum import (
-    INTERFACE_TYPE,
-    IPADDRESS_TYPE,
-    NODE_ACTION_TYPE,
+from maascommon.enums.interface import INTERFACE_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maascommon.enums.node import (
     NODE_STATUS,
     NODE_STATUS_CHOICES,
     NODE_STATUS_CHOICES_DICT,
     NODE_TYPE,
     NODE_TYPE_CHOICES_DICT,
 )
+from maasserver import locks
+from maasserver.clusterrpc.utils import get_error_message_for_exception
+from maasserver.enum import NODE_ACTION_TYPE
 from maasserver.exceptions import NodeActionError
 from maasserver.models import Config, Event
 from maasserver.models import node as node_module

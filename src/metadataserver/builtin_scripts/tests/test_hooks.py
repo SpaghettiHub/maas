@@ -11,13 +11,12 @@ from django.db.models import Q
 from fixtures import FakeLogger
 from netaddr import IPNetwork
 
+from maascommon.enums.interface import INTERFACE_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maascommon.enums.node import HARDWARE_TYPE, NODE_DEVICE_BUS, NODE_STATUS
 from maasserver.enum import (
     FILESYSTEM_TYPE,
-    INTERFACE_TYPE,
-    IPADDRESS_TYPE,
-    NODE_DEVICE_BUS,
     NODE_METADATA,
-    NODE_STATUS,
     PARTITION_TABLE_TYPE,
 )
 from maasserver.models import (
@@ -65,11 +64,7 @@ from metadataserver.builtin_scripts.hooks import (
     update_node_fruid_metadata,
     update_node_network_information,
 )
-from metadataserver.enum import (
-    HARDWARE_SYNC_ACTIONS,
-    HARDWARE_TYPE,
-    SCRIPT_TYPE,
-)
+from metadataserver.enum import HARDWARE_SYNC_ACTIONS, SCRIPT_TYPE
 from provisioningserver.events import EVENT_DETAILS, EVENT_TYPES
 from provisioningserver.refresh.node_info_scripts import (
     KERNEL_CMDLINE_OUTPUT_NAME,

@@ -1,32 +1,17 @@
 # Copyright 2024 Canonical Ltd.  This software is licensed under the
 # GNU Affero General Public License version 3 (see the file LICENSE).
 
-from enum import Enum
 import re
 from typing import Optional
 
 from pydantic import validator
 
-from maasserver.enum import NODE_STATUS_CHOICES
-from maasservicelayer.enums.power_drivers import PowerTypeEnum
+from maascommon.enums.node import HARDWARE_TYPE, NODE_STATUS
+from maascommon.enums.power_driver import PowerTypeEnum
 from maasservicelayer.models.base import MaasTimestampedBaseModel
-from metadataserver.enum import HARDWARE_TYPE_CHOICES
 
 # PCIE and USB vendor and product ids are represented as a 2 byte hex string
 DEVICE_ID_REGEX = re.compile(r"^[\da-f]{4}$", re.I)
-
-
-MachineStatusEnum = Enum(
-    "MachineStatus",
-    dict({str(name).lower(): int(code) for code, name in NODE_STATUS_CHOICES}),
-)
-
-HardwareDeviceTypeEnum = Enum(
-    "HardwareDeviceType",
-    dict(
-        {str(name).lower(): int(code) for code, name in HARDWARE_TYPE_CHOICES}
-    ),
-)
 
 
 class Machine(MaasTimestampedBaseModel):
@@ -41,15 +26,14 @@ class Machine(MaasTimestampedBaseModel):
     hwe_kernel: Optional[str]
     locked: bool
     cpu_count: int
-    status: MachineStatusEnum
+    status: NODE_STATUS
     power_type: Optional[PowerTypeEnum]
     fqdn: str
     hostname: str
 
 
 class HardwareDevice(MaasTimestampedBaseModel):
-    # TODO: move HARDWARE_TYPE to enum and change the type here
-    hardware_type: HardwareDeviceTypeEnum = HardwareDeviceTypeEnum.node
+    hardware_type: HARDWARE_TYPE = HARDWARE_TYPE.NODE
     vendor_id: str
     product_id: str
     vendor_name: str

@@ -16,14 +16,13 @@ from django.db.models import Model, Q
 from django.forms.fields import Field
 from netaddr import IPAddress
 
-from maasserver.enum import (
-    DEPLOYMENT_TARGET,
-    DEPLOYMENT_TARGET_CHOICES,
+from maascommon.enums.node import (
     NODE_STATUS,
     NODE_STATUS_SHORT_LABEL_CHOICES,
     SIMPLIFIED_NODE_STATUS,
     SIMPLIFIED_NODE_STATUS_LABEL_CHOICES,
 )
+from maasserver.enum import DEPLOYMENT_TARGET, DEPLOYMENT_TARGET_CHOICES
 from maasserver.fields import MAC_FIELD_VALIDATOR, MODEL_NAME_VALIDATOR
 import maasserver.forms as maasserver_forms
 from maasserver.forms import (

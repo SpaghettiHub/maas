@@ -7,7 +7,7 @@ import random
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
-from maasserver.enum import INTERFACE_TYPE
+from maascommon.enums.interface import INTERFACE_TYPE
 from maasserver.models.virtualmachine import (
     get_vm_host_resources,
     get_vm_host_storage_pools,

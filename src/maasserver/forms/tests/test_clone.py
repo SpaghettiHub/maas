@@ -6,7 +6,7 @@
 
 import random
 
-from maasserver.enum import NODE_STATUS
+from maascommon.enums.node import NODE_STATUS
 from maasserver.forms.clone import CloneForm
 from maasserver.testing.factory import factory
 from maasserver.testing.testcase import MAASServerTestCase

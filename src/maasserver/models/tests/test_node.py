@@ -27,26 +27,30 @@ from twisted.internet.defer import succeed
 from twisted.internet.error import ConnectionDone
 import yaml
 
+from maascommon.enums.interface import (
+    BRIDGE_TYPE_CHOICES,
+    INTERFACE_LINK_TYPE,
+    INTERFACE_LINK_TYPE_CHOICES,
+    INTERFACE_TYPE,
+)
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maascommon.enums.node import (
+    NODE_STATUS,
+    NODE_STATUS_CHOICES,
+    NODE_STATUS_CHOICES_DICT,
+    NODE_TYPE,
+    NODE_TYPE_CHOICES,
+)
 from maasserver import server_address
 from maasserver import workflow as workflow_module
 from maasserver.clusterrpc.driver_parameters import get_driver_choices
 from maasserver.enum import (
     BOOT_RESOURCE_FILE_TYPE,
     BOOT_RESOURCE_TYPE,
-    BRIDGE_TYPE_CHOICES,
     CACHE_MODE_TYPE,
     FILESYSTEM_GROUP_TYPE,
     FILESYSTEM_TYPE,
-    INTERFACE_LINK_TYPE,
-    INTERFACE_LINK_TYPE_CHOICES,
-    INTERFACE_TYPE,
-    IPADDRESS_TYPE,
     IPRANGE_TYPE,
-    NODE_STATUS,
-    NODE_STATUS_CHOICES,
-    NODE_STATUS_CHOICES_DICT,
-    NODE_TYPE,
-    NODE_TYPE_CHOICES,
     PARTITION_TABLE_TYPE,
     SERVICE_STATUS,
 )

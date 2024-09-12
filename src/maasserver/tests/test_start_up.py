@@ -6,9 +6,10 @@ import random
 from unittest.mock import call, MagicMock
 from uuid import uuid4
 
+from maascommon.enums.interface import INTERFACE_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
 from maasserver import deprecations, eventloop, locks, start_up, vault
 from maasserver.config import RegionConfiguration
-from maasserver.enum import INTERFACE_TYPE, IPADDRESS_TYPE
 from maasserver.models import Interface, StaticIPAddress
 from maasserver.models.config import Config
 from maasserver.models.controllerinfo import ControllerInfo

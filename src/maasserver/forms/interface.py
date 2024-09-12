@@ -13,16 +13,16 @@ __all__ = [
 from django import forms
 from django.core.exceptions import ValidationError
 
-from maasserver.enum import (
+from maascommon.enums.interface import (
     BOND_LACP_RATE_CHOICES,
     BOND_MODE_CHOICES,
     BOND_XMIT_HASH_POLICY_CHOICES,
     BRIDGE_TYPE_CHOICES,
-    DEVICE_IP_ASSIGNMENT_TYPE,
     INTERFACE_TYPE,
-    IPADDRESS_TYPE,
-    NODE_TYPE,
 )
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maascommon.enums.node import NODE_TYPE
+from maasserver.enum import DEVICE_IP_ASSIGNMENT_TYPE
 from maasserver.forms import MAASModelForm, NUMANodeFormMixin, set_form_error
 from maasserver.models.interface import (
     BondInterface,

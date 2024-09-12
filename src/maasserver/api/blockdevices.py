@@ -6,9 +6,9 @@
 from django.core.exceptions import PermissionDenied
 from piston3.utils import rc
 
+from maascommon.enums.node import NODE_STATUS
 from maasserver.api.support import admin_method, operation, OperationsHandler
 from maasserver.api.utils import get_mandatory_param
-from maasserver.enum import NODE_STATUS
 from maasserver.exceptions import (
     MAASAPIBadRequest,
     MAASAPIValidationError,

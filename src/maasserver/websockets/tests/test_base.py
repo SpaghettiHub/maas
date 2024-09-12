@@ -11,7 +11,7 @@ from django.db.models.query import QuerySet
 from django.http import HttpRequest
 from twisted.internet.defer import succeed
 
-from maasserver.enum import NODE_STATUS, NODE_STATUS_CHOICES_DICT
+from maascommon.enums.node import NODE_STATUS, NODE_STATUS_CHOICES_DICT
 from maasserver.forms import AdminMachineForm, AdminMachineWithMACAddressesForm
 from maasserver.models.node import Device, Node
 from maasserver.models.sslkey import SSLKey

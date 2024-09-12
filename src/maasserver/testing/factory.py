@@ -20,9 +20,19 @@ from django.utils import timezone
 from netaddr import IPAddress, IPNetwork
 import yaml
 
+from maascommon.enums.interface import INTERFACE_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maascommon.enums.node import (
+    ALLOCATED_NODE_STATUSES,
+    HARDWARE_TYPE,
+    HARDWARE_TYPE_CHOICES,
+    NODE_DEVICE_BUS,
+    NODE_DEVICE_BUS_CHOICES,
+    NODE_STATUS,
+    NODE_TYPE,
+)
 from maasserver.clusterrpc.driver_parameters import get_driver_types
 from maasserver.enum import (
-    ALLOCATED_NODE_STATUSES,
     BOOT_RESOURCE_FILE_TYPE,
     BOOT_RESOURCE_TYPE,
     CACHE_MODE_TYPE,
@@ -30,14 +40,8 @@ from maasserver.enum import (
     FILESYSTEM_FORMAT_TYPE_CHOICES,
     FILESYSTEM_GROUP_TYPE,
     FILESYSTEM_TYPE,
-    INTERFACE_TYPE,
-    IPADDRESS_TYPE,
     IPRANGE_TYPE,
     KEYS_PROTOCOL_TYPE,
-    NODE_DEVICE_BUS,
-    NODE_DEVICE_BUS_CHOICES,
-    NODE_STATUS,
-    NODE_TYPE,
     PARTITION_TABLE_TYPE,
     RDNS_MODE,
 )
@@ -132,8 +136,6 @@ import maastesting.factory
 from maastesting.factory import TooManyRandomRetries
 from metadataserver.builtin_scripts import load_builtin_scripts
 from metadataserver.enum import (
-    HARDWARE_TYPE,
-    HARDWARE_TYPE_CHOICES,
     RESULT_TYPE,
     RESULT_TYPE_CHOICES,
     SCRIPT_PARALLEL_CHOICES,

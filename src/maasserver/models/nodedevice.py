@@ -14,10 +14,14 @@ from django.db.models import (
     PositiveIntegerField,
 )
 
-from maasserver.enum import NODE_DEVICE_BUS, NODE_DEVICE_BUS_CHOICES
+from maascommon.enums.node import (
+    HARDWARE_TYPE,
+    HARDWARE_TYPE_CHOICES,
+    NODE_DEVICE_BUS,
+    NODE_DEVICE_BUS_CHOICES,
+)
 from maasserver.models.cleansave import CleanSave
 from maasserver.models.timestampedmodel import TimestampedModel
-from metadataserver.enum import HARDWARE_TYPE, HARDWARE_TYPE_CHOICES
 
 # PCIE and USB vendor and product ids are represented as a 2 byte hex string
 DEVICE_ID_REGEX = re.compile(r"^[\da-f]{4}$", re.I)

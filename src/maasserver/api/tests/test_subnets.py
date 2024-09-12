@@ -10,12 +10,9 @@ from django.conf import settings
 from django.http import QueryDict
 from django.urls import reverse
 
-from maasserver.enum import (
-    IPADDRESS_TYPE,
-    NODE_STATUS,
-    RDNS_MODE,
-    RDNS_MODE_CHOICES,
-)
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maascommon.enums.node import NODE_STATUS
+from maasserver.enum import RDNS_MODE, RDNS_MODE_CHOICES
 from maasserver.testing.api import APITestCase, explain_unexpected_response
 from maasserver.testing.factory import factory
 from maasserver.utils.orm import reload_object

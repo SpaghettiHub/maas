@@ -6,7 +6,7 @@ import http.client
 from django.urls import reverse
 from django.utils.http import urlencode
 
-from maasserver.enum import NODE_TYPE
+from maascommon.enums.node import NODE_TYPE
 from maasserver.models.bmc import Pod
 from maasserver.testing.api import APITestCase, explain_unexpected_response
 from maasserver.testing.factory import factory

@@ -7,16 +7,12 @@ from unittest.mock import ANY, DEFAULT
 
 from netaddr import IPAddress, IPNetwork
 
+from maascommon.enums.interface import INTERFACE_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maascommon.enums.node import NODE_STATUS, NODE_TYPE
 from maasserver import server_address
 from maasserver.dns.config import get_resource_name_for_subnet
-from maasserver.enum import (
-    BOOT_RESOURCE_FILE_TYPE,
-    BOOT_RESOURCE_TYPE,
-    INTERFACE_TYPE,
-    IPADDRESS_TYPE,
-    NODE_STATUS,
-    NODE_TYPE,
-)
+from maasserver.enum import BOOT_RESOURCE_FILE_TYPE, BOOT_RESOURCE_TYPE
 from maasserver.models import (
     BootResource,
     BootResourceFile,

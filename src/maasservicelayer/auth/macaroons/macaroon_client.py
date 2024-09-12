@@ -8,6 +8,7 @@ from urllib.parse import quote
 
 from macaroonbakery.httpbakery.agent import AuthInfo
 
+from maascommon.enums.rbac import RbacPermission, RbacResourceType
 from maasservicelayer.auth.macaroons.bakery import (
     AsyncAgentInteractor,
     HttpBakeryAsyncClient,
@@ -27,7 +28,6 @@ from maasservicelayer.auth.macaroons.models.responses import (
     UpdateResourcesResponse,
     UserDetailsResponse,
 )
-from maasservicelayer.enums.rbac import RbacPermission, RbacResourceType
 
 
 class MacaroonAsyncClient(abc.ABC):

@@ -5,11 +5,11 @@ from netaddr import IPAddress
 
 from maasapiserver.v3.api.public.models.responses.interfaces import (
     InterfaceResponse,
-    InterfaceTypeEnum,
     LinkResponse,
 )
 from maasapiserver.v3.constants import V3_API_PREFIX
-from maasserver.enum import IPADDRESS_TYPE
+from maascommon.enums.interface import INTERFACE_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
 from maasservicelayer.models.interfaces import Interface, Link
 from maasservicelayer.utils.date import utcnow
 
@@ -38,7 +38,7 @@ class TestInterfaceModel:
             created=now,
             updated=now,
             name="test_interface",
-            type=InterfaceTypeEnum.physical,
+            type=INTERFACE_TYPE.PHYSICAL,
             mac_address="",
             link_connected=True,
             interface_speed=0,

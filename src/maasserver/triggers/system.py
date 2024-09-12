@@ -12,7 +12,7 @@ for.
 
 from textwrap import dedent
 
-from maasserver.enum import NODE_TYPE
+from maascommon.enums.node import NODE_TYPE
 from maasserver.models.dnspublication import zone_serial
 from maasserver.triggers import register_procedure, register_trigger
 from maasserver.utils.orm import transactional

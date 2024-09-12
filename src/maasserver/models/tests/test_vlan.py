@@ -6,7 +6,7 @@ import random
 from django.core.exceptions import ValidationError
 from django.db.models import ProtectedError
 
-from maasserver.enum import INTERFACE_TYPE
+from maascommon.enums.interface import INTERFACE_TYPE
 from maasserver.models.interface import PhysicalInterface, VLANInterface
 from maasserver.models.notification import Notification
 from maasserver.models.vlan import VLAN

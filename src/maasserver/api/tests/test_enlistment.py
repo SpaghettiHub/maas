@@ -9,8 +9,8 @@ import random
 from django.conf import settings
 from django.urls import reverse
 
+from maascommon.enums.node import NODE_STATUS
 from maasserver.api import machines as machines_module
-from maasserver.enum import NODE_STATUS
 from maasserver.models import Domain, Machine, Node, NodeMetadata
 from maasserver.models.node import PowerInfo
 from maasserver.testing.api import APITestCase

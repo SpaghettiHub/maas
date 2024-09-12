@@ -8,7 +8,8 @@ from netaddr import IPAddress
 import tempita
 import yaml
 
-from maasserver.enum import BRIDGE_TYPE, INTERFACE_TYPE, NODE_STATUS
+from maascommon.enums.interface import BRIDGE_TYPE, INTERFACE_TYPE
+from maascommon.enums.node import NODE_STATUS
 from maasserver.models import Config, ControllerInfo, NodeKey
 from maasserver.node_status import COMMISSIONING_LIKE_STATUSES
 from maasserver.secrets import SecretManager

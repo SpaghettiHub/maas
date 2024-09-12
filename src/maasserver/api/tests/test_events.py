@@ -12,10 +12,10 @@ from urllib.parse import parse_qsl, urlparse
 from django.conf import settings
 from django.urls import reverse
 
+from maascommon.enums.node import NODE_TYPE
 from maasserver.api import events as events_module
 from maasserver.api.events import event_to_dict
 from maasserver.api.tests.test_nodes import RequestFixture
-from maasserver.enum import NODE_TYPE
 from maasserver.testing.api import APITestCase
 from maasserver.testing.factory import factory
 from maasserver.testing.fixtures import RBACForceOffFixture

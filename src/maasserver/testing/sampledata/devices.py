@@ -1,6 +1,5 @@
-from maasserver.enum import NODE_DEVICE_BUS
+from maascommon.enums.node import HARDWARE_TYPE, NODE_DEVICE_BUS
 from maasserver.testing.factory import factory
-from metadataserver.enum import HARDWARE_TYPE
 
 
 def make_pci_devices(machines: list):

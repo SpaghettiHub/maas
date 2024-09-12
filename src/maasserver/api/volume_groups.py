@@ -5,9 +5,9 @@
 
 from piston3.utils import rc
 
+from maascommon.enums.node import NODE_STATUS
 from maasserver.api.support import operation, OperationsHandler
 from maasserver.api.utils import get_mandatory_param
-from maasserver.enum import NODE_STATUS
 from maasserver.exceptions import MAASAPIValidationError, NodeStateViolation
 from maasserver.forms import (
     CreateLogicalVolumeForm,

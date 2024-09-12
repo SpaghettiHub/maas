@@ -4,8 +4,9 @@
 from django.db.models import Count, Q, QuerySet
 from django.http import HttpRequest
 
+from maascommon.enums.node import NODE_TYPE
 from maasserver.audit import create_audit_event
-from maasserver.enum import ENDPOINT, NODE_TYPE
+from maasserver.enum import ENDPOINT
 from maasserver.forms import TagForm
 from maasserver.models.tag import Tag
 from maasserver.node_constraint_filter_forms import FreeTextFilterNodeForm

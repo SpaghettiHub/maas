@@ -17,9 +17,9 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db.models import F, Q
 
+from maascommon.enums.node import NODE_STATUS
 from maasserver import exceptions, ntp
 from maasserver.api.utils import get_overridden_query_dict
-from maasserver.enum import NODE_STATUS
 from maasserver.forms import AdminMachineWithMACAddressesForm
 from maasserver.models import Node, PhysicalInterface, RackController
 from maasserver.models.timestampedmodel import now

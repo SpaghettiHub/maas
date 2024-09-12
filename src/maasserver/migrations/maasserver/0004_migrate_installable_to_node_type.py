@@ -1,6 +1,6 @@
 from django.db import migrations, models
 
-from maasserver.enum import NODE_TYPE
+from maascommon.enums.node import NODE_TYPE
 
 
 def convert_installable_to_node_type(apps, schema_editor):

@@ -9,7 +9,7 @@ from collections import defaultdict
 from django.core.exceptions import ValidationError
 from django.db.models import Count
 
-from maasserver.enum import NODE_TYPE
+from maascommon.enums.node import NODE_TYPE
 from maasserver.models.defaultresource import DefaultResource
 from maasserver.models.zone import Zone
 from maasserver.testing.factory import factory

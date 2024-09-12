@@ -17,12 +17,9 @@ from django.http import Http404
 import petname
 from twisted.internet.defer import DeferredList, fail, inlineCallbacks, succeed
 
-from maasserver.enum import (
-    INTERFACE_TYPE,
-    IPADDRESS_TYPE,
-    NODE_STATUS,
-    NODE_TYPE,
-)
+from maascommon.enums.interface import INTERFACE_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maascommon.enums.node import NODE_STATUS, NODE_TYPE
 from maasserver.exceptions import PodProblem
 from maasserver.models import bmc as bmc_module
 from maasserver.models.blockdevice import BlockDevice

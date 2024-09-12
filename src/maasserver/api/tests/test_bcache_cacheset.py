@@ -8,8 +8,9 @@ from unittest.mock import ANY
 
 from django.urls import reverse
 
+from maascommon.enums.node import NODE_STATUS
 from maasserver.api import bcache_cacheset as bcache_cacheset_module
-from maasserver.enum import ENDPOINT, FILESYSTEM_GROUP_TYPE, NODE_STATUS
+from maasserver.enum import ENDPOINT, FILESYSTEM_GROUP_TYPE
 from maasserver.testing.api import APITestCase
 from maasserver.testing.factory import factory
 from maasserver.utils.converters import json_load_bytes

@@ -8,8 +8,8 @@ from urllib.parse import urlparse
 
 from twisted.internet.defer import succeed
 
+from maascommon.enums.bmc import BMC_TYPE
 from maasserver import vmhost as vmhost_module
-from maasserver.enum import BMC_TYPE
 from maasserver.exceptions import PodProblem
 from maasserver.models import NodeKey, Pod, PodHints, VMCluster
 from maasserver.testing.factory import factory

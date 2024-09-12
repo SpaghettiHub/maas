@@ -6,7 +6,7 @@
 
 from django.db.models.signals import post_init, post_save, pre_delete, pre_save
 
-from maasserver.enum import NODE_STATUS
+from maascommon.enums.node import NODE_STATUS
 from maasserver.models import (
     Controller,
     Device,

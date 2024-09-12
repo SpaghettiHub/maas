@@ -16,6 +16,16 @@ from django.http import HttpResponse
 from formencode.validators import Int, StringBool
 from piston3.utils import rc
 
+from maascommon.enums.interface import (
+    BRIDGE_TYPE_CHOICES,
+    BRIDGE_TYPE_CHOICES_DICT,
+)
+from maascommon.enums.node import (
+    HARDWARE_TYPE,
+    NODE_STATUS,
+    NODE_TYPE,
+    NODE_TYPE_CHOICES,
+)
 from maasserver.api.support import (
     admin_method,
     AnonymousOperationsHandler,
@@ -27,13 +37,6 @@ from maasserver.api.utils import (
     get_mandatory_param,
     get_optional_list,
     get_optional_param,
-)
-from maasserver.enum import (
-    BRIDGE_TYPE_CHOICES,
-    BRIDGE_TYPE_CHOICES_DICT,
-    NODE_STATUS,
-    NODE_TYPE,
-    NODE_TYPE_CHOICES,
 )
 from maasserver.exceptions import (
     MAASAPIValidationError,
@@ -52,7 +55,6 @@ from maasserver.permissions import NodePermission
 from maasserver.utils.forms import compose_invalid_choice_text
 from maasserver.utils.orm import prefetch_queryset
 from metadataserver.enum import (
-    HARDWARE_TYPE,
     RESULT_TYPE,
     SCRIPT_STATUS,
     SCRIPT_STATUS_CHOICES,

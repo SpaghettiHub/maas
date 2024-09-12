@@ -7,6 +7,7 @@
 import random
 from unittest.mock import sentinel
 
+from maascommon.enums.node import HARDWARE_TYPE, HARDWARE_TYPE_CHOICES
 from maasserver.testing.factory import factory
 from maasserver.testing.testcase import MAASServerTestCase
 from maasserver.utils.orm import reload_object
@@ -17,13 +18,7 @@ from maasserver.websockets.base import (
 )
 from maasserver.websockets.handlers.node_result import NodeResultHandler
 from maastesting.djangotestcase import CountQueries
-from metadataserver.enum import (
-    HARDWARE_TYPE,
-    HARDWARE_TYPE_CHOICES,
-    RESULT_TYPE,
-    RESULT_TYPE_CHOICES,
-    SCRIPT_STATUS,
-)
+from metadataserver.enum import RESULT_TYPE, RESULT_TYPE_CHOICES, SCRIPT_STATUS
 
 
 class TestNodeResultHandler(MAASServerTestCase):

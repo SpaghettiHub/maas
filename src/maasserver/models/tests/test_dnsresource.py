@@ -7,7 +7,7 @@ import re
 
 from django.core.exceptions import PermissionDenied, ValidationError
 
-from maasserver.enum import IPADDRESS_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
 from maasserver.models import StaticIPAddress
 from maasserver.models.dnsresource import DNSResource, separate_fqdn
 from maasserver.permissions import NodePermission

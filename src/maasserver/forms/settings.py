@@ -18,8 +18,8 @@ from socket import gethostname
 from django import forms
 from django.core.exceptions import ValidationError
 
+from maascommon.enums.interface import INTERFACE_LINK_TYPE_CHOICES
 from maasserver.bootresources import IMPORT_RESOURCES_SERVICE_PERIOD
-from maasserver.enum import INTERFACE_LINK_TYPE_CHOICES
 from maasserver.fields import (
     HostListFormField,
     IPListFormField,

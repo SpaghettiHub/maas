@@ -7,6 +7,7 @@ import random
 from django.urls import reverse
 import yaml
 
+from maascommon.enums.node import NODE_STATUS, NODE_STATUS_CHOICES
 import maasserver.compose_preseed as cp_module
 from maasserver.compose_preseed import (
     build_metadata_url,
@@ -14,7 +15,7 @@ from maasserver.compose_preseed import (
     compose_preseed,
     get_apt_proxy,
 )
-from maasserver.enum import NODE_STATUS, NODE_STATUS_CHOICES, PRESEED_TYPE
+from maasserver.enum import PRESEED_TYPE
 from maasserver.models import NodeKey, PackageRepository
 from maasserver.models.config import Config
 from maasserver.rpc.testing.fixtures import RunningClusterRPCFixture

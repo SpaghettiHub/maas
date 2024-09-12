@@ -12,7 +12,8 @@ import prometheus_client
 from twisted.application.internet import TimerService
 from twisted.internet.defer import fail
 
-from maasserver.enum import IPADDRESS_TYPE, IPRANGE_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
+from maasserver.enum import IPRANGE_TYPE
 from maasserver.models import Config
 from maasserver.prometheus import stats
 from maasserver.prometheus.stats import (

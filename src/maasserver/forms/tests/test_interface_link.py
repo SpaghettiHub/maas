@@ -8,7 +8,8 @@ import random
 
 from netaddr import IPAddress
 
-from maasserver.enum import INTERFACE_LINK_TYPE, INTERFACE_TYPE, IPADDRESS_TYPE
+from maascommon.enums.interface import INTERFACE_LINK_TYPE, INTERFACE_TYPE
+from maascommon.enums.ipaddress import IPADDRESS_TYPE
 from maasserver.forms.interface_link import (
     InterfaceLinkForm,
     InterfaceSetDefaultGatwayForm,

@@ -22,7 +22,7 @@ from django.db.models import (
 from django.db.models.query import QuerySet
 from netaddr import AddrFormatError
 
-from maasserver.enum import NODE_TYPE
+from maascommon.enums.node import NODE_TYPE
 from maasserver.fields import MODEL_NAME_VALIDATOR
 from maasserver.models.cleansave import CleanSave
 from maasserver.models.interface import VLANInterface
