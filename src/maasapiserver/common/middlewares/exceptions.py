@@ -24,6 +24,7 @@ from maasservicelayer.exceptions.catalog import (
     BaseExceptionDetail,
     DischargeRequiredException,
     ForbiddenException,
+    InternalErrorException,
     NotFoundException,
     PreconditionFailedException,
     ServiceUnavailableException,
@@ -60,6 +61,9 @@ class ExceptionMiddleware(BaseHTTPMiddleware):
         except BadRequestException as e:
             logger.debug(e)
             return BadRequestResponse(e.details)
+        except InternalErrorException as e:
+            logger.exception(e)
+            return InternalServerErrorResponse()
         except UnauthorizedException as e:
             logger.debug(e)
             return UnauthorizedResponse(e.details)
