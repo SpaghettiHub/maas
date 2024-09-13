@@ -27,7 +27,7 @@ from maasservicelayer.auth.macaroons.models.responses import (
     PermissionResourcesMapping,
 )
 from maasservicelayer.db.repositories.resource_pools import (
-    ResourcePoolFilterQueryBuilder,
+    ResourcePoolClauseFactory,
 )
 from maasservicelayer.enums.rbac import RbacPermission
 from maasservicelayer.exceptions.catalog import (
@@ -166,10 +166,9 @@ class TestResourcePoolApi(ApiCommonTests):
             services_mock.resource_pools.list.mock_calls[0].kwargs["size"]
             == 20
         )
-        assert (
-            services_mock.resource_pools.list.mock_calls[0].kwargs["query"]
-            == ResourcePoolFilterQueryBuilder().with_ids([1, 2]).build()
-        )
+        assert services_mock.resource_pools.list.mock_calls[0].kwargs[
+            "query"
+        ].where == ResourcePoolClauseFactory.with_ids([1, 2])
 
     async def test_get_200(
         self,
