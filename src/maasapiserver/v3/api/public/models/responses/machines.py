@@ -9,6 +9,7 @@ from maasapiserver.v3.api.public.models.responses.base import (
     HalResponse,
     TokenPaginatedResponse,
 )
+from maasapiserver.v3.constants import V3_API_PREFIX
 from maasservicelayer.enums.power_drivers import PowerTypeEnum
 from maasservicelayer.models.bmc import Bmc
 from maasservicelayer.models.machines import (
@@ -37,6 +38,7 @@ class MachineResponse(HalResponse[BaseHal]):
     status: MachineStatusEnum
     power_type: Optional[PowerTypeEnum]
     fqdn: str
+    pool: Optional[BaseHref]
 
     @classmethod
     def from_model(
@@ -58,6 +60,13 @@ class MachineResponse(HalResponse[BaseHal]):
             status=machine.status,
             power_type=machine.power_type,
             fqdn=machine.fqdn,
+            pool=(
+                BaseHref(
+                    href=f"{V3_API_PREFIX}/resource_pools/{machine.pool_id}"
+                )
+                if machine.pool_id
+                else None
+            ),
             hal_links=BaseHal(
                 self=BaseHref(
                     href=f"{self_base_hyperlink.rstrip('/')}/{machine.id}"

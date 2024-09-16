@@ -45,6 +45,7 @@ class Machine(MaasTimestampedBaseModel):
     power_type: Optional[PowerTypeEnum]
     fqdn: str
     hostname: str
+    pool_id: Optional[int]
 
 
 class HardwareDevice(MaasTimestampedBaseModel):
