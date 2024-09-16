@@ -1,7 +1,21 @@
-# Copyright 2012-2020 Canonical Ltd.  This software is licensed under the
+# Copyright 2012-2024 Canonical Ltd.  This software is licensed under the
 # GNU Affero General Public License version 3 (see the file LICENSE).
 
-"""Enumerations meaningful to the maasserver application."""
+"""
+Enumerations meaningful to the maasserver application.
+
+IMPORTANT NOTE: This enums in this module are being moved to maascommon.enums. When a specific enum is needed in the
+maasapiserver/maasservicelayer/maastemporalworker, we move it to maascommon.enums and copy the values here. Here we simply
+We decided to use this strategy because we want to limit the amount of changes to the legacy maasserver application.
+We still want bugfixes to be easily backported here!
+
+If you migrate one enum, you MUST also add the test to test.maasserver.test_enums.
+
+The enums in this module will be removed once the migration to the new maasapiserver/maasservicelayer has been completed, for this
+reason you can still use them ONLY FROM maasserver if you really need.
+
+That said, NEW ENUMS MUST NOT BE ADDED HERE AT ALL! Please add them to maascommon.enums directly.
+"""
 
 __all__ = [
     "CACHE_MODE_TYPE",
@@ -32,6 +46,16 @@ __all__ = [
 from collections import OrderedDict
 from typing import Callable, cast
 
+from maascommon.enums.bmc import BmcTypeEnum
+from maascommon.enums.interface import InterfaceLinkTypeEnum, InterfaceTypeEnum
+from maascommon.enums.ipaddress import IpAddressTypeEnum
+from maascommon.enums.node import (
+    NodeDeviceBusEnum,
+    NodeStatusEnum,
+    NodeTypeEnum,
+    SimplifiedNodeStatusEnum,
+)
+from maascommon.enums.subnet import RdnsModeEnum
 from provisioningserver.enum import enum_choices
 
 
@@ -50,57 +74,61 @@ class NODE_STATUS:
     """The vocabulary of a `Node`'s possible statuses."""
 
     # A node starts out as NEW (DEFAULT is an alias for NEW).
-    DEFAULT = 0
+    DEFAULT = NodeStatusEnum.DEFAULT.value
 
     # The node has been created and has a system ID assigned to it.
-    NEW = 0
+    NEW = NodeStatusEnum.NEW.value
     # Testing and other commissioning steps are taking place.
-    COMMISSIONING = 1
+    COMMISSIONING = NodeStatusEnum.COMMISSIONING.value
     # The commissioning step failed.
-    FAILED_COMMISSIONING = 2
+    FAILED_COMMISSIONING = NodeStatusEnum.FAILED_COMMISSIONING.value
     # The node can't be contacted.
-    MISSING = 3
+    MISSING = NodeStatusEnum.MISSING.value
     # The node is in the general pool ready to be deployed.
-    READY = 4
+    READY = NodeStatusEnum.READY.value
     # The node is ready for named deployment.
-    RESERVED = 5
+    RESERVED = NodeStatusEnum.RESERVED.value
     # The node has booted into the operating system of its owner's choice
     # and is ready for use.
-    DEPLOYED = 6
+    DEPLOYED = NodeStatusEnum.DEPLOYED.value
     # The node has been removed from service manually until an admin
     # overrides the retirement.
-    RETIRED = 7
+    RETIRED = NodeStatusEnum.RETIRED.value
     # The node is broken: a step in the node lifecyle failed.
     # More details can be found in the node's event log.
-    BROKEN = 8
+    BROKEN = NodeStatusEnum.BROKEN.value
     # The node is being installed.
-    DEPLOYING = 9
+    DEPLOYING = NodeStatusEnum.DEPLOYING.value
     # The node has been allocated to a user and is ready for deployment.
-    ALLOCATED = 10
+    ALLOCATED = NodeStatusEnum.ALLOCATED.value
     # The deployment of the node failed.
-    FAILED_DEPLOYMENT = 11
+    FAILED_DEPLOYMENT = NodeStatusEnum.FAILED_DEPLOYMENT.value
     # The node is powering down after a release request.
-    RELEASING = 12
+    RELEASING = NodeStatusEnum.RELEASING.value
     # The releasing of the node failed.
-    FAILED_RELEASING = 13
+    FAILED_RELEASING = NodeStatusEnum.FAILED_RELEASING.value
     # The node is erasing its disks.
-    DISK_ERASING = 14
+    DISK_ERASING = NodeStatusEnum.DISK_ERASING.value
     # The node failed to erase its disks.
-    FAILED_DISK_ERASING = 15
+    FAILED_DISK_ERASING = NodeStatusEnum.FAILED_DISK_ERASING.value
     # The node is in rescue mode.
-    RESCUE_MODE = 16
+    RESCUE_MODE = NodeStatusEnum.RESCUE_MODE.value
     # The node is entering rescue mode.
-    ENTERING_RESCUE_MODE = 17
+    ENTERING_RESCUE_MODE = NodeStatusEnum.ENTERING_RESCUE_MODE.value
     # The node failed to enter rescue mode.
-    FAILED_ENTERING_RESCUE_MODE = 18
+    FAILED_ENTERING_RESCUE_MODE = (
+        NodeStatusEnum.FAILED_ENTERING_RESCUE_MODE.value
+    )
     # The node is exiting rescue mode.
-    EXITING_RESCUE_MODE = 19
+    EXITING_RESCUE_MODE = NodeStatusEnum.EXITING_RESCUE_MODE.value
     # The node failed to exit rescue mode.
-    FAILED_EXITING_RESCUE_MODE = 20
+    FAILED_EXITING_RESCUE_MODE = (
+        NodeStatusEnum.FAILED_EXITING_RESCUE_MODE.value
+    )
     # Running tests on Node
-    TESTING = 21
+    TESTING = NodeStatusEnum.TESTING.value
     # Testing has failed
-    FAILED_TESTING = 22
+    FAILED_TESTING = NodeStatusEnum.FAILED_TESTING.value
 
 
 # Django choices for NODE_STATUS: sequence of tuples (key, UI
@@ -168,18 +196,18 @@ ALLOCATED_NODE_STATUSES = frozenset(
 class SIMPLIFIED_NODE_STATUS:
     """The vocabulary of a `Node`'s possible simplified statuses."""
 
-    ALLOCATED = "Allocated"
-    BROKEN = "Broken"
-    COMMISSIONING = "Commissioning"
-    DEPLOYED = "Deployed"
-    DEPLOYING = "Deploying"
-    FAILED = "Failed"
-    NEW = "New"
-    READY = "Ready"
-    RELEASING = "Releasing"
-    RESCUE_MODE = "Rescue Mode"
-    TESTING = "Testing"
-    OTHER = "Other"
+    ALLOCATED = SimplifiedNodeStatusEnum.ALLOCATED.value
+    BROKEN = SimplifiedNodeStatusEnum.BROKEN.value
+    COMMISSIONING = SimplifiedNodeStatusEnum.COMMISSIONING.value
+    DEPLOYED = SimplifiedNodeStatusEnum.DEPLOYED.value
+    DEPLOYING = SimplifiedNodeStatusEnum.DEPLOYING.value
+    FAILED = SimplifiedNodeStatusEnum.FAILED.value
+    NEW = SimplifiedNodeStatusEnum.NEW.value
+    READY = SimplifiedNodeStatusEnum.READY.value
+    RELEASING = SimplifiedNodeStatusEnum.RELEASING.value
+    RESCUE_MODE = SimplifiedNodeStatusEnum.RESCUE_MODE.value
+    TESTING = SimplifiedNodeStatusEnum.TESTING.value
+    OTHER = SimplifiedNodeStatusEnum.OTHER.value
 
 
 SIMPLIFIED_NODE_STATUS_CHOICES = enum_choices(SIMPLIFIED_NODE_STATUS)
@@ -236,12 +264,12 @@ SIMPLIFIED_NODE_STATUSES_MAP_REVERSED = {
 class NODE_TYPE:
     """Valid node types."""
 
-    DEFAULT = 0
-    MACHINE = 0
-    DEVICE = 1
-    RACK_CONTROLLER = 2
-    REGION_CONTROLLER = 3
-    REGION_AND_RACK_CONTROLLER = 4
+    DEFAULT = NodeTypeEnum.DEFAULT.value
+    MACHINE = NodeTypeEnum.MACHINE.value
+    DEVICE = NodeTypeEnum.DEVICE.value
+    RACK_CONTROLLER = NodeTypeEnum.RACK_CONTROLLER.value
+    REGION_CONTROLLER = NodeTypeEnum.REGION_CONTROLLER.value
+    REGION_AND_RACK_CONTROLLER = NodeTypeEnum.REGION_AND_RACK_CONTROLLER.value
 
 
 # This is copied in static/js/angular/controllers/subnet_details.js. If you
@@ -260,9 +288,9 @@ NODE_TYPE_CHOICES_DICT = OrderedDict(NODE_TYPE_CHOICES)
 class BMC_TYPE:
     """Valid BMC types."""
 
-    DEFAULT = 0
-    BMC = 0
-    POD = 1
+    DEFAULT = BmcTypeEnum.DEFAULT.value
+    BMC = BmcTypeEnum.BMC.value
+    POD = BmcTypeEnum.POD.value
 
 
 BMC_TYPE_CHOICES = ((BMC_TYPE.BMC, "BMC"), (BMC_TYPE.POD, "POD"))
@@ -305,13 +333,13 @@ class RDNS_MODE:
     """The vocabulary of a `Subnet`'s possible reverse DNS modes."""
 
     # By default, we do what we've always done: assume we rule the DNS world.
-    DEFAULT = 2
+    DEFAULT = RdnsModeEnum.DEFAULT.value
     # Do not generate reverse DNS for this Subnet.
-    DISABLED = 0
+    DISABLED = RdnsModeEnum.DISABLED.value
     # Generate reverse DNS only for the CIDR.
-    ENABLED = 1
+    ENABLED = RdnsModeEnum.ENABLED.value
     # Generate RFC2317 glue if needed (Subnet is too small for its own zone.)
-    RFC2317 = 2
+    RFC2317 = RdnsModeEnum.RFC2317.value
 
 
 # Django choices for RDNS_MODE: sequence of tuples (key, UI representation.)
@@ -342,11 +370,11 @@ class IPADDRESS_TYPE:
     # Automatically assigned IP address for a node or device out of the
     # connected clusters managed range. MUST NOT be assigned to a Interface
     # with a STICKY address of the same address family.
-    AUTO = 0
+    AUTO = IpAddressTypeEnum.AUTO.value
 
     # User-specified static IP address for a node or device.
     # Permanent until removed by the user, or the node or device is deleted.
-    STICKY = 1
+    STICKY = IpAddressTypeEnum.STICKY.value
 
     # User-specified static IP address.
     # Specifying a MAC address is optional. If the MAC address is not present,
@@ -355,16 +383,16 @@ class IPADDRESS_TYPE:
     # USER_RESERVED IP addresses that correspond to a MAC address,
     # and reside within a cluster interface range, will be added to the DHCP
     # leases file.
-    USER_RESERVED = 4
+    USER_RESERVED = IpAddressTypeEnum.USER_RESERVED.value
 
     # Assigned to tell the interface that it should DHCP from a managed
     # clusters dynamic range or from an external DHCP server.
-    DHCP = 5
+    DHCP = IpAddressTypeEnum.DHCP.value
 
     # IP address was discovered on the interface during commissioning and/or
     # lease parsing. Only commissioning or lease parsing creates these IP
     # addresses.
-    DISCOVERED = 6
+    DISCOVERED = IpAddressTypeEnum.DISCOVERED.value
 
 
 # This is copied in static/js/angular/controllers/subnet_details.js. If you
@@ -726,13 +754,13 @@ class INTERFACE_TYPE:
     # Note: when these constants are changed, the custom SQL query
     # in StaticIPAddressManager.get_hostname_ip_mapping() must also
     # be changed.
-    PHYSICAL = "physical"
-    BOND = "bond"
-    BRIDGE = "bridge"
-    VLAN = "vlan"
-    ALIAS = "alias"
+    PHYSICAL = InterfaceTypeEnum.PHYSICAL.value
+    BOND = InterfaceTypeEnum.BOND.value
+    BRIDGE = InterfaceTypeEnum.BRIDGE.value
+    VLAN = InterfaceTypeEnum.VLAN.value
+    ALIAS = InterfaceTypeEnum.ALIAS.value
     # Interface that is created when it is not linked to a node.
-    UNKNOWN = "unknown"
+    UNKNOWN = InterfaceTypeEnum.UNKNOWN.value
 
 
 INTERFACE_TYPE_CHOICES = (
@@ -751,10 +779,10 @@ INTERFACE_TYPE_CHOICES_DICT = OrderedDict(INTERFACE_TYPE_CHOICES)
 class INTERFACE_LINK_TYPE:
     """The vocabulary of possible types to link a `Subnet` to a `Interface`."""
 
-    AUTO = "auto"
-    DHCP = "dhcp"
-    STATIC = "static"
-    LINK_UP = "link_up"
+    AUTO = InterfaceLinkTypeEnum.AUTO.value
+    DHCP = InterfaceLinkTypeEnum.DHCP.value
+    STATIC = InterfaceLinkTypeEnum.STATIC.value
+    LINK_UP = InterfaceLinkTypeEnum.LINK_UP.value
 
 
 INTERFACE_LINK_TYPE_CHOICES = (
@@ -891,8 +919,8 @@ ENDPOINT_CHOICES = (
 
 
 class NODE_DEVICE_BUS:
-    PCIE = 1
-    USB = 2
+    PCIE = NodeDeviceBusEnum.PCIE.value
+    USB = NodeDeviceBusEnum.USB.value
 
 
 NODE_DEVICE_BUS_CHOICES = (

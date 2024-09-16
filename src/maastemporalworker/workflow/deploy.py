@@ -12,7 +12,7 @@ from temporalio import activity, workflow
 from temporalio.common import RetryPolicy
 from temporalio.exceptions import CancelledError, ChildWorkflowError
 
-from maasserver.enum import NODE_STATUS
+from maascommon.enums.node import NodeStatusEnum
 from maasserver.workflow.power import (
     PowerCycleParam,
     PowerOnParam,
@@ -290,14 +290,14 @@ class DeployNWorkflow:
                 if isinstance(e.cause, CancelledError):
                     continue
 
-                status = NODE_STATUS.FAILED_DEPLOYMENT
+                status = NodeStatusEnum.FAILED_DEPLOYMENT
             except Exception:  # TODO handle failed workflow more specifically
-                status = NODE_STATUS.FAILED_DEPLOYMENT
+                status = NodeStatusEnum.FAILED_DEPLOYMENT
             else:
                 status = (
-                    NODE_STATUS.DEPLOYED
+                    NodeStatusEnum.DEPLOYED
                     if result["success"]
-                    else NODE_STATUS.FAILED_DEPLOYMENT
+                    else NodeStatusEnum.FAILED_DEPLOYMENT
                 )
 
             await workflow.execute_activity(

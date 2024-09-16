@@ -7,7 +7,8 @@ from math import ceil
 import pytest
 from sqlalchemy.ext.asyncio import AsyncConnection
 
-from maasserver.enum import IPADDRESS_TYPE
+from maascommon.enums.ipaddress import IpAddressTypeEnum
+from maascommon.enums.subnet import RdnsModeEnum
 from maasservicelayer.db.repositories.interfaces import InterfaceRepository
 from maasservicelayer.models.base import ListResult
 from maasservicelayer.models.interfaces import Interface
@@ -84,7 +85,7 @@ class TestInterfaceRepository:
                     name=str(i),
                     node=machine,
                     ip_count=4,
-                    alloc_type=getattr(IPADDRESS_TYPE, alloc_type),
+                    alloc_type=getattr(RdnsModeEnum, alloc_type),
                 )
             )
             for i in range(0, interface_count)
@@ -149,7 +150,7 @@ class TestInterfaceRepository:
                     name=str(i),
                     node=machine1,
                     ip_count=4,
-                    alloc_type=IPADDRESS_TYPE.DISCOVERED,
+                    alloc_type=IpAddressTypeEnum.DISCOVERED,
                 )
             )
             for i in range(0, interface1_count)
@@ -163,7 +164,7 @@ class TestInterfaceRepository:
                     name=str(i),
                     node=machine2,
                     ip_count=2,
-                    alloc_type=IPADDRESS_TYPE.DISCOVERED,
+                    alloc_type=IpAddressTypeEnum.DISCOVERED,
                 )
             )
             for i in range(0, interface2_count)
@@ -209,7 +210,7 @@ class TestInterfaceRepository:
                     name=str(i),
                     node=machine,
                     ip_count=4,
-                    alloc_type=IPADDRESS_TYPE.DISCOVERED,
+                    alloc_type=IpAddressTypeEnum.DISCOVERED,
                 )
             )
             for i in range(0, interface_count)
@@ -255,14 +256,16 @@ class TestInterfaceRepository:
                 created_links,
                 response_links,
             ):
-                assert created_dhcp.ip_type == IPADDRESS_TYPE.DHCP
-                assert created_discovery.ip_type == IPADDRESS_TYPE.DISCOVERED
+                assert created_dhcp.ip_type == IpAddressTypeEnum.DHCP
+                assert (
+                    created_discovery.ip_type == IpAddressTypeEnum.DISCOVERED
+                )
 
                 assert created_dhcp.ip_address is None
                 assert created_discovery.ip_address is not None
 
                 # response should be dhcp with the discovery ip
-                assert response_link.ip_type == IPADDRESS_TYPE.DHCP
+                assert response_link.ip_type == IpAddressTypeEnum.DHCP
                 assert response_link.ip_address == created_discovery.ip_address
 
             _assert_interfaces_match_without_links(
@@ -294,7 +297,7 @@ class TestInterfaceRepository:
                     await create_test_staticipaddress_entry(
                         fixture=fixture,
                         subnet=subnet,
-                        alloc_type=IPADDRESS_TYPE.DHCP,
+                        alloc_type=IpAddressTypeEnum.DHCP,
                     )
                 )
             this_interface = await create_test_interface_entry(

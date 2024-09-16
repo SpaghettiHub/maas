@@ -193,6 +193,7 @@ APIServerRule = Rule(
     Allow("fastapi|fastapi.**"),
     Allow("jose|jose.**"),
     Allow("maasapiserver|maasapiserver.**"),
+    Allow("maascommon|maascommon.**"),
     # TODO: Remove when we finally move everything to the maasservicelayer
     Allow("maasserver.config.**"),
     Allow("maasserver.enum.**"),

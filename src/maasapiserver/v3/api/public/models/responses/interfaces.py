@@ -11,17 +11,17 @@ from maasapiserver.v3.api.public.models.responses.base import (
     HalResponse,
     TokenPaginatedResponse,
 )
+from maascommon.enums.interface import InterfaceLinkTypeEnum
 from maasservicelayer.models.interfaces import (
     Interface,
     InterfaceTypeEnum,
     Link,
-    LinkModeEnum,
 )
 
 
 class LinkResponse(BaseModel):
     id: int
-    mode: LinkModeEnum
+    mode: InterfaceLinkTypeEnum
     ip_address: Optional[IPvAnyAddress]
 
     @classmethod
