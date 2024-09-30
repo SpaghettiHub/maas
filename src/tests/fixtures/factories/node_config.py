@@ -3,7 +3,7 @@ from typing import Any
 
 from sqlalchemy import update
 
-from maasserver.enum import NODE_DEVICE_BUS
+from maascommon.enums.node import NodeDeviceBus
 from maasservicelayer.db.tables import NodeTable
 from maasservicelayer.models.machines import PciDevice, UsbDevice
 from maasservicelayer.utils.date import utcnow
@@ -15,7 +15,7 @@ from tests.maasapiserver.fixtures.db import Fixture
 async def create_test_node_config_entry(
     fixture: Fixture,
     node: dict[str, Any] | None = None,
-    **extra_details: dict[str, Any],
+    **extra_details: Any,
 ) -> dict[str, Any]:
     created_at = datetime.utcnow().astimezone()
     updated_at = datetime.utcnow().astimezone()
@@ -77,7 +77,7 @@ async def create_test_usb_device(
     device = {
         "created": now,
         "updated": now,
-        "bus": NODE_DEVICE_BUS.USB,
+        "bus": NodeDeviceBus.USB,
         "hardware_type": HARDWARE_TYPE.NODE,
         "vendor_id": "0000",
         "product_id": "0000",
@@ -107,7 +107,7 @@ async def create_test_pci_device(
     device = {
         "created": now,
         "updated": now,
-        "bus": NODE_DEVICE_BUS.PCIE,
+        "bus": NodeDeviceBus.PCIE,
         "hardware_type": HARDWARE_TYPE.NODE,
         "vendor_id": "0000",
         "product_id": "0000",

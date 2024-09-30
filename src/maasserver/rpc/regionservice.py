@@ -33,15 +33,7 @@ from maasserver.dns.config import get_trusted_networks
 from maasserver.models.config import Config
 from maasserver.models.node import RackController
 from maasserver.models.subnet import Subnet
-from maasserver.rpc import (
-    boot,
-    configuration,
-    events,
-    leases,
-    nodes,
-    packagerepository,
-    rackcontrollers,
-)
+from maasserver.rpc import boot, events, leases, nodes, rackcontrollers
 from maasserver.rpc.nodes import (
     commission_node,
     create_node,
@@ -212,26 +204,6 @@ class Region(SecuredRPCProtocol):
             hardware_uuid=hardware_uuid,
             bios_boot_method=bios_boot_method,
         )
-
-    @region.GetArchiveMirrors.responder
-    def get_archive_mirrors(self):
-        """get_archive_mirrors()
-
-        Implementation of
-        :py:class:`~provisioningserver.rpc.region.GetArchiveMirrors`.
-        """
-        d = deferToDatabase(packagerepository.get_archive_mirrors)
-        return d
-
-    @region.GetProxies.responder
-    def get_proxies(self):
-        """get_proxies()
-
-        Implementation of
-        :py:class:`~provisioningserver.rpc.region.GetProxies`.
-        """
-        d = deferToDatabase(configuration.get_proxies)
-        return d
 
     @region.MarkNodeFailed.responder
     def mark_node_failed(self, system_id, error_description):

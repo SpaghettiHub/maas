@@ -7,8 +7,8 @@ from sqlalchemy import and_, desc, select, Select
 from sqlalchemy.sql.expression import func
 from sqlalchemy.sql.operators import eq, le
 
-from maasserver.enum import NODE_DEVICE_BUS, NODE_TYPE
-from maasservicelayer.db.filters import QuerySpec
+from maascommon.enums.node import NodeDeviceBus, NodeTypeEnum
+from maasservicelayer.db.filters import Clause, ClauseFactory, QuerySpec
 from maasservicelayer.db.repositories.base import (
     BaseRepository,
     CreateOrUpdateResource,
@@ -25,6 +25,18 @@ from maasservicelayer.models.base import ListResult
 from maasservicelayer.models.machines import Machine, PciDevice, UsbDevice
 
 
+class MachineClauseFactory(ClauseFactory):
+    @classmethod
+    def with_owner(cls, owner: str | None) -> Clause:
+        return Clause(condition=eq(UserTable.c.username, owner))
+
+    @classmethod
+    def with_resource_pool_ids(cls, rp_ids: set[int] | None) -> Clause:
+        if rp_ids is None:
+            rp_ids = set()
+        return Clause(condition=NodeTable.c.pool_id.in_(rp_ids))
+
+
 class MachinesRepository(BaseRepository[Machine]):
     async def create(self, resource: CreateOrUpdateResource) -> Machine:
         raise NotImplementedError("Not implemented yet.")
@@ -35,12 +47,14 @@ class MachinesRepository(BaseRepository[Machine]):
     async def list(
         self, token: str | None, size: int, query: QuerySpec | None = None
     ) -> ListResult[Machine]:
-        # TODO: use the query for the filters
         stmt = (
             self._select_all_statement()
             .order_by(desc(NodeTable.c.id))
             .limit(size + 1)
         )
+        if query and query.where:
+            stmt = stmt.where(query.where.condition)
+
         if token is not None:
             stmt = stmt.where(le(NodeTable.c.id, int(token)))
 
@@ -67,7 +81,7 @@ class MachinesRepository(BaseRepository[Machine]):
         stmt = (
             self._list_devices_statement(system_id)
             .order_by(desc(NodeDeviceTable.c.id))
-            .where(eq(NodeDeviceTable.c.bus, NODE_DEVICE_BUS.USB))
+            .where(eq(NodeDeviceTable.c.bus, NodeDeviceBus.USB))
             .limit(size + 1)
         )
         if token is not None:
@@ -89,7 +103,7 @@ class MachinesRepository(BaseRepository[Machine]):
         stmt = (
             self._list_devices_statement(system_id)
             .order_by(desc(NodeDeviceTable.c.id))
-            .where(eq(NodeDeviceTable.c.bus, NODE_DEVICE_BUS.PCIE))
+            .where(eq(NodeDeviceTable.c.bus, NodeDeviceBus.PCIE))
             .limit(size + 1)
         )
         if token is not None:
@@ -178,5 +192,5 @@ class MachinesRepository(BaseRepository[Machine]):
             .join(
                 BMCTable, eq(BMCTable.c.id, NodeTable.c.bmc_id), isouter=True
             )
-            .where(eq(NodeTable.c.node_type, NODE_TYPE.MACHINE))
+            .where(eq(NodeTable.c.node_type, NodeTypeEnum.MACHINE))
         )

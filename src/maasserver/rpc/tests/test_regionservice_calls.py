@@ -9,7 +9,6 @@ from json import dumps
 import random
 from random import randint
 import time
-from urllib.parse import urlparse
 
 from twisted.internet.defer import inlineCallbacks, succeed
 from twisted.python.failure import Failure
@@ -17,9 +16,8 @@ from twisted.python.failure import Failure
 from maasserver import eventloop
 from maasserver.dns.config import get_trusted_networks
 from maasserver.enum import INTERFACE_TYPE, NODE_STATUS
-from maasserver.models import Config, Event, EventType, Node, PackageRepository
+from maasserver.models import Config, Event, EventType, Node
 from maasserver.models.interface import PhysicalInterface
-from maasserver.models.signals import bootsources
 from maasserver.models.signals.testing import SignalsDisabled
 from maasserver.rpc import events as events_module
 from maasserver.rpc import leases as leases_module
@@ -43,11 +41,9 @@ from provisioningserver.rpc.region import (
     Authenticate,
     CommissionNode,
     CreateNode,
-    GetArchiveMirrors,
     GetBootConfig,
     GetControllerType,
     GetDNSConfiguration,
-    GetProxies,
     GetProxyConfiguration,
     GetSyslogConfiguration,
     GetTimeConfiguration,
@@ -261,103 +257,6 @@ class TestRegionProtocol_GetBootConfig(MAASTransactionServerTestCase):
                 "ephemeral_opts",
             },
         )
-
-
-class TestRegionProtocol_GetArchiveMirrors(MAASTransactionServerTestCase):
-    def test_get_archive_mirrors_is_registered(self):
-        protocol = Region()
-        responder = protocol.locateResponder(GetArchiveMirrors.commandName)
-        self.assertIsNotNone(responder)
-
-    @wait_for_reactor
-    @inlineCallbacks
-    def test_get_archive_mirrors_with_main_archive_port_archive_default(self):
-        response = yield call_responder(Region(), GetArchiveMirrors, {})
-        self.assertEqual(
-            {
-                "main": urlparse("http://archive.ubuntu.com/ubuntu"),
-                "ports": urlparse("http://ports.ubuntu.com/ubuntu-ports"),
-            },
-            response,
-        )
-
-    @wait_for_reactor
-    @inlineCallbacks
-    def test_get_archive_mirrors_with_main_archive_set(self):
-        main_archive = yield deferToDatabase(
-            lambda: PackageRepository.get_main_archive()
-        )
-        url = factory.make_parsed_url(scheme="http")
-        main_archive.url = url.geturl()
-        yield deferToDatabase(transactional(main_archive.save))
-
-        response = yield call_responder(Region(), GetArchiveMirrors, {})
-
-        self.assertEqual(
-            {
-                "main": url,
-                "ports": urlparse("http://ports.ubuntu.com/ubuntu-ports"),
-            },
-            response,
-        )
-
-    @wait_for_reactor
-    @inlineCallbacks
-    def test_get_archive_mirrors_with_ports_archive_set(self):
-        ports_archive = yield deferToDatabase(
-            lambda: PackageRepository.get_ports_archive()
-        )
-        url = factory.make_parsed_url(scheme="http")
-        ports_archive.url = url.geturl()
-        yield deferToDatabase(transactional(ports_archive.save))
-
-        response = yield call_responder(Region(), GetArchiveMirrors, {})
-
-        self.assertEqual(
-            {
-                "main": urlparse("http://archive.ubuntu.com/ubuntu"),
-                "ports": url,
-            },
-            response,
-        )
-
-
-class TestRegionProtocol_GetProxies(MAASTransactionServerTestCase):
-    def test_get_proxies_is_registered(self):
-        protocol = Region()
-        responder = protocol.locateResponder(GetProxies.commandName)
-        self.assertIsNotNone(responder)
-
-    @transactional
-    def set_http_proxy(self, url):
-        Config.objects.set_config("http_proxy", url)
-
-    @wait_for_reactor
-    @inlineCallbacks
-    def test_get_proxies_with_http_proxy_not_set(self):
-        # Disable boot source cache signals.
-        self.addCleanup(bootsources.signals.enable)
-        bootsources.signals.disable()
-
-        yield deferToDatabase(self.set_http_proxy, None)
-
-        response = yield call_responder(Region(), GetProxies, {})
-
-        self.assertEqual({"http": None, "https": None}, response)
-
-    @wait_for_reactor
-    @inlineCallbacks
-    def test_get_proxies_with_http_proxy_set(self):
-        # Disable boot source cache signals.
-        self.addCleanup(bootsources.signals.enable)
-        bootsources.signals.disable()
-
-        url = factory.make_parsed_url()
-        yield deferToDatabase(self.set_http_proxy, url.geturl())
-
-        response = yield call_responder(Region(), GetProxies, {})
-
-        self.assertEqual({"http": url, "https": url}, response)
 
 
 class TestRegionProtocol_MarkNodeFailed(MAASTransactionServerTestCase):

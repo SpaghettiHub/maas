@@ -10,12 +10,10 @@ __all__ = [
     "Authenticate",
     "CommissionNode",
     "CreateNode",
-    "GetArchiveMirrors",
     "GetBootConfig",
     "GetControllerType",
     "GetDiscoveryState",
     "GetDNSConfiguration",
-    "GetProxies",
     "GetTimeConfiguration",
     "Identify",
     "ListNodePowerParameters",
@@ -143,20 +141,6 @@ class GetArchiveMirrors(amp.Command):
 
     arguments = []
     response = [(b"main", ParsedURL()), (b"ports", ParsedURL())]
-    errors = []
-
-
-class GetProxies(amp.Command):
-    """Return the HTTP and HTTPS proxies to use.
-
-    :since: 1.6
-    """
-
-    arguments = []
-    response = [
-        (b"http", ParsedURL(optional=True)),
-        (b"https", ParsedURL(optional=True)),
-    ]
     errors = []
 
 
