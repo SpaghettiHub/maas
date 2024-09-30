@@ -21,6 +21,8 @@ epoch: 4*
 package-repositories:
   - type: apt
     ppa: maas-committers/latest-deps
+  - type: apt
+    ppa: curtin-dev/curtin-daily-release-23.1.x
 
 environment:
   PYTHONPATH: $SNAP/usr/lib/python3/dist-packages:$SNAP/usr/lib/python3.10/dist-packages
