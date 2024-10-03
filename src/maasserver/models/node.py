@@ -118,6 +118,7 @@ from maasserver.models.filesystem import Filesystem
 from maasserver.models.filesystemgroup import FilesystemGroup
 from maasserver.models.interface import Interface, InterfaceRelationship
 from maasserver.models.licensekey import LicenseKey
+from maasserver.models.notification import Notification
 from maasserver.models.numa import NUMANode, NUMANodeHugepages
 from maasserver.models.ownerdata import OwnerData
 from maasserver.models.partitiontable import PartitionTable
@@ -638,6 +639,49 @@ class MachineManager(BaseNodeManager):
         available_machines = self.get_nodes(for_user, NodePermission.edit)
         return available_machines.filter(status=NODE_STATUS.READY)
 
+    def validate_enable_kernel_crash_dump(
+        self,
+        machine,
+        enable_kernel_crash_dump: bool | None = None,
+        emit_notification_if_fail: bool = False,
+    ):
+        """
+        If the machine does not satisfy the minimum requirements to enable the kernel crash dump, return False.
+        This is a UX requirement, because we don't want to fail a deployment under such circumstance.
+        """
+        if enable_kernel_crash_dump is None:
+            enable_kernel_crash_dump = Config.objects.get_config(
+                "enable_kernel_crash_dump"
+            )
+        if enable_kernel_crash_dump:
+            # At least 4 CPU threads, at least 6GB of RAM and at most 2TB of RAM
+            if (
+                machine.cpu_count < 4
+                or machine.memory < 6 * 1024
+                or machine.memory > 2 * 1024 * 1024
+            ):
+                if emit_notification_if_fail:
+                    Notification.objects.create_warning_for_users(
+                        ident=f"kernel_crash_{machine.system_id}",
+                        message=f"Kernel crash dump was not enabled for {machine.fqdn} because it did not meet the minimum requirements.",
+                    )
+                maaslog.warning(
+                    f"Kernel crash dump was not enabled for {machine.fqdn} because it did not meet the minimum requirements."
+                )
+                enable_kernel_crash_dump = False
+        if machine.split_arch()[0] not in ["amd64", "arm64", "s390x"]:
+            if emit_notification_if_fail:
+                Notification.objects.create_warning_for_users(
+                    ident=f"kernel_crash_{machine.system_id}",
+                    message=f"Kernel crash dump was not enabled for {machine.fqdn} because it does not have a supported architecture.",
+                )
+            maaslog.warning(
+                f"Kernel crash dump was not enabled for {machine.fqdn} because it does not have a supported architecture."
+            )
+            enable_kernel_crash_dump = False
+
+        return enable_kernel_crash_dump
+
 
 class DeviceManager(BaseNodeManager):
     """Devices are all the non-deployable nodes."""
@@ -1119,6 +1163,8 @@ class Node(CleanSave, TimestampedModel):
     netboot = BooleanField(default=True)
 
     ephemeral_deploy = BooleanField(default=False)
+
+    enable_kernel_crash_dump = BooleanField(default=False)
 
     license_key = CharField(max_length=30, null=True, blank=True)
 

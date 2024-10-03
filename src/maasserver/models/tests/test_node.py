@@ -75,6 +75,7 @@ from maasserver.models import (
 from maasserver.models import (
     NodeDevice,
     NodeUserData,
+    Notification,
     OwnerData,
     PhysicalInterface,
     RackController,
@@ -421,7 +422,9 @@ class TestNodeGetLatestScriptResults(MAASServerTestCase):
 class TestMachineManager(MAASServerTestCase):
     def make_machine(self, *args, **kwargs):
         return factory.make_Node(
-            status=NODE_STATUS.READY, with_boot_disk=False, **kwargs
+            status=NODE_STATUS.READY,
+            with_boot_disk=False,
+            **kwargs,
         )
 
     def test_machine_lists_node_type_machine(self):
@@ -474,6 +477,122 @@ class TestMachineManager(MAASServerTestCase):
         self.assertEqual(
             [],
             list(Machine.objects.get_available_machines_for_acquisition(user)),
+        )
+
+    def test_validate_enable_kernel_crash_dump_default(self):
+        machine = self.make_machine(
+            cpu_count=4, memory=6 * 1024, architecture="amd64/generic"
+        )
+        machine.save()
+        self.assertFalse(
+            Machine.objects.validate_enable_kernel_crash_dump(machine)
+        )
+
+    def test_validate_enable_kernel_crash_dump_default_true(self):
+        Config.objects.set_config("enable_kernel_crash_dump", True)
+        machine = self.make_machine(
+            cpu_count=4, memory=6 * 1024, architecture="amd64/generic"
+        )
+        machine.save()
+        self.assertTrue(
+            Machine.objects.validate_enable_kernel_crash_dump(machine)
+        )
+
+    def test_validate_enable_kernel_crash_dump_override_default(self):
+        machine = self.make_machine(
+            cpu_count=4, memory=(6 * 1024), architecture="amd64/generic"
+        )
+        machine.save()
+        self.assertTrue(
+            Machine.objects.validate_enable_kernel_crash_dump(
+                machine, enable_kernel_crash_dump=True
+            )
+        )
+
+    def test_validate_enable_kernel_crash_dump_not_enough_cpu(self):
+        machine = self.make_machine(
+            cpu_count=3, memory=6 * 1024, architecture="amd64/generic"
+        )
+        machine.save()
+        self.assertFalse(
+            Machine.objects.validate_enable_kernel_crash_dump(
+                machine, enable_kernel_crash_dump=True
+            )
+        )
+
+    def test_validate_enable_kernel_crash_dump_not_enough_memory(
+        self,
+    ):
+        machine = self.make_machine(
+            cpu_count=4, memory=(6 * 1024 - 1), architecture="amd64/generic"
+        )
+        machine.save()
+        self.assertFalse(
+            Machine.objects.validate_enable_kernel_crash_dump(
+                machine, enable_kernel_crash_dump=True
+            )
+        )
+
+    def test_validate_enable_kernel_crash_too_much_memory(
+        self,
+    ):
+        machine = self.make_machine(
+            cpu_count=4,
+            memory=(2 * 1024 * 1024 + 1),
+            architecture="amd64/generic",
+        )
+        machine.save()
+        self.assertFalse(
+            Machine.objects.validate_enable_kernel_crash_dump(
+                machine, enable_kernel_crash_dump=True
+            )
+        )
+        # Notification not emitted by default
+        self.assertFalse(
+            Notification.objects.filter(
+                ident=f"kernel_crash_dumps_warning_{machine.fqdn}"
+            ).exists()
+        )
+
+    def test_validate_enable_kernel_crash_wrong_arch(
+        self,
+    ):
+        machine = self.make_machine(
+            cpu_count=4, memory=(8 * 1024), architecture="armhf/generic"
+        )
+        machine.save()
+        self.assertFalse(
+            Machine.objects.validate_enable_kernel_crash_dump(
+                machine, enable_kernel_crash_dump=True
+            )
+        )
+        # Notification not emitted by default
+        self.assertFalse(
+            Notification.objects.filter(
+                ident=f"kernel_crash_dumps_warning_{machine.fqdn}"
+            ).exists()
+        )
+
+    def test_validate_enable_kernel_notification_emitted(
+        self,
+    ):
+        machine = self.make_machine(
+            cpu_count=4,
+            memory=(2 * 1024 * 1024 + 1),
+            architecture="amd64/generic",
+        )
+        machine.save()
+        self.assertFalse(
+            Machine.objects.validate_enable_kernel_crash_dump(
+                machine,
+                enable_kernel_crash_dump=True,
+                emit_notification_if_fail=True,
+            )
+        )
+        self.assertTrue(
+            Notification.objects.filter(
+                ident=f"kernel_crash_{machine.system_id}"
+            ).exists()
         )
 
 
