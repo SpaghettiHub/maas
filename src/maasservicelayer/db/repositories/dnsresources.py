@@ -1,0 +1,133 @@
+from typing import Any, Optional
+
+from sqlalchemy import delete, select
+from sqlalchemy.ext.asyncio import AsyncConnection
+
+from maascommon.enums.ipaddress import IpAddressType
+from maasservicelayer.db.tables import (
+    DNSResourceIPAddressTable,
+    DNSResourceTable,
+    GlobalDefaultTable,
+    StaticIPAddressTable,
+)
+from maasservicelayer.models.dnsresources import DNSResource
+from maasservicelayer.models.domains import Domain
+from maasservicelayer.models.staticipaddress import StaticIPAddress
+
+
+class DNSResourceRepository:
+    def __init__(self, connection: AsyncConnection):
+        self.connection = connection
+
+    async def get(self, **values: dict[str, Any]) -> DNSResource | None:
+        filters = []
+        for col, value in values.items():
+            filters.append(getattr(DNSResourceTable.c, col) == value)
+
+        stmt = (
+            select(DNSResourceTable)
+            .select_from(DNSResourceTable)
+            .filter(*filters)
+        )
+
+        result = (await self.connection.execute(stmt)).one_or_none()
+        if result:
+            return DNSResource(**result._asdict())
+        return None
+
+    async def create(self, **values: dict[str, Any]) -> DNSResource:
+        stmt = (
+            insert(DNSResourceTable)
+            .returning(DNSResourceTable)
+            .values(**values)
+        )
+
+        result = (await self.connection.execute(stmt)).one()
+
+        return DNSResource(**result)
+
+    async def get_dnsresources_in_domain_for_ip(
+        self,
+        domain: Domain,
+        ip: StaticIPAddress,
+        but_not_for: Optional[DNSResource] = None,
+    ) -> list[DNSResource]:
+        stmt = (
+            select(DNSResourceTable)
+            .select_from(DNSResourceTable)
+            .join(
+                DNSResourceIPAddressTable,
+                DNSResourceIPAddressTable.c.dnsresource_id
+                == DNSResourceTable.c.id,
+            )
+            .filter(
+                DNSResourceTable.c.domain_id == domain.id,
+                DNSResourceIPAddressTable.c.staticipaddress_id == ip.id,
+            )
+        )
+
+        if but_not_for:
+            stmt = resources_stmt.filter(
+                DNSResourceTable.c.id != but_not_for.id
+            )
+
+        result = (await self.connection.execute(stmt)).all()
+        return [DNSResource(**row._asdict()) for row in result]
+
+    async def get_ips_for_dnsresource(
+        self,
+        dnsrr: DNSResource,
+        discovered_only: Optional[bool] = False,
+        matching: Optional[StaticIPAddress] = None,
+    ) -> list[StaticIPAddress]:
+        filters = [
+            DNSResourceIPAddressTable.c.dnsresource_id == dnsrr.id,
+        ]
+
+        if discovered_only:
+            filters.append(
+                StaticIPAddressTable.c.alloc_type
+                == IpAddressType.DISCOVERED.value
+            )
+
+        if matching:
+            filters.append(StaticIPAddressTable.c.ip == matching.ip)
+
+        stmt = (
+            select(
+                StaticIPAddressTable.c.id,
+            )
+            .select_from(StaticIPAddressTable)
+            .join(
+                DNSResourceIPAddressTable,
+                DNSResourceIPAddressTable.c.staticipaddress_id
+                == StaticIPAddressTable.c.id,
+            )
+            .filter(*filters)
+        )
+
+        result = (await self.connection.execute(stmt)).all()
+
+        return [StaticIPAddress(**row._asict()) for row in result]
+
+    async def remove_ip_relation(
+        self, dnsrr: DNSResource, ip: StaticIPAddress
+    ) -> None:
+        remove_relation_stmt = delete(DNSResourceIPAddressTable).where(
+            DNSResourceIPAddressTable.c.staticipaddress_id == ip.id,
+            DNSResourceIPAddressTable.c.dnsresource_id == dnsrr.id,
+        )
+        await self.connection.execute(remove_relation_stmt)
+
+    async def delete(self, dnsrr: DNSResource) -> None:
+        stmt = delete(DNSResourceTable).where(
+            DNSResourceTable.c.id == dnsrr.id
+        )
+        await self.connection.execute(stmt)
+
+    async def link_ip(self, dnsrr: DNSResource, ip: StaticIPAddress) -> None:
+        stmt = insert(DNSResourceIPAddressTable).values(
+            dnsresource_id=dnsrr.id, staticipaddress_id=ip.id
+        )
+
+        await self.connection.execute(stmt)

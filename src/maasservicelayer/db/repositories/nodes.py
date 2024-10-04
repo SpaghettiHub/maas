@@ -74,3 +74,14 @@ class NodesRepository(BaseRepository[Node]):
             .select_from(BMCTable)
             .join(NodeTable, eq(NodeTable.c.bmc_id, BMCTable.c.id))
         )
+
+    async def hostname_exists(self, hostname: str) -> bool:
+        stmt = (
+            select(NodeTable.c.id)
+            .select_from(NodeTable)
+            .filter(NodeTable.c.hostname == hostname)
+        )
+
+        exists = (await self.connection.execute(stmt)).one_or_none()
+
+        return exists is not None
