@@ -3,7 +3,9 @@
 
 from typing import Any
 
-from sqlalchemy import desc, select, Select
+from netaddr import IPAddress
+from pydantic import IPvAnyAddress
+from sqlalchemy import desc, select, Select, text
 from sqlalchemy.sql.operators import eq, le
 
 from maasservicelayer.db.filters import QuerySpec
@@ -28,6 +30,46 @@ class SubnetsRepository(BaseRepository[Subnet]):
         if not subnet:
             return None
         return Subnet(**subnet._asdict())
+
+    async def find_best_subnet_for_ip(
+        self, ip: IPvAnyAddress
+    ) -> Subnet | None:
+        ip_addr = IPAddress(str(ip))
+        if ip_addr.is_ipv4_mapped():
+            ip_addr = ip_addr.ipv4()
+
+        stmt = text(
+            """
+            SELECT DISTINCT
+                subnet.*,
+                masklen(subnet.cidr) "prefixlen",
+                vlan.dhcp_on "dhcp_on"
+            FROM maasserver_subnet AS subnet
+            INNER JOIN maasserver_vlan AS vlan
+                ON subnet.vlan_id = vlan.id
+            WHERE
+                :ip << subnet.cidr /* Specified IP is inside range */
+            ORDER BY
+                /* Pick subnet that is on a VLAN that is managed over a subnet
+                   that is not managed on a VLAN. */
+                dhcp_on DESC,
+                /* If there are multiple subnets we want to pick the most specific
+                   one that the IP address falls within. */
+                prefixlen DESC
+            LIMIT 1
+        """
+        )
+
+        result = (
+            await self.connection.execute(stmt, {"ip": ip_addr})
+        ).one_or_none()
+        if not result:
+            return None
+
+        res = result._asdict()
+        del res["prefixlen"]
+        del res["dhcp_on"]
+        return Subnet(**res)
 
     async def find_by_name(self, name: str) -> Subnet | None:
         raise NotImplementedError()

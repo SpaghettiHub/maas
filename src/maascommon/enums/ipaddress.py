@@ -37,3 +37,8 @@ class IpAddressType(IntEnum):
     # lease parsing. Only commissioning or lease parsing creates these IP
     # addresses.
     DISCOVERED = 6
+
+
+class IpAddressFamily(IntEnum):
+    IPV4 = 4
+    IPv6 = 6
