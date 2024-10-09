@@ -15,13 +15,7 @@ from maasserver import eventloop
 from maasserver.api import auth
 from maasserver.api import machines as machines_module
 from maasserver.api.machines import AllocationOptions, get_allocation_options
-from maasserver.enum import (
-    BMC_TYPE,
-    BRIDGE_TYPE,
-    INTERFACE_TYPE,
-    NODE_STATUS,
-    POWER_STATE,
-)
+from maasserver.enum import BMC_TYPE, BRIDGE_TYPE, INTERFACE_TYPE, NODE_STATUS
 import maasserver.forms as forms_module
 from maasserver.forms.pods import ComposeMachineForm, ComposeMachineForPodsForm
 from maasserver.models import Config, Domain, Machine, Node
@@ -51,6 +45,7 @@ from maastesting.testcase import MAASTestCase
 from maastesting.twisted import always_succeed_with
 from metadataserver.enum import SCRIPT_TYPE
 from metadataserver.models import ScriptSet
+from provisioningserver.enum import POWER_STATE
 from provisioningserver.rpc import cluster as cluster_module
 from provisioningserver.utils.enum import map_enum
 

@@ -22,7 +22,6 @@ from maasserver.enum import (
     NODE_TYPE,
     NODE_TYPE_CHOICES,
     NODE_TYPE_CHOICES_DICT,
-    POWER_STATE,
 )
 from maasserver.exceptions import NodeActionError
 from maasserver.models import Config, Event, signals, StaticIPAddress
@@ -78,6 +77,7 @@ from metadataserver.enum import (
     SCRIPT_TYPE,
 )
 from metadataserver.models import ScriptSet
+from provisioningserver.enum import POWER_STATE
 from provisioningserver.events import AUDIT
 from provisioningserver.utils.shell import ExternalProcessError
 

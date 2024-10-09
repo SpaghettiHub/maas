@@ -47,7 +47,6 @@ from maasserver.enum import (
     NODE_STATUS_SHORT_LABEL_CHOICES,
     NODE_TYPE,
     PARTITION_TABLE_TYPE,
-    POWER_STATE,
     SIMPLIFIED_NODE_STATUS,
     SIMPLIFIED_NODE_STATUS_CHOICES,
 )
@@ -134,6 +133,7 @@ from metadataserver.enum import (
 )
 from metadataserver.models.nodekey import NodeKey
 from metadataserver.models.scriptset import get_status_from_qs
+from provisioningserver.enum import POWER_STATE
 from provisioningserver.refresh.node_info_scripts import (
     LIST_MODALIASES_OUTPUT_NAME,
     LLDP_OUTPUT_NAME,

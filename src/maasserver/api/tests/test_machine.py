@@ -37,7 +37,6 @@ from maasserver.enum import (
     NODE_STATUS_CHOICES_DICT,
     NODE_TYPE,
     NODE_TYPE_CHOICES,
-    POWER_STATE,
 )
 from maasserver.exceptions import StaticIPAddressExhaustion
 from maasserver.models import Config, Domain, Filesystem, Machine, Node
@@ -77,6 +76,7 @@ from metadataserver.builtin_scripts.tests import test_hooks
 from metadataserver.enum import SCRIPT_TYPE
 from metadataserver.models import NodeKey, NodeUserData, ScriptSet
 from metadataserver.nodeinituser import get_node_init_user
+from provisioningserver.enum import POWER_STATE
 from provisioningserver.refresh.node_info_scripts import (
     COMMISSIONING_OUTPUT_NAME,
     NODE_INFO_SCRIPTS,

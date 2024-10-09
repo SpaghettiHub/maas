@@ -97,8 +97,6 @@ from maasserver.enum import (
     NODE_STATUS_CHOICES_DICT,
     NODE_TYPE,
     NODE_TYPE_CHOICES,
-    POWER_STATE,
-    POWER_STATE_CHOICES,
     SERVICE_STATUS,
     SIMPLIFIED_NODE_STATUS,
     SIMPLIFIED_NODE_STATUSES_MAP_REVERSED,
@@ -187,6 +185,7 @@ from provisioningserver.drivers.power.registry import (
     PowerDriverRegistry,
     sanitise_power_parameters,
 )
+from provisioningserver.enum import POWER_STATE, POWER_STATE_CHOICES
 from provisioningserver.events import EVENT_DETAILS, EVENT_TYPES
 from provisioningserver.logger import get_maas_logger, LegacyLogger
 from provisioningserver.refresh.node_info_scripts import (

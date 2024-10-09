@@ -12,7 +12,7 @@ from django.urls import reverse
 from twisted.internet.defer import succeed
 
 from maasserver.api import auth
-from maasserver.enum import NODE_STATUS, NODE_STATUS_CHOICES, POWER_STATE
+from maasserver.enum import NODE_STATUS, NODE_STATUS_CHOICES
 from maasserver.models import Config, Node
 from maasserver.models import node as node_module
 from maasserver.testing.api import APITestCase
@@ -37,6 +37,7 @@ from metadataserver.enum import (
 from metadataserver.models import NodeKey
 from metadataserver.models.scriptset import get_status_from_qs
 from metadataserver.nodeinituser import get_node_init_user
+from provisioningserver.enum import POWER_STATE
 from provisioningserver.refresh.node_info_scripts import (
     LLDP_OUTPUT_NAME,
     LSHW_OUTPUT_NAME,

@@ -23,7 +23,6 @@ from maasserver.clusterrpc.power import (
     power_query_all,
     set_boot_order,
 )
-from maasserver.enum import POWER_STATE
 from maasserver.exceptions import PowerProblem
 from maasserver.testing.factory import factory
 from maasserver.testing.testcase import (
@@ -34,6 +33,7 @@ from maasserver.utils.orm import transactional
 from maasserver.utils.threads import deferToDatabase
 from maastesting.crochet import wait_for
 from maastesting.matchers import MockCalledOnceWith
+from provisioningserver.enum import POWER_STATE
 from provisioningserver.rpc.cluster import (
     PowerCycle,
     PowerDriverCheck,

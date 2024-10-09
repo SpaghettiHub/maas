@@ -394,24 +394,6 @@ IPRANGE_TYPE_CHOICES = (
 )
 
 
-class POWER_STATE:
-
-    # Node is on
-    ON = "on"
-
-    # Node is off
-    OFF = "off"
-
-    # Node is power state is unknown
-    UNKNOWN = "unknown"
-
-    # Error getting the nodes power state
-    ERROR = "error"
-
-
-POWER_STATE_CHOICES = enum_choices(POWER_STATE, transform=str.capitalize)
-
-
 class BOOT_RESOURCE_TYPE:
     """The vocabulary of possible types for `BootResource`."""
 

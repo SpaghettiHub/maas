@@ -19,7 +19,6 @@ from maasserver.enum import (
     INTERFACE_TYPE,
     IPADDRESS_TYPE,
     NODE_STATUS,
-    POWER_STATE,
 )
 from maasserver.forms import (
     UnconstrainedMultipleChoiceField,
@@ -46,6 +45,7 @@ from maasserver.testing.architecture import patch_usable_architectures
 from maasserver.testing.factory import factory, RANDOM
 from maasserver.testing.osystems import make_usable_osystem
 from maasserver.testing.testcase import MAASServerTestCase
+from provisioningserver.enum import POWER_STATE
 from provisioningserver.utils.constraints import LabeledConstraintMap
 
 
