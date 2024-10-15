@@ -138,14 +138,8 @@ func run(ctx tworkflow.Context, fn any, args ...any) error {
 		fn, args...).Get(ctx, nil)
 }
 
-type ConfigureDHCPForAgentParam struct {
-	SystemID        string `json:"system_id"`
-	VlanIDs         []int  `json:"vlan_ids"`           // for parity with python definition, agent should never assign this
-	SubnetIDs       []int  `json:"subnet_ids"`         // for parity with python definition, agent should never assign this
-	IPRangeIDs      []int  `json:"ip_ranges_ids"`      // for parity with python definition, agent should never assign this
-	StaticIPAddrIDs []int  `json:"static_ip_addr_ids"` // for parity with python definition, agent should never assign this
-	ReservedIPIDs   []int  `json:"reserved_ip_ids"`    // for parity with python definition, agent should never assign this
-	FullReload      bool   `json:"full_reload"`
+type ConfigureDHCPFullReloadForAgentParam struct {
+	SystemID string `json:"system_id"`
 }
 
 func (s *DHCPService) configure(ctx tworkflow.Context, config DHCPServiceConfigParam) error {
@@ -163,14 +157,8 @@ func (s *DHCPService) configure(ctx tworkflow.Context, config DHCPServiceConfigP
 		TaskQueue:  "region",
 	})
 
-	return tworkflow.ExecuteChildWorkflow(childCtx, "configure-dhcp-for-agent", ConfigureDHCPForAgentParam{
-		SystemID:        s.systemID,
-		FullReload:      true,
-		VlanIDs:         []int{},
-		SubnetIDs:       []int{},
-		IPRangeIDs:      []int{},
-		StaticIPAddrIDs: []int{},
-		ReservedIPIDs:   []int{},
+	return tworkflow.ExecuteChildWorkflow(childCtx, "configure-dhcp-full-reload-for-agent", ConfigureDHCPFullReloadForAgentParam{
+		SystemID: s.systemID,
 	}).Get(ctx, nil)
 }
 

@@ -31,12 +31,12 @@ APPLY_DHCP_CONFIG_VIA_OMAPI_TIMEOUT = timedelta(minutes=5)
 
 @dataclass
 class ConfigureDHCPParam:
-    system_ids: Optional[list[str]]
-    vlan_ids: Optional[list[int]]
-    subnet_ids: Optional[list[int]]
-    static_ip_addr_ids: Optional[list[int]]
-    ip_range_ids: Optional[list[int]]
-    reserved_ip_ids: Optional[list[int]]
+    system_ids: Optional[list[str]] = None
+    vlan_ids: Optional[list[int]] = None
+    subnet_ids: Optional[list[int]] = None
+    static_ip_addr_ids: Optional[list[int]] = None
+    ip_range_ids: Optional[list[int]] = None
+    reserved_ip_ids: Optional[list[int]] = None
 
 
 @dataclass
@@ -45,11 +45,15 @@ class AgentsForUpdateResult:
 
 
 @dataclass
-class ConfigureDHCPForAgentParam:
+class ConfigureDHCPForAgentFullReloadParam:
     system_id: str
-    full_reload: bool
-    static_ip_addr_ids: list[int]
-    reserved_ip_ids: list[int]
+
+
+@dataclass
+class ConfigureDHCPForAgentPartialReloadParam:
+    system_id: str
+    static_ip_addr_ids: list[int] | None = None
+    reserved_ip_ids: list[int] | None = None
 
 
 @dataclass
@@ -61,8 +65,8 @@ class DHCPDConfigResult:
 @dataclass
 class FetchHostsForUpdateParam:
     system_id: str
-    static_ip_addr_ids: list[int]
-    reserved_ip_ids: list[int]
+    static_ip_addr_ids: list[int] | None = None
+    reserved_ip_ids: list[int] | None = None
 
 
 @dataclass
@@ -377,42 +381,47 @@ class DHCPConfigActivity(ActivityBase):
             return OMAPIKeyResult(key=key)
 
 
-@workflow.defn(name="configure-dhcp-for-agent", sandboxed=False)
-class ConfigureDHCPForAgentWorkflow:
-
+@workflow.defn(name="configure-dhcp-full-reload-for-agent", sandboxed=False)
+class ConfigureDHCPFullReloadForAgentWorkflow:
     @workflow.run
-    async def run(self, param: ConfigureDHCPForAgentParam) -> None:
-        if param.full_reload:
-            await workflow.execute_activity(
-                "apply-dhcp-config-via-file",
-                task_queue=f"{param.system_id}@agent:main",
-                start_to_close_timeout=APPLY_DHCP_CONFIG_VIA_FILE_TIMEOUT,
-            )
-        else:
-            hosts = await workflow.execute_activity(
-                "fetch-hosts-for-update",
-                FetchHostsForUpdateParam(
-                    system_id=param.system_id,
-                    static_ip_addr_ids=param.static_ip_addr_ids,
-                    reserved_ip_ids=param.reserved_ip_ids,
-                ),
-                start_to_close_timeout=FETCH_HOSTS_FOR_UPDATE_TIMEOUT,
-            )
+    async def run(self, param: ConfigureDHCPForAgentFullReloadParam) -> None:
+        await workflow.execute_activity(
+            "apply-dhcp-config-via-file",
+            task_queue=f"{param.system_id}@agent:main",
+            start_to_close_timeout=APPLY_DHCP_CONFIG_VIA_FILE_TIMEOUT,
+        )
 
-            omapi_key = await workflow.execute_activity(
-                "get-omapi-key",
-                start_to_close_timeout=GET_OMAPI_KEY_TIMEOUT,
-            )
 
-            await workflow.execute_activity(
-                "apply-dhcp-config-via-omapi",
-                ApplyConfigViaOmapiParam(
-                    hosts=hosts["hosts"],
-                    secret=omapi_key["key"],
-                ),
-                task_queue=f"{param.system_id}@agent:main",
-                start_to_close_timeout=APPLY_DHCP_CONFIG_VIA_OMAPI_TIMEOUT,
-            )
+@workflow.defn(name="configure-dhcp-partial-reload-for-agent", sandboxed=False)
+class ConfigureDHCPPartialReloadForAgentWorkflow:
+    @workflow.run
+    async def run(
+        self, param: ConfigureDHCPForAgentPartialReloadParam
+    ) -> None:
+        hosts = await workflow.execute_activity(
+            "fetch-hosts-for-update",
+            FetchHostsForUpdateParam(
+                system_id=param.system_id,
+                static_ip_addr_ids=param.static_ip_addr_ids,
+                reserved_ip_ids=param.reserved_ip_ids,
+            ),
+            start_to_close_timeout=FETCH_HOSTS_FOR_UPDATE_TIMEOUT,
+        )
+
+        omapi_key = await workflow.execute_activity(
+            "get-omapi-key",
+            start_to_close_timeout=GET_OMAPI_KEY_TIMEOUT,
+        )
+
+        await workflow.execute_activity(
+            "apply-dhcp-config-via-omapi",
+            ApplyConfigViaOmapiParam(
+                hosts=hosts["hosts"],
+                secret=omapi_key["key"],
+            ),
+            task_queue=f"{param.system_id}@agent:main",
+            start_to_close_timeout=APPLY_DHCP_CONFIG_VIA_OMAPI_TIMEOUT,
+        )
 
 
 @workflow.defn(name="configure-dhcp", sandboxed=False)
@@ -436,16 +445,25 @@ class ConfigureDHCPWorkflow:
         children = []
 
         for system_id in agent_system_ids_for_update["agent_system_ids"]:
-            cfg_child = await workflow.start_child_workflow(
-                "configure-dhcp-for-agent",
-                ConfigureDHCPForAgentParam(
-                    system_id=system_id,
-                    full_reload=full_reload,
-                    static_ip_addr_ids=param.static_ip_addr_ids,
-                    reserved_ip_ids=param.reserved_ip_ids,
-                ),
-                id=f"configure-dhcp:{system_id}",
-            )
+            if full_reload:
+                cfg_child = await workflow.start_child_workflow(
+                    "configure-dhcp-full-reload-for-agent",
+                    ConfigureDHCPForAgentFullReloadParam(
+                        system_id=system_id,
+                    ),
+                    # If there is already a workflow with this ID it is not going to start.
+                    id=f"configure-dhcp:{system_id}",
+                )
+            else:
+                cfg_child = await workflow.start_child_workflow(
+                    "configure-dhcp-partial-reload-for-agent",
+                    ConfigureDHCPForAgentPartialReloadParam(
+                        system_id=system_id,
+                        static_ip_addr_ids=param.static_ip_addr_ids,
+                        reserved_ip_ids=param.reserved_ip_ids,
+                    ),
+                    # Do NOT set an ID, we want all the partial updates to be delivered.
+                )
             children.append(cfg_child)
 
-        asyncio.gather(*children)
+        await asyncio.gather(*children)

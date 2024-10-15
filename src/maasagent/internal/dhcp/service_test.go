@@ -120,7 +120,7 @@ func (s *DHCPServiceTestSuite) SetupTest() {
 
 	s.workflowEnv.RegisterWorkflowWithOptions(MockConfigureDHCPForAgent,
 		tworkflow.RegisterOptions{
-			Name: "configure-dhcp-for-agent",
+			Name: "configure-dhcp-full-reload-for-agent",
 		})
 
 	s.activityEnv.RegisterActivityWithOptions(s.svc.configureViaOMAPI,

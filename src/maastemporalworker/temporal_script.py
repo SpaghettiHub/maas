@@ -19,7 +19,8 @@ from maastemporalworker.workflow.deploy import (
     DeployWorkflow,
 )
 from maastemporalworker.workflow.dhcp import (
-    ConfigureDHCPForAgentWorkflow,
+    ConfigureDHCPFullReloadForAgentWorkflow,
+    ConfigureDHCPPartialReloadForAgentWorkflow,
     ConfigureDHCPWorkflow,
     DHCPConfigActivity,
 )
@@ -74,7 +75,8 @@ async def main() -> None:
                 # Configuration workflows
                 ConfigureAgentWorkflow,
                 ConfigureDHCPWorkflow,
-                ConfigureDHCPForAgentWorkflow,
+                ConfigureDHCPFullReloadForAgentWorkflow,
+                ConfigureDHCPPartialReloadForAgentWorkflow,
                 # Lifecycle workflows
                 DeployNWorkflow,
                 DeployWorkflow,
