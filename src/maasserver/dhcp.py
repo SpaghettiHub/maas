@@ -30,6 +30,7 @@ from maasserver.models import (
     DHCPSnippet,
     Domain,
     RackController,
+    ReservedIP,
     Service,
     StaticIPAddress,
     Subnet,
@@ -40,6 +41,8 @@ from maasserver.rpc import getClientFor
 from maasserver.secrets import SecretManager, SecretNotFound
 from maasserver.utils.orm import transactional
 from maasserver.utils.threads import deferToDatabase
+from maasserver.workflow import start_workflow
+from maastemporalworker.workflow.dhcp import ConfigureDHCPParam
 from provisioningserver.dhcp.config import get_config_v4, get_config_v6
 from provisioningserver.dhcp.omapi import generate_omapi_key
 from provisioningserver.logger import LegacyLogger
@@ -297,7 +300,7 @@ def get_ntp_server_addresses_for_rack(rack: RackController) -> dict:
 
 
 def make_interface_hostname(interface):
-    """Return the host decleration name for DHCPD for this `interface`."""
+    """Return the host declaration name for DHCPD for this `interface`."""
     interface_name = interface.name.replace(".", "-")
     if (
         interface.type == INTERFACE_TYPE.UNKNOWN
@@ -317,7 +320,9 @@ def make_dhcp_snippet(dhcp_snippet):
     }
 
 
-def make_hosts_for_subnets(subnets, nodes_dhcp_snippets: list = None):
+def make_hosts_for_subnets(
+    subnets: list[Subnet], nodes_dhcp_snippets: list | None = None
+) -> list[dict]:
     """Return list of host entries to create in the DHCP configuration for the
     given `subnets`.
     """
@@ -401,6 +406,17 @@ def make_hosts_for_subnets(subnets, nodes_dhcp_snippets: list = None):
                         ),
                     }
                 )
+
+    for reserved_ip in ReservedIP.objects.filter(subnet__in=subnets):
+        hosts.append(
+            {
+                "host": "",
+                "mac": reserved_ip.mac_address,
+                "ip": reserved_ip.ip,
+                "dhcp_snippets": [],
+            }
+        )
+
     return hosts
 
 
@@ -1025,3 +1041,25 @@ def _get_dhcp_rackcontrollers(dhcp_snippet):
         return get_racks_by_subnet(dhcp_snippet.subnet)
     elif dhcp_snippet.node is not None:
         return dhcp_snippet.node.get_boot_rack_controllers()
+
+
+def configure_dhcp_on_agents(
+    system_ids: list[str] | None = None,
+    vlan_ids: list[int] | None = None,
+    subnet_ids: list[int] | None = None,
+    static_ip_addr_ids: list[int] | None = None,
+    ip_range_ids: list[int] | None = None,
+    reserved_ip_ids: list[int] | None = None,
+):
+    return start_workflow(
+        workflow_name="configure-dhcp",
+        param=ConfigureDHCPParam(
+            system_ids=system_ids,
+            vlan_ids=vlan_ids,
+            subnet_ids=subnet_ids,
+            static_ip_addr_ids=static_ip_addr_ids,
+            ip_range_ids=ip_range_ids,
+            reserved_ip_ids=reserved_ip_ids,
+        ),
+        task_queue="region",
+    )
