@@ -839,6 +839,11 @@ class FilterNodeForm(forms.Form):
         },
     )
 
+    system_id = UnconstrainedMultipleChoiceField(
+        label="System ID",
+        required=False,
+    )
+
     pool = UnconstrainedMultipleChoiceField(
         label="Resource pool", required=False, coerce=str_or_none
     )
@@ -938,6 +943,7 @@ class FilterNodeForm(forms.Form):
     ignore_unknown_constraints = False
 
     NODE_FILTERS = {
+        "system_id": ("system_id", _match_any),
         "fabric_classes": (
             "current_config__interface__vlan__fabric__class_type",
             _match_any,
@@ -1631,6 +1637,7 @@ class FreeTextFilterNodeForm(ReadNodesForm):
     )
 
     FREETEXT_FILTERS = {
+        "system_id": ("system_id", _match_substring),
         "hostname": ("hostname", _match_substring),
         "description": ("description", _match_substring),
         "distro_series": ("distro_series", _match_substring),
@@ -1921,6 +1928,7 @@ class FreeTextFilterNodeForm(ReadNodesForm):
         for txt in data:
             subq = Q()
             for field in (
+                "system_id",
                 "distro_series",
                 "fabric_name",
                 "fqdn",
