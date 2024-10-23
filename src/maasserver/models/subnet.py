@@ -870,34 +870,6 @@ class Subnet(CleanSave, TimestampedModel):
             key=lambda json: IPAddress(json["ip"]),
         )
 
-    def render_json_for_related_reserved_ips(self) -> list[dict]:
-        """Find the reserved IPs associated to this subnet, and render them as
-        a list of dictionaries.
-        Each item contains:
-        - ip: of the reserved IP
-        - mac_address: associated to the reserved IP (it does not need to be defined)
-        - created: timestamp when the reserved IP was created
-        - updated: timestamp when the reserved IP was last modified
-        - node_summary: summary of the node where the machine using the
-          reserved IP is located
-        """
-        from maasserver.websockets.base import dehydrate_datetime
-
-        reserved_ips = self.reservedip_set.all()
-
-        result = []
-        for reserved_ip in sorted(reserved_ips, key=lambda r_ip: r_ip.ip):
-            data = {
-                "ip": reserved_ip.ip,
-                "mac_address": reserved_ip.mac_address,
-                "created": dehydrate_datetime(reserved_ip.created),
-                "updated": dehydrate_datetime(reserved_ip.updated),
-                "node_summary": {},
-            }
-            result.append(data)
-
-        return result
-
     def get_dynamic_ranges(self):
         return self.iprange_set.filter(type=IPRANGE_TYPE.DYNAMIC)
 
@@ -921,7 +893,9 @@ class Subnet(CleanSave, TimestampedModel):
             return False
         return True
 
-    def validate_static_ip(self, ip):
+    def validate_static_ip(
+        self, ip, restrict_ip_to_unreserved_ranges: bool = True
+    ):
         """Validates that the requested IP address is acceptable for allocation
         in this `Subnet` (assuming it has not already been allocated).
 
@@ -937,18 +911,23 @@ class Subnet(CleanSave, TimestampedModel):
             raise StaticIPAddressOutOfRange(
                 f"{ip} is not within subnet CIDR: {self.cidr}"
             )
-        for iprange in self.get_reserved_maasipset():
-            if ip in iprange:
-                raise StaticIPAddressUnavailable(
-                    "%s is within the reserved range from %s to %s"
-                    % (ip, IPAddress(iprange.first), IPAddress(iprange.last))
-                )
         for iprange in self.get_dynamic_maasipset():
             if ip in iprange:
                 raise StaticIPAddressUnavailable(
                     "%s is within the dynamic range from %s to %s"
                     % (ip, IPAddress(iprange.first), IPAddress(iprange.last))
                 )
+        if restrict_ip_to_unreserved_ranges:
+            for iprange in self.get_reserved_maasipset():
+                if ip in iprange:
+                    raise StaticIPAddressUnavailable(
+                        "%s is within the reserved range from %s to %s"
+                        % (
+                            ip,
+                            IPAddress(iprange.first),
+                            IPAddress(iprange.last),
+                        )
+                    )
 
     def get_reserved_maasipset(self, exclude_ip_ranges: list = None):
         if exclude_ip_ranges is None:

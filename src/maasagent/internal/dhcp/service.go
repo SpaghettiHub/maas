@@ -33,6 +33,7 @@ import (
 	"maas.io/core/src/maasagent/internal/atomicfile"
 	"maas.io/core/src/maasagent/internal/dhcpd/omapi"
 	"maas.io/core/src/maasagent/internal/pathutil"
+	"maas.io/core/src/maasagent/internal/servicecontroller"
 )
 
 const (
@@ -52,6 +53,8 @@ type DHCPService struct {
 	omapiConnFactory   omapiConnFactory
 	omapiClientFactory omapiClientFactory
 	dataPathFactory    dataPathFactory
+	controllerV4       servicecontroller.Controller
+	controllerV6       servicecontroller.Controller
 	runningV4          *atomic.Bool
 	runningV6          *atomic.Bool
 	running            *atomic.Bool
@@ -66,9 +69,16 @@ type dataPathFactory func(string) string
 
 type DHCPServiceOption func(*DHCPService)
 
-func NewDHCPService(systemID string, options ...DHCPServiceOption) *DHCPService {
+func NewDHCPService(
+	systemID string,
+	controllerV4 servicecontroller.Controller,
+	controllerV6 servicecontroller.Controller,
+	options ...DHCPServiceOption,
+) *DHCPService {
 	s := &DHCPService{
 		systemID:           systemID,
+		controllerV4:       controllerV4,
+		controllerV6:       controllerV6,
 		omapiConnFactory:   net.Dial,
 		omapiClientFactory: omapi.NewClient,
 		dataPathFactory:    pathutil.GetDataPath,
@@ -120,6 +130,7 @@ func (s *DHCPService) ConfigurationActivities() map[string]interface{} {
 		// This activity should be called to force DHCP configuration update.
 		"apply-dhcp-config-via-file":  s.configureViaFile,
 		"apply-dhcp-config-via-omapi": s.configureViaOMAPI,
+		"restart-dhcp-service":        s.restartService,
 	}
 }
 
@@ -177,6 +188,7 @@ func (s *DHCPService) configure(ctx tworkflow.Context, config DHCPServiceConfigP
 func (s *DHCPService) start(ctx context.Context) error {
 	// TODO: start processing loop
 	s.running.Store(true)
+
 	return nil
 }
 
@@ -350,13 +362,62 @@ func (s *DHCPService) configureViaFile(ctx context.Context) error {
 		"dhcpd6-interfaces": config.DHCPv6Interfaces,
 	}
 
+	v4 := []bool{false, false}
+	v6 := []bool{false, false}
+
 	for file, config := range files {
 		data, err := base64.StdEncoding.DecodeString(config)
 		if err != nil {
 			return err
 		}
 
+		hasData := len(data) != 0
+
+		if file == "dhcpd.conf" {
+			v4[0] = hasData
+		}
+
+		if file == "dhcpd-interfaces" {
+			v4[1] = hasData
+		}
+
+		if file == "dhcpd6.conf" {
+			v6[0] = hasData
+		}
+
+		if file == "dhcpd6-interfaces" {
+			v6[1] = hasData
+		}
+
 		if err := s.writeConfigFile(file, data); err != nil {
+			return err
+		}
+	}
+
+	runningV4 := v4[0] && v4[1]
+	runningV6 := v6[0] && v6[1]
+
+	s.runningV4.Store(runningV4)
+	s.runningV6.Store(runningV6)
+	s.running.Store(runningV4 || runningV6)
+
+	return nil
+}
+
+func (s *DHCPService) restartService(ctx context.Context) error {
+	runningV4 := s.runningV4.Load()
+	runningV6 := s.runningV6.Load()
+
+	if runningV4 {
+		err := s.controllerV4.Restart(ctx)
+		if err != nil {
+			return err
+		}
+	}
+
+	if runningV6 {
+		err := s.controllerV6.Restart(ctx)
+		if err != nil {
 			return err
 		}
 	}
