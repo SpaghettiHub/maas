@@ -24,6 +24,7 @@ from maasservicelayer.services.secrets import (
 from maasservicelayer.services.spaces import SpacesService
 from maasservicelayer.services.staticipaddress import StaticIPAddressService
 from maasservicelayer.services.subnets import SubnetsService
+from maasservicelayer.services.temporal import TemporalService
 from maasservicelayer.services.users import UsersService
 from maasservicelayer.services.vlans import VlansService
 from maasservicelayer.services.vmcluster import VmClustersService
@@ -55,6 +56,7 @@ class ServiceCollectionV3:
     dnsresources: DNSResourcesService
     staticipaddress: StaticIPAddressService
     ipranges: IPRangesService
+    temporal: TemporalService
 
     @classmethod
     async def produce(
@@ -65,6 +67,7 @@ class ServiceCollectionV3:
         services.secrets = await SecretsServiceFactory.produce(
             connection=connection, config_service=services.configurations
         )
+        services.temporal = TemporalService(connection=connection)
         services.users = UsersService(connection=connection)
         services.auth = AuthService(
             connection=connection,
@@ -90,20 +93,34 @@ class ServiceCollectionV3:
             connection=connection, secrets_service=services.secrets
         )
         services.events = EventsService(connection=connection)
-        services.interfaces = InterfacesService(connection=connection)
+        services.interfaces = InterfacesService(
+            connection=connection,
+            temporal_service=services.temporal,
+        )
         services.fabrics = FabricsService(connection=connection)
         services.spaces = SpacesService(connection=connection)
-        services.vlans = VlansService(connection=connection)
-        services.subnets = SubnetsService(connection=connection)
+        services.vlans = VlansService(
+            connection=connection,
+            temporal_service=services.temporal,
+            nodes_service=services.nodes,
+        )
+        services.subnets = SubnetsService(
+            connection=connection,
+            temporal_service=services.temporal,
+        )
         services.agents = AgentsService(connection=connection)
         services.domains = DomainsService(connection=connection)
         services.dnsresources = DNSResourcesService(
             connection=connection, domains_service=services.domains
         )
         services.staticipaddress = StaticIPAddressService(
-            connection=connection
+            connection=connection,
+            temporal_service=services.temporal,
         )
-        services.ipranges = IPRangesService(connection=connection)
+        services.ipranges = IPRangesService(
+            connection=connection,
+            temporal_service=services.temporal,
+        )
         services.leases = LeasesService(
             connection=connection,
             dnsresource_service=services.dnsresources,

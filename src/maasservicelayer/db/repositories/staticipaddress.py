@@ -66,7 +66,17 @@ class StaticIPAddressResourceBuilder(CreateOrUpdateResourceBuilder):
 
 class StaticIPAddressRepository(BaseRepository):
     async def find_by_id(self, id: int) -> StaticIPAddress | None:
-        raise NotImplementedError("Not implemented yet.")
+        stmt = (
+            select(StaticIPAddressTable)
+            .select_from(StaticIPAddressTable)
+            .filter(StaticIPAddressTable.c.id == id)
+        )
+
+        result = (await self.connection.execute(stmt)).one_or_none()
+
+        if result:
+            return StaticIPAddress(**result._asdict())
+        return None
 
     async def list(
         self, token: str | None, size: int, query: QuerySpec | None = None

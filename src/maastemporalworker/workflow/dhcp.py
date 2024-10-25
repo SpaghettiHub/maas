@@ -41,6 +41,24 @@ class ConfigureDHCPParam:
     reserved_ip_ids: Optional[list[int]] = None
 
 
+def merge_configure_dhcp_param(
+    old: ConfigureDHCPParam, new: ConfigureDHCPParam
+) -> ConfigureDHCPParam:
+    ensure_list = lambda l: l if l is not None else []
+
+    return ConfigureDHCPParam(
+        system_ids=ensure_list(old.system_ids) + ensure_list(new.system_ids),
+        vlan_ids=ensure_list(old.vlan_ids) + ensure_list(new.vlan_ids),
+        subnet_ids=ensure_list(old.subnet_ids) + ensure_list(new.subnet_ids),
+        static_ip_addr_ids=ensure_list(old.static_ip_addr_ids)
+        + ensure_list(new.static_ip_addr_ids),
+        ip_range_ids=ensure_list(old.ip_range_ids)
+        + ensure_list(new.ip_range_ids),
+        reserved_ip_ids=ensure_list(old.reserved_ip_ids)
+        + ensure_list(new.ip_range_ids),
+    )
+
+
 @dataclass
 class AgentsForUpdateResult:
     agent_system_ids: list[str]

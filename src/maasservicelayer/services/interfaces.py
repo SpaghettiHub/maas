@@ -10,15 +10,18 @@ from maasservicelayer.models.base import ListResult
 from maasservicelayer.models.interfaces import Interface
 from maasservicelayer.models.staticipaddress import StaticIPAddress
 from maasservicelayer.services._base import Service
+from maasservicelayer.services.temporal import TemporalService
 
 
 class InterfacesService(Service):
     def __init__(
         self,
         connection: AsyncConnection,
+        temporal_service: TemporalService,
         interface_repository: InterfaceRepository | None = None,
     ):
         super().__init__(connection)
+        self.temporal_service = temporal_service
         self.interface_repository = (
             interface_repository
             if interface_repository
@@ -43,3 +46,14 @@ class InterfacesService(Service):
 
     async def add_ip(self, interface: Interface, sip: StaticIPAddress) -> None:
         await self.interface_repository.add_ip(interface, sip)
+        if sip.alloc_type in (
+            IpAddressType.AUTO,
+            IpAddressType.STICKY,
+            IpAddressType.USER_RESERVED,
+        ):
+            self.temporal_service.register_or_update_workflow_call(
+                "configure-dhcp",
+                ConfigureDHCPParam(static_ip_addr_ids=[sip.id]),
+                parameter_merge_func=merge_configure_dhcp_param,
+                wait=False,
+            )
