@@ -796,7 +796,7 @@ def get_interfaces(clear_cache=False):
 def parse_parameters(script, scripts_dir):
     """Return a list containg script path and parameters to be passed to it."""
     ret = [os.path.join(scripts_dir, script["path"])]
-    for param in script.get("parameters", {}).values():
+    for key, param in script.get("parameters", {}).items():
         param_type = param.get("type")
         if param_type == "storage":
             value = param["value"]
@@ -871,9 +871,10 @@ def parse_parameters(script, scripts_dir):
                 )
         else:
             argument_format = param.get(
-                "argument_format", "--%s={input}" % param_type
+                "argument_format", "--%s={input}" % key
             )
-            ret += argument_format.format(input=param["value"]).split()
+            value = param["value"] if "value" in param else param["default"]
+            ret += argument_format.format(input=value).split()
 
     return ret
 
