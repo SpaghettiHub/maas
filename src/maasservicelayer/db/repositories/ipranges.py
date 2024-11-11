@@ -1,37 +1,46 @@
+from typing import Type
+
 import netaddr
 from pydantic import IPvAnyAddress
-from sqlalchemy import select
+from sqlalchemy import select, Table
 
-from maasservicelayer.db.filters import QuerySpec
 from maasservicelayer.db.repositories.base import (
     BaseRepository,
-    CreateOrUpdateResource,
+    CreateOrUpdateResourceBuilder,
 )
 from maasservicelayer.db.tables import IPRangeTable, SubnetTable
-from maasservicelayer.models.base import ListResult
 from maasservicelayer.models.ipranges import IPRange
 from maasservicelayer.models.subnets import Subnet
 
 
-class IPRangesRepository(BaseRepository):
-    async def delete(self, id: int) -> None:
-        raise NotImplementedError("Not implemented yet.")
+class IPRangesResourceBuilder(CreateOrUpdateResourceBuilder):
+    def with_type(self, type: str) -> "IPRangesResourceBuilder":
+        self._request.set_value(IPRangeTable.c.type, type)
+        return self
 
-    async def find_by_id(self, id: int) -> IPRange | None:
-        raise NotImplementedError("Not implemented yet.")
+    def with_start_ip(self, ip: IPvAnyAddress) -> "IPRangesResourceBuilder":
+        self._request.set_value(IPRangeTable.c.start_ip, str(ip))
+        return self
 
-    async def list(
-        self, token: str | None, size: int, query: QuerySpec | None = None
-    ) -> ListResult[IPRange]:
-        raise NotImplementedError("Not implemented yet.")
+    def with_end_ip(self, ip: IPvAnyAddress) -> "IPRangesResourceBuilder":
+        self._request.set_value(IPRangeTable.c.end_ip, str(ip))
+        return self
 
-    async def create(self, resource: CreateOrUpdateResource) -> IPRange:
-        raise NotImplementedError("Not implemented yet.")
+    def with_comment(self, comment: str) -> "IPRangesResourceBuilder":
+        self._request.set_value(IPRangeTable.c.comment, comment)
+        return self
 
-    async def update(
-        self, id: int, resource: CreateOrUpdateResource
-    ) -> IPRange:
-        raise NotImplementedError("Not implemented yet.")
+    def with_subnet_id(self, id: int) -> "IPRangesResourceBuilder":
+        self._request.set_value(IPRangeTable.c.subnet_id, id)
+        return self
+
+
+class IPRangesRepository(BaseRepository[IPRange]):
+    def get_repository_table(self) -> Table:
+        return IPRangeTable
+
+    def get_model_factory(self) -> Type[IPRange]:
+        return IPRange
 
     async def get_dynamic_range_for_ip(
         self, subnet: Subnet, ip: IPvAnyAddress

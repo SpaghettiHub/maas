@@ -6,6 +6,7 @@ from functools import partial
 import logging
 import ssl
 
+from django.conf import settings as django_settings
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 import uvicorn
@@ -39,6 +40,9 @@ from maasapiserver.v3.middlewares.auth import (
     V3AuthenticationMiddleware,
 )
 from maasapiserver.v3.middlewares.services import ServicesMiddleware
+from maasserver.workflow.worker import (
+    get_client_async as get_temporal_client_async,
+)
 from maasservicelayer.db import Database
 from maasservicelayer.db.listeners import PostgresListenersTaskFactory
 from maasservicelayer.db.locks import StartupLock
@@ -70,11 +74,16 @@ async def prepare_app(
 ) -> FastAPI:
     """Create the FastAPI application."""
 
+    if not django_settings.configured:
+        django_settings.configure()
+
     if db is None:
         db = Database(config.db, echo=config.debug_queries)
 
     # In maasserver we have a startup lock. If it is set, we have to wait to start maasapiserver as well.
     await wait_for_startup(db)
+
+    temporal = await get_temporal_client_async()
 
     app = FastAPI(
         title=app_title,
@@ -99,7 +108,7 @@ async def prepare_app(
             ),
         )
 
-    app.add_middleware(ServicesMiddleware)
+    app.add_middleware(ServicesMiddleware, temporal=temporal)
     app.add_middleware(transaction_middleware_class, db=db)
     app.add_middleware(ExceptionMiddleware)
 

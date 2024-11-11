@@ -1,7 +1,6 @@
 # Copyright 2024 Canonical Ltd.  This software is licensed under the
 # GNU Affero General Public License version 3 (see the file LICENSE).
 
-from datetime import datetime
 from ipaddress import IPv4Address, IPv6Address
 import time
 from unittest.mock import AsyncMock, Mock
@@ -26,6 +25,7 @@ from maasservicelayer.services.leases import LeasesService, LeaseUpdateError
 from maasservicelayer.services.nodes import NodesService
 from maasservicelayer.services.staticipaddress import StaticIPAddressService
 from maasservicelayer.services.subnets import SubnetsService
+from maasservicelayer.utils.date import utcnow
 
 
 @pytest.mark.asyncio
@@ -70,13 +70,14 @@ class TestLeasesService:
         subnet = Subnet(
             id=1,
             cidr="10.0.0.0/24",
-            created=datetime.utcnow(),
-            updated=datetime.utcnow(),
+            created=utcnow(),
+            updated=utcnow(),
             rdns_mode=1,
             allow_dns=True,
             allow_proxy=True,
             active_discovery=True,
             managed=True,
+            vlan_id=1,
             disabled_boot_architectures=[],
         )
         interface = Interface(
@@ -84,8 +85,8 @@ class TestLeasesService:
             mac_address="00:11:22:33:44:55",
             type=InterfaceType.PHYSICAL,
             name="eth0",
-            created=datetime.utcnow(),
-            updated=datetime.utcnow(),
+            created=utcnow(),
+            updated=utcnow(),
         )
         sip = StaticIPAddress(
             id=3,
@@ -93,8 +94,8 @@ class TestLeasesService:
             alloc_type=IpAddressType.DISCOVERED,
             lease_time=600,
             subnet_id=subnet.id,
-            created=datetime.utcnow(),
-            updated=datetime.utcnow(),
+            created=utcnow(),
+            updated=utcnow(),
         )
 
         mock_dns_resources_service = Mock(DNSResourcesService)
@@ -112,15 +113,11 @@ class TestLeasesService:
             interface_service=mock_interfaces_service,
             iprange_service=mock_ip_ranges_service,
         )
-        mock_static_ip_address_service.create_or_update = AsyncMock(
-            return_value=sip
-        )
-        mock_subnets_service.find_best_subnet_for_ip = AsyncMock(
-            return_value=subnet
-        )
-        mock_interfaces_service.get_interfaces_for_mac = AsyncMock(
-            return_value=[interface]
-        )
+        mock_static_ip_address_service.create_or_update.return_value = sip
+        mock_subnets_service.find_best_subnet_for_ip.return_value = subnet
+        mock_interfaces_service.get_interfaces_for_mac.return_value = [
+            interface
+        ]
 
         ip = IPv4Address("10.0.0.2")
         await leases_service.store_lease_info(
@@ -144,8 +141,8 @@ class TestLeasesService:
         mock_interfaces_service.get_interfaces_for_mac.assert_called_once_with(
             "00:11:22:33:44:55"
         )
-        mock_static_ip_address_service.get_discovered_ips_in_family_for_interfaces(
-            [interface], IpAddressFamily.IPV4
+        mock_static_ip_address_service.get_discovered_ips_in_family_for_interfaces.assert_called_once_with(
+            [interface], family=IpAddressFamily.IPV4
         )
         mock_interfaces_service.add_ip.assert_called_once_with(interface, sip)
 
@@ -155,13 +152,14 @@ class TestLeasesService:
         subnet = Subnet(
             id=1,
             cidr="fd42:be3f:b08a:3d6c::/64",
-            created=datetime.utcnow(),
-            updated=datetime.utcnow(),
+            created=utcnow(),
+            updated=utcnow(),
             rdns_mode=1,
             allow_dns=True,
             allow_proxy=True,
             active_discovery=True,
             managed=True,
+            vlan_id=1,
             disabled_boot_architectures=[],
         )
         interface = Interface(
@@ -169,8 +167,8 @@ class TestLeasesService:
             mac_address="00:11:22:33:44:55",
             type=InterfaceType.PHYSICAL,
             name="eth0",
-            created=datetime.utcnow(),
-            updated=datetime.utcnow(),
+            created=utcnow(),
+            updated=utcnow(),
         )
         sip = StaticIPAddress(
             id=3,
@@ -178,8 +176,8 @@ class TestLeasesService:
             alloc_type=IpAddressType.DISCOVERED,
             lease_time=600,
             subnet_id=subnet.id,
-            created=datetime.utcnow(),
-            updated=datetime.utcnow(),
+            created=utcnow(),
+            updated=utcnow(),
         )
 
         mock_dns_resources_service = Mock(DNSResourcesService)
@@ -197,15 +195,11 @@ class TestLeasesService:
             interface_service=mock_interfaces_service,
             iprange_service=mock_ip_ranges_service,
         )
-        mock_static_ip_address_service.create_or_update = AsyncMock(
-            return_value=sip
-        )
-        mock_subnets_service.find_best_subnet_for_ip = AsyncMock(
-            return_value=subnet
-        )
-        mock_interfaces_service.get_interfaces_for_mac = AsyncMock(
-            return_value=[interface]
-        )
+        mock_static_ip_address_service.create_or_update.return_value = sip
+        mock_subnets_service.find_best_subnet_for_ip.return_value = subnet
+        mock_interfaces_service.get_interfaces_for_mac.return_value = [
+            interface
+        ]
 
         ip = IPv6Address("fd42:be3f:b08a:3d6c::2")
         await leases_service.store_lease_info(
@@ -229,8 +223,8 @@ class TestLeasesService:
         mock_interfaces_service.get_interfaces_for_mac.assert_called_once_with(
             "00:11:22:33:44:55"
         )
-        mock_static_ip_address_service.get_discovered_ips_in_family_for_interfaces(
-            [interface], IpAddressFamily.IPV6
+        mock_static_ip_address_service.get_discovered_ips_in_family_for_interfaces.assert_called_once_with(
+            [interface], family=IpAddressFamily.IPV6
         )
         mock_interfaces_service.add_ip.assert_called_once_with(interface, sip)
 
@@ -240,13 +234,14 @@ class TestLeasesService:
         subnet = Subnet(
             id=1,
             cidr="10.0.0.0/24",
-            created=datetime.utcnow(),
-            updated=datetime.utcnow(),
+            created=utcnow(),
+            updated=utcnow(),
             rdns_mode=1,
             allow_dns=True,
             allow_proxy=True,
             active_discovery=True,
             managed=True,
+            vlan_id=1,
             disabled_boot_architectures=[],
         )
         interface = Interface(
@@ -254,8 +249,8 @@ class TestLeasesService:
             mac_address="00:11:22:33:44:55",
             type=InterfaceType.PHYSICAL,
             name="eth0",
-            created=datetime.utcnow(),
-            updated=datetime.utcnow(),
+            created=utcnow(),
+            updated=utcnow(),
         )
         sip = StaticIPAddress(
             id=3,
@@ -263,8 +258,8 @@ class TestLeasesService:
             alloc_type=IpAddressType.DISCOVERED,
             lease_time=600,
             subnet_id=subnet.id,
-            created=datetime.utcnow(),
-            updated=datetime.utcnow(),
+            created=utcnow(),
+            updated=utcnow(),
         )
 
         mock_dns_resources_service = Mock(DNSResourcesService)
@@ -282,19 +277,15 @@ class TestLeasesService:
             interface_service=mock_interfaces_service,
             iprange_service=mock_ip_ranges_service,
         )
-        mock_static_ip_address_service.get_discovered_ips_in_family_for_interfaces = AsyncMock(
-            return_value=[sip]
-        )
-        mock_static_ip_address_service.get_for_interfaces = AsyncMock(
-            return_value=sip
-        )
-        mock_subnets_service.find_best_subnet_for_ip = AsyncMock(
-            return_value=subnet
-        )
-        mock_interfaces_service.get_interfaces_for_mac = AsyncMock(
-            return_value=[interface]
-        )
-        mock_interfaces_service.bulk_link_ip = AsyncMock(return_value=None)
+        mock_static_ip_address_service.get_discovered_ips_in_family_for_interfaces.return_value = [
+            sip
+        ]
+        mock_static_ip_address_service.get_for_interfaces.return_value = sip
+        mock_subnets_service.find_best_subnet_for_ip.return_value = subnet
+        mock_interfaces_service.get_interfaces_for_mac.return_value = [
+            interface
+        ]
+        mock_interfaces_service.bulk_link_ip.return_value = None
 
         ip = IPv4Address("10.0.0.2")
         await leases_service.store_lease_info(
@@ -318,7 +309,7 @@ class TestLeasesService:
         mock_interfaces_service.get_interfaces_for_mac.assert_called_once_with(
             "00:11:22:33:44:55"
         )
-        mock_static_ip_address_service.get_discovered_ips_in_family_for_interfaces(
+        mock_static_ip_address_service.get_discovered_ips_in_family_for_interfaces.assert_called_once_with(
             [interface], family=IpAddressFamily.IPV4
         )
         sip.ip = None
@@ -332,13 +323,14 @@ class TestLeasesService:
         subnet = Subnet(
             id=1,
             cidr="10.0.0.0/24",
-            created=datetime.utcnow(),
-            updated=datetime.utcnow(),
+            created=utcnow(),
+            updated=utcnow(),
             rdns_mode=1,
             allow_dns=True,
             allow_proxy=True,
             active_discovery=True,
             managed=True,
+            vlan_id=1,
             disabled_boot_architectures=[],
         )
         interface = Interface(
@@ -346,8 +338,8 @@ class TestLeasesService:
             mac_address="00:11:22:33:44:55",
             type=InterfaceType.PHYSICAL,
             name="eth0",
-            created=datetime.utcnow(),
-            updated=datetime.utcnow(),
+            created=utcnow(),
+            updated=utcnow(),
         )
         sip = StaticIPAddress(
             id=3,
@@ -355,8 +347,8 @@ class TestLeasesService:
             alloc_type=IpAddressType.DISCOVERED,
             lease_time=600,
             subnet_id=subnet.id,
-            created=datetime.utcnow(),
-            updated=datetime.utcnow(),
+            created=utcnow(),
+            updated=utcnow(),
         )
 
         mock_dns_resources_service = Mock(DNSResourcesService)
@@ -374,19 +366,15 @@ class TestLeasesService:
             interface_service=mock_interfaces_service,
             iprange_service=mock_ip_ranges_service,
         )
-        mock_static_ip_address_service.get_discovered_ips_in_family_for_interfaces = AsyncMock(
-            return_value=[sip]
-        )
-        mock_static_ip_address_service.get_for_interfaces = AsyncMock(
-            return_value=sip
-        )
-        mock_subnets_service.find_best_subnet_for_ip = AsyncMock(
-            return_value=subnet
-        )
-        mock_interfaces_service.get_interfaces_for_mac = AsyncMock(
-            return_value=[interface]
-        )
-        mock_interfaces_service.bulk_link_ip = AsyncMock(return_value=None)
+        mock_static_ip_address_service.get_discovered_ips_in_family_for_interfaces.return_value = [
+            sip
+        ]
+        mock_static_ip_address_service.get_for_interfaces.return_value = sip
+        mock_subnets_service.find_best_subnet_for_ip.return_value = subnet
+        mock_interfaces_service.get_interfaces_for_mac.return_value = [
+            interface
+        ]
+        mock_interfaces_service.bulk_link_ip.return_value = None
 
         ip = IPv4Address("10.0.0.2")
         await leases_service.store_lease_info(
@@ -410,7 +398,7 @@ class TestLeasesService:
         mock_interfaces_service.get_interfaces_for_mac.assert_called_once_with(
             "00:11:22:33:44:55"
         )
-        mock_static_ip_address_service.get_discovered_ips_in_family_for_interfaces(
+        mock_static_ip_address_service.get_discovered_ips_in_family_for_interfaces.assert_called_once_with(
             [interface], family=IpAddressFamily.IPV4
         )
         sip.ip = None

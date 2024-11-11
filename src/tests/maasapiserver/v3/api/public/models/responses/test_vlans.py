@@ -1,16 +1,15 @@
 # Copyright 2024 Canonical Ltd.  This software is licensed under the
 # GNU Affero General Public License version 3 (see the file LICENSE).
 
-from datetime import datetime, timezone
-
 from maasapiserver.v3.api.public.models.responses.vlans import VlanResponse
 from maasapiserver.v3.constants import V3_API_PREFIX
 from maasservicelayer.models.vlans import Vlan
+from maasservicelayer.utils.date import utcnow
 
 
 class TestVlanResponse:
     def test_from_model(self) -> None:
-        now = datetime.now(timezone.utc)
+        now = utcnow()
         vlan = Vlan(
             id=0,
             created=now,
@@ -21,7 +20,7 @@ class TestVlanResponse:
             mtu=0,
             dhcp_on=True,
             external_dhcp="192.0.1.1",
-            primary_rack_id="xyz",
+            primary_rack_id=1,
             secondary_rack_id=None,
             relay_vlan=1,
             fabric_id=0,

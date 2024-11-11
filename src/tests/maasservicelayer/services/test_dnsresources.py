@@ -1,4 +1,3 @@
-from datetime import datetime
 from unittest.mock import AsyncMock, call, Mock
 
 import pytest
@@ -12,19 +11,20 @@ from maasservicelayer.models.domains import Domain
 from maasservicelayer.models.staticipaddress import StaticIPAddress
 from maasservicelayer.services.dnsresources import DNSResourcesService
 from maasservicelayer.services.domains import DomainsService
+from maasservicelayer.utils.date import utcnow
 
 
 @pytest.mark.asyncio
 class TestDNSResourcesService:
-    async def test_get(self) -> None:
+    async def test_get_one(self) -> None:
         mock_domains_service = Mock(DomainsService)
         mock_domains_service.get_default_domain = AsyncMock(
             return_value=Domain(
                 id=0,
                 name="test_domain",
                 authoritative=True,
-                created=datetime.utcnow(),
-                updated=datetime.utcnow(),
+                created=utcnow(),
+                updated=utcnow(),
             )
         )
 
@@ -37,9 +37,9 @@ class TestDNSResourcesService:
             dnsresource_repository=mock_dnsresource_repository,
         )
 
-        await dnsresources_service.get(query=QuerySpec(where=None))
+        await dnsresources_service.get_one(query=QuerySpec(where=None))
 
-        mock_dnsresource_repository.get.assert_called_once_with(
+        mock_dnsresource_repository.get_one.assert_called_once_with(
             query=QuerySpec(where=None)
         )
 
@@ -49,8 +49,8 @@ class TestDNSResourcesService:
             id=0,
             name="test_domain",
             authoritative=True,
-            created=datetime.utcnow(),
-            updated=datetime.utcnow(),
+            created=utcnow(),
+            updated=utcnow(),
         )
         mock_domains_service.get_default_domain = AsyncMock(
             return_value=domain
@@ -60,8 +60,8 @@ class TestDNSResourcesService:
             id=1,
             name="test_name",
             domain_id=0,
-            created=datetime.utcnow(),
-            updated=datetime.utcnow(),
+            created=utcnow(),
+            updated=utcnow(),
         )
 
         sip = StaticIPAddress(
@@ -70,8 +70,8 @@ class TestDNSResourcesService:
             alloc_type=IpAddressType.DISCOVERED,
             lease_time=600,
             subnet_id=2,
-            created=datetime.utcnow(),
-            updated=datetime.utcnow(),
+            created=utcnow(),
+            updated=utcnow(),
         )
 
         mock_dnsresource_repository = Mock(DNSResourceRepository)
@@ -118,8 +118,8 @@ class TestDNSResourcesService:
             id=0,
             name="test_domain",
             authoritative=True,
-            created=datetime.utcnow(),
-            updated=datetime.utcnow(),
+            created=utcnow(),
+            updated=utcnow(),
         )
         mock_domains_service.get_default_domain = AsyncMock(
             return_value=domain
@@ -131,19 +131,21 @@ class TestDNSResourcesService:
             alloc_type=IpAddressType.DISCOVERED,
             lease_time=600,
             subnet_id=2,
-            created=datetime.utcnow(),
-            updated=datetime.utcnow(),
+            created=utcnow(),
+            updated=utcnow(),
         )
         dnsresource = DNSResource(
             id=1,
             name="test_name",
             domain_id=0,
-            created=datetime.utcnow(),
-            updated=datetime.utcnow(),
+            created=utcnow(),
+            updated=utcnow(),
         )
 
         mock_dnsresource_repository = Mock(DNSResourceRepository)
-        mock_dnsresource_repository.get = AsyncMock(return_value=dnsresource)
+        mock_dnsresource_repository.get_one = AsyncMock(
+            return_value=dnsresource
+        )
         mock_dnsresource_repository.get_dnsresources_in_domain_for_ip.return_value = [
             dnsresource
         ]

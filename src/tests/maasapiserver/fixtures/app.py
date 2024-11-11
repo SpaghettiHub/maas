@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from typing import AsyncIterator, Awaitable, Callable, Iterator
 from unittest.mock import AsyncMock, Mock
 
@@ -9,6 +9,7 @@ from fastapi.exceptions import RequestValidationError
 from httpx import AsyncClient, Headers
 from macaroonbakery import bakery
 import pytest
+from pytest_mock import MockerFixture
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 
@@ -214,9 +215,14 @@ async def mocked_api_client_admin_rbac(
 
 @pytest.fixture
 async def api_app(
-    test_config: Config, transaction_middleware_class: type, db: Database
+    test_config: Config,
+    transaction_middleware_class: type,
+    db: Database,
+    mocker: MockerFixture,
 ) -> Iterator[FastAPI]:
     """The API application."""
+    mocker.patch("maasapiserver.main.get_temporal_client_async")
+
     yield await create_app(
         config=test_config,
         transaction_middleware_class=transaction_middleware_class,
@@ -251,7 +257,7 @@ async def authenticated_user(
         "is_superuser": False,
         "is_staff": False,
         "is_active": True,
-        "date_joined": datetime.now(timezone.utc),
+        "date_joined": utcnow(),
     }
     [user_details] = await fixture.create("auth_user", user_details)
     user = User(**user_details)
@@ -274,7 +280,7 @@ async def _create_user_session(
         {
             "session_key": session_id,
             "session_data": session_data,
-            "expire_date": datetime.now(timezone.utc) + timedelta(days=20),
+            "expire_date": utcnow() + timedelta(days=20),
         },
     )
 

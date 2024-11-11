@@ -179,6 +179,12 @@ update-initial-sql: bin/database bin/maas-region cleandb
 	$(dbrun) utilities/update-initial-sql src/maasserver/testing/initial.maas_test.sql
 .PHONY: update-initial-sql
 
+sec: sec-py
+.PHONY: sec sec-py
+
+sec-py:
+	@tox -e bandit
+
 lint: lint-py lint-py-imports lint-py-linefeeds lint-go lint-shell
 .PHONY: lint
 
@@ -450,7 +456,7 @@ snap-tree-sync: $(UI_BUILD) clean-agent go-bins $(SNAP_UNPACKED_DIR_MARKER)
 		--exclude 'host-info' --exclude 'maas-offline-docs' \
 		--exclude '*.pyc' --exclude '__pycache__' \
 		src/ \
-		$(SNAP_UNPACKED_DIR)/lib/python3.10/site-packages/
+		$(SNAP_UNPACKED_DIR)/lib/python3.*/site-packages/
 	$(RSYNC) \
 		$(UI_BUILD)/ \
 		$(SNAP_UNPACKED_DIR)/usr/share/maas/web/static/

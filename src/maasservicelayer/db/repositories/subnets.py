@@ -1,35 +1,84 @@
 #  Copyright 2024 Canonical Ltd.  This software is licensed under the
 #  GNU Affero General Public License version 3 (see the file LICENSE).
 
-from typing import Any
+from typing import Type
 
-from netaddr import IPAddress
+from netaddr import IPAddress, IPNetwork
 from pydantic import IPvAnyAddress
-from sqlalchemy import desc, func, select, Select
-from sqlalchemy.sql.operators import eq, le
+from sqlalchemy import desc, func, select, Table
 
-from maasservicelayer.db.filters import QuerySpec
 from maasservicelayer.db.repositories.base import (
     BaseRepository,
-    CreateOrUpdateResource,
+    CreateOrUpdateResourceBuilder,
 )
 from maasservicelayer.db.tables import SubnetTable, VlanTable
-from maasservicelayer.models.base import ListResult
 from maasservicelayer.models.subnets import Subnet
 
 
+class SubnetsResourceBuilder(CreateOrUpdateResourceBuilder):
+    def with_cidr(self, cidr: IPNetwork) -> "SubnetsResourceBuilder":
+        self._request.set_value(SubnetTable.c.cidr, str(cidr))
+        return self
+
+    def with_name(self, name: str) -> "SubnetsResourceBuilder":
+        self._request.set_value(SubnetTable.c.name, name)
+        return self
+
+    def with_description(self, description: str) -> "SubnetsResourceBuilder":
+        self._request.set_value(SubnetTable.c.description, description)
+        return self
+
+    def with_allow_dns(self, allow_dns: bool) -> "SubnetsResourceBuilder":
+        self._request.set_value(SubnetTable.c.allow_dns, allow_dns)
+        return self
+
+    def with_allow_proxy(self, allow_proxy: bool) -> "SubnetsResourceBuilder":
+        self._request.set_value(SubnetTable.c.allow_proxy, allow_proxy)
+        return self
+
+    def with_rdns_mode(self, rdns_mode: int) -> "SubnetsResourceBuilder":
+        self._request.set_value(SubnetTable.c.rdns_mode, rdns_mode)
+        return self
+
+    def with_active_discovery(
+        self, active_discovery: bool
+    ) -> "SubnetsResourceBuilder":
+        self._request.set_value(
+            SubnetTable.c.active_discovery, active_discovery
+        )
+        return self
+
+    def with_managed(self, managed: bool) -> "SubnetsResourceBuilder":
+        self._request.set_value(SubnetTable.c.managed, managed)
+        return self
+
+    def with_disabled_boot_architectures(
+        self, disabled_boot_architectures: list[str]
+    ) -> "SubnetsResourceBuilder":
+        self._request.set_value(
+            SubnetTable.c.disabled_boot_architectures,
+            disabled_boot_architectures,
+        )
+        return self
+
+    def with_gateway_ip(
+        self, gateway_ip: IPvAnyAddress
+    ) -> "SubnetsResourceBuilder":
+        self._request.set_value(SubnetTable.c.gateway_ip, gateway_ip)
+        return self
+
+    def with_vlan_id(self, vlan_id: int) -> "SubnetsResourceBuilder":
+        self._request.set_value(SubnetTable.c.vlan_id, vlan_id)
+        return self
+
+
 class SubnetsRepository(BaseRepository[Subnet]):
-    async def create(self, resource: CreateOrUpdateResource) -> Subnet:
-        raise NotImplementedError()
 
-    async def find_by_id(self, id: int) -> Subnet | None:
-        stmt = self._select_all_statement().filter(eq(SubnetTable.c.id, id))
+    def get_repository_table(self) -> Table:
+        return SubnetTable
 
-        result = await self.connection.execute(stmt)
-        subnet = result.first()
-        if not subnet:
-            return None
-        return Subnet(**subnet._asdict())
+    def get_model_factory(self) -> Type[Subnet]:
+        return Subnet
 
     async def find_best_subnet_for_ip(
         self, ip: IPvAnyAddress
@@ -63,53 +112,3 @@ class SubnetsRepository(BaseRepository[Subnet]):
         del res["prefixlen"]
         del res["dhcp_on"]
         return Subnet(**res)
-
-    async def find_by_name(self, name: str) -> Subnet | None:
-        raise NotImplementedError()
-
-    async def list(
-        self, token: str | None, size: int, query: QuerySpec | None = None
-    ) -> ListResult[Subnet]:
-        # TODO: use the query for the filters
-        stmt = (
-            self._select_all_statement()
-            .order_by(desc(SubnetTable.c.id))
-            .limit(size + 1)  # Retrieve one more element to get the next token
-        )
-        if token is not None:
-            stmt = stmt.where(le(SubnetTable.c.id, int(token)))
-
-        result = (await self.connection.execute(stmt)).all()
-        next_token = None
-        if len(result) > size:  # There is another page
-            next_token = result.pop().id
-        return ListResult[Subnet](
-            items=[Subnet(**row._asdict()) for row in result],
-            next_token=next_token,
-        )
-
-    async def update(
-        self, id: int, resource: CreateOrUpdateResource
-    ) -> Subnet:
-        raise NotImplementedError()
-
-    async def delete(self, id: int) -> None:
-        raise NotImplementedError()
-
-    def _select_all_statement(self) -> Select[Any]:
-        return select(
-            SubnetTable.c.id,
-            SubnetTable.c.created,
-            SubnetTable.c.updated,
-            SubnetTable.c.name,
-            SubnetTable.c.cidr,
-            SubnetTable.c.gateway_ip,
-            SubnetTable.c.dns_servers,
-            SubnetTable.c.rdns_mode,
-            SubnetTable.c.allow_proxy,
-            SubnetTable.c.description,
-            SubnetTable.c.active_discovery,
-            SubnetTable.c.managed,
-            SubnetTable.c.allow_dns,
-            SubnetTable.c.disabled_boot_architectures,
-        ).select_from(SubnetTable)
