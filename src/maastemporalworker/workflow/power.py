@@ -23,6 +23,7 @@ from maascommon.workflows.power import (
     PowerQueryParam,
 )
 from maasserver.workflow.worker.worker import REGION_TASK_QUEUE
+from maastemporalworker.workflow.utils import with_context_workflow
 
 # Maximum power activity duration (to cope with broken BMCs)
 POWER_ACTION_ACTIVITY_TIMEOUT = timedelta(minutes=5)
@@ -77,6 +78,7 @@ class PowerOnWorkflow:
     PowerOnWorkflow is executed by the Region Controller itself.
     """
 
+    @with_context_workflow
     @workflow.run
     async def run(self, param: PowerOnParam) -> PowerOnResult:
         result = await workflow.execute_activity(
@@ -99,6 +101,7 @@ class PowerOffWorkflow:
     PowerOffWorkflow is executed by the Region Controller itself.
     """
 
+    @with_context_workflow
     @workflow.run
     async def run(self, param: PowerOffParam) -> PowerOffResult:
         result = await workflow.execute_activity(
@@ -121,6 +124,7 @@ class PowerCycleWorkflow:
     PowerCycleWorkflow is executed by the Region Controller itself.
     """
 
+    @with_context_workflow
     @workflow.run
     async def run(self, param: PowerCycleParam) -> PowerCycleResult:
         result = await workflow.execute_activity(
@@ -143,6 +147,7 @@ class PowerQueryWorkflow:
     PowerQueryWorkflow is executed by the Region Controller itself.
     """
 
+    @with_context_workflow
     @workflow.run
     async def run(self, param: PowerQueryParam) -> PowerQueryResult:
         result = await workflow.execute_activity(
@@ -165,6 +170,7 @@ class PowerManyWorkflow:
     It spawns requested child workflows but doesn't collect results.
     """
 
+    @with_context_workflow
     @workflow.run
     async def run(self, param: PowerManyParam) -> None:
         for child in param.params:

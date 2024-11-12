@@ -31,13 +31,6 @@ from maasserver.workflow.bootresource import (
     SyncBootResourcesWorkflow,
 )
 from maasserver.workflow.worker import Worker
-from maastemporalworker.workflow.power import (
-    PowerCycleWorkflow,
-    PowerManyWorkflow,
-    PowerOffWorkflow,
-    PowerOnWorkflow,
-    PowerQueryWorkflow,
-)
 from provisioningserver.utils.env import MAAS_ID
 
 
@@ -121,11 +114,6 @@ class TemporalWorkerService(Service):
                     # the image on its own storage. Then, DownloadBootResourceWorkflow is scheduled on the task queues of the
                     # other regions if the HA is being used.
                     DownloadBootResourceWorkflow,
-                    PowerOnWorkflow,
-                    PowerOffWorkflow,
-                    PowerCycleWorkflow,
-                    PowerQueryWorkflow,
-                    PowerManyWorkflow,
                     SyncBootResourcesWorkflow,
                 ],
                 activities=[

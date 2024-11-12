@@ -13,6 +13,7 @@ from typing import Any
 
 from aiohttp import ClientSession, ClientTimeout, TCPConnector
 from sqlalchemy.ext.asyncio import AsyncConnection
+import structlog
 from temporalio import activity, workflow
 from temporalio.common import RetryPolicy, WorkflowIDReusePolicy
 from temporalio.exceptions import ApplicationError
@@ -32,6 +33,12 @@ from maascommon.workflows.msm import (
 )
 from maasservicelayer.db import Database
 from maastemporalworker.workflow.activity import ActivityBase
+from maastemporalworker.workflow.utils import (
+    with_context_activity,
+    with_context_workflow,
+)
+
+logger = structlog.getLogger()
 
 HEARTBEAT_TIMEOUT = timedelta(seconds=10)
 MSM_TIMEOUT = timedelta(minutes=15)
@@ -77,6 +84,7 @@ class MSMConnectorActivity(ActivityBase):
             trust_env=True, timeout=timeout, connector=tcp_conn
         )
 
+    @with_context_activity
     @activity.defn(name=MSM_SEND_ENROL_ACTIVITY_NAME)
     async def send_enrol(
         self, input: MSMEnrolParam
@@ -89,7 +97,7 @@ class MSMConnectorActivity(ActivityBase):
         Returns:
             bool: whether the request was successful
         """
-        activity.logger.debug(f"attempting to enrol to {input.url}")
+        logger.debug(f"attempting to enrol to {input.url}")
         headers = {
             "Authorization": f"bearer {input.jwt}",
         }
@@ -107,7 +115,7 @@ class MSMConnectorActivity(ActivityBase):
         ) as response:
             match response.status:
                 case 404:
-                    activity.logger.error("Enrolment URL not found, aborting")
+                    logger.error("Enrolment URL not found, aborting")
                     return (
                         False,
                         {
@@ -122,6 +130,7 @@ class MSMConnectorActivity(ActivityBase):
                         f"got unexpected return code: HTTP {response.status}"
                     )
 
+    @with_context_activity
     @activity.defn(name=MSM_CHECK_ENROL_ACTIVITY_NAME)
     async def check_enrol(
         self, input: MSMEnrolParam
@@ -153,15 +162,14 @@ class MSMConnectorActivity(ActivityBase):
                         data["rotation_interval_minutes"],
                     )
                 case 401 | 404:
-                    activity.logger.error(
-                        "Enrolment cancelled by MSM, aborting"
-                    )
+                    logger.error("Enrolment cancelled by MSM, aborting")
                     return (None, -1)
                 case _:
                     raise ApplicationError(
                         f"got unexpected return code: HTTP {response.status}"
                     )
 
+    @with_context_activity
     @activity.defn(name=MSM_VERIFY_TOKEN_ACTIVITY_NAME)
     async def verify_token(self, input: MSMTokenVerifyParam) -> bool:
         """Notify MSM that the new token was successfully installed.
@@ -182,13 +190,14 @@ class MSMConnectorActivity(ActivityBase):
                 case 200:
                     return True
                 case 401 | 404:
-                    activity.logger.error("Failed to verify token")
+                    logger.error("Failed to verify token")
                     return False
                 case _:
                     raise ApplicationError(
                         f"got unexpected return code: HTTP {response.status}"
                     )
 
+    @with_context_activity
     @activity.defn(name=MSM_SET_ENROL_ACTIVITY_NAME)
     async def set_enrol(self, input: MSMConnectorParam) -> None:
         """Set enrolment data in the DB.
@@ -207,6 +216,7 @@ class MSMConnectorActivity(ActivityBase):
                 },
             )
 
+    @with_context_activity
     @activity.defn(name=MSM_GET_ENROL_ACTIVITY_NAME)
     async def get_enrol(self) -> dict[str, Any]:
         """Get enrolment data in the DB.
@@ -219,6 +229,7 @@ class MSMConnectorActivity(ActivityBase):
                 f"global/{MSM_SECRET}"
             )
 
+    @with_context_activity
     @activity.defn(name=MSM_GET_HEARTBEAT_DATA_ACTIVITY_NAME)
     async def get_heartbeat_data(self) -> MachinesCountByStatus:
         """Get heartbeat data from MAAS DB
@@ -229,6 +240,7 @@ class MSMConnectorActivity(ActivityBase):
         async with self.start_transaction() as services:
             return await services.machines.count_machines_by_statuses()
 
+    @with_context_activity
     @activity.defn(name=MSM_SEND_HEARTBEAT_ACTIVITY_NAME)
     async def send_heartbeat(self, input: MSMHeartbeatParam) -> int:
         """Send heartbeat data to MSM.
@@ -259,15 +271,14 @@ class MSMConnectorActivity(ActivityBase):
                         response.headers["MSM-Heartbeat-Interval-Seconds"]
                     )
                 case 401 | 404:
-                    activity.logger.error(
-                        "Enrolment cancelled by MSM, aborting"
-                    )
+                    logger.error("Enrolment cancelled by MSM, aborting")
                     return -1
                 case _:
                     raise ApplicationError(
                         f"got unexpected return code: HTTP {response.status}"
                     )
 
+    @with_context_activity
     @activity.defn(name=MSM_GET_TOKEN_REFRESH_ACTIVITY_NAME)
     async def refresh_token(
         self, input: MSMTokenRefreshParam
@@ -294,9 +305,7 @@ class MSMConnectorActivity(ActivityBase):
                         data["rotation_interval_minutes"],
                     )
                 case 401 | 404:
-                    activity.logger.error(
-                        "Enrolment cancelled by MSM, aborting"
-                    )
+                    logger.error("Enrolment cancelled by MSM, aborting")
                     return (None, -1)
                 case _:
                     raise ApplicationError(
@@ -312,6 +321,7 @@ class MSMEnrolSiteWorkflow:
         self._pending = False
         self._enrolment_error = None
 
+    @with_context_workflow
     @workflow.run
     async def run(self, input: MSMEnrolParam) -> None:
         """Run workflow.
@@ -323,7 +333,7 @@ class MSMEnrolSiteWorkflow:
         if input.url.endswith("/"):
             input.url = input.url[:-1]
 
-        workflow.logger.info(f"enrolling to {input.url}")
+        logger.info(f"enrolling to {input.url}")
         self._pending = True
         (sent, error) = await workflow.execute_activity(
             MSM_SEND_ENROL_ACTIVITY_NAME,
@@ -333,7 +343,7 @@ class MSMEnrolSiteWorkflow:
         if not sent:
             self._pending = False
             self._enrolment_error = error
-            workflow.logger.error(f"failed to enrol to {input.url}, aborting")
+            logger.error(f"failed to enrol to {input.url}, aborting")
             return
         else:
             # important we set this to {} instead of None so
@@ -362,7 +372,7 @@ class MSMEnrolSiteWorkflow:
         )
         if new_jwt is None:
             self._pending = False
-            workflow.logger.error("enrolment cancelled by MSM")
+            logger.error("enrolment cancelled by MSM")
             return
 
         param.jwt = new_jwt
@@ -423,6 +433,7 @@ class MSMEnrolSiteWorkflow:
 class MSMWithdrawWorkflow:
     """Withdraw this site from MSM."""
 
+    @with_context_workflow
     @workflow.run
     async def run(self, input: MSMConnectorParam) -> None:
         """Run workflow.
@@ -439,6 +450,7 @@ class MSMHeartbeatWorkflow:
     def __init__(self) -> None:
         self._running = False
 
+    @with_context_workflow
     @workflow.run
     async def run(self, input: MSMHeartbeatParam) -> None:
         """Run workflow.
@@ -466,7 +478,7 @@ class MSMHeartbeatWorkflow:
                     initial_interval=timedelta(seconds=next_update),
                 ),
             )
-            workflow.logger.debug(f"next refresh in {next_update} seconds")
+            logger.debug(f"next refresh in {next_update} seconds")
             if next_update > 0:
                 await asyncio.sleep(next_update)
         self._running = False
@@ -480,6 +492,7 @@ class MSMHeartbeatWorkflow:
 class MSMTokenRefreshWorkflow:
     """Retrieve a new JWT from MSM."""
 
+    @with_context_workflow
     @workflow.run
     async def run(self, input: MSMTokenRefreshParam) -> None:
         next_refresh = input.rotation_interval_minutes * 60
