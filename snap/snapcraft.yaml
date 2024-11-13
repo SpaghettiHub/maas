@@ -161,6 +161,7 @@ parts:
       - python3-pypureomapi
       - python3-pyrsistent # for jsonschema
       - python3-pyvmomi
+      - python3-pythonjsonlogger
       - python3-requests
       - python3-requests-toolbelt  # for pylxd
       - python3-requests-unixsocket
@@ -169,6 +170,7 @@ parts:
       - python3-simplestreams
       - python3-sqlalchemy
       - python3-starlette
+      - python3-structlog
       - python3-tempita
       - python3-temporalio
       - python3-twisted
