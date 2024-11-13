@@ -18,7 +18,6 @@ from maasservicelayer.db.tables import NodeTagTable, TagTable
 from maasservicelayer.models.bmc import Bmc
 from maasservicelayer.models.users import User
 from maastemporalworker.workflow.tag_evaluation import (
-    EVALUATE_TAG_ACTIVITY_NAME,
     TagEvaluationActivity,
     TagEvaluationParam,
     TagEvaluationResult,
@@ -211,7 +210,7 @@ class TestTagEvaluationWorkflow:
         calls = {}
         activity_param = TagEvaluationParam(101, "//node")
 
-        @activity.defn(name=EVALUATE_TAG_ACTIVITY_NAME)
+        @activity.defn(name="evaluate-tag")
         async def mock_evaluate_tag(
             param: TagEvaluationParam,
         ) -> TagEvaluationResult:
