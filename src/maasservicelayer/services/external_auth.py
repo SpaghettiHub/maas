@@ -56,9 +56,6 @@ def get_third_party_locator(auth_endpoint: str):
 
 # We need to implement RootKeyStore because we pass this service to the Macaroon Auth Checker
 class ExternalAuthService(Service, RootKeyStore):
-    # TODO: MAASENG-3538 implement an ExternalAuthServiceFactory to cache the external_auth_config, keys and other things that
-    #  do not need to be refetched from the DB.
-
     EXTERNAL_AUTH_SECRET_PATH = "global/external-auth"
     BAKERY_KEY_SECRET_PATH = "global/macaroon-key"
     ROOTKEY_MATERIAL_SECRET_FORMAT = "rootkey/%s/material"
@@ -79,14 +76,35 @@ class ExternalAuthService(Service, RootKeyStore):
         self.external_auth_repository = (
             external_auth_repository or ExternalAuthRepository(connection)
         )
+        self.config = {}
+        self.bakery_key = None
+
+    async def _post_init(self):
+        """Initialize config and bakery key with values from the db.
+
+        Acts like a caching mechanism since this two values won't change over time.
+        """
+        self.config = await self.secrets_service.get_composite_secret(
+            path=self.EXTERNAL_AUTH_SECRET_PATH, default={}
+        )
+        key = await self.secrets_service.get_simple_secret(
+            path=self.BAKERY_KEY_SECRET_PATH, default=None
+        )
+        if key:
+            key = bakery.PrivateKey.deserialize(key)
+        else:
+            key = bakery.generate_key()
+            await self.secrets_service.set_simple_secret(
+                path=self.BAKERY_KEY_SECRET_PATH,
+                value=key.serialize().decode("ascii"),
+            )
+        self.bakery_key = key
 
     async def get_external_auth(self) -> ExternalAuthConfig | None:
         """
         Same logic of maasserver.middleware.ExternalAuthInfoMiddleware._get_external_auth_info
         """
-        config = await self.secrets_service.get_composite_secret(
-            path=self.EXTERNAL_AUTH_SECRET_PATH, default={}
-        )
+        config = self.config
         candid_endpoint = config.get("url", "")
         rbac_endpoint = config.get("rbac-url", "")
         auth_domain = config.get("domain", "")
@@ -117,10 +135,7 @@ class ExternalAuthService(Service, RootKeyStore):
         """
         Same logic of maasserver.macaroon_auth.get_auth_info
         """
-        config = await self.secrets_service.get_composite_secret(
-            path=self.EXTERNAL_AUTH_SECRET_PATH, default=None
-        )
-
+        config = self.config
         if config is None:
             return None
         key = bakery.PrivateKey.deserialize(config["key"])
@@ -195,7 +210,7 @@ class ExternalAuthService(Service, RootKeyStore):
         base_bakery = bakery.Bakery()
         base_checker = checkers.Checker()
         oven = AsyncOven(
-            key=await self.get_or_create_bakery_key(),
+            key=self.bakery_key,
             location=request_absolute_uri,
             locator=get_third_party_locator(auth_endpoint),
             namespace=base_checker.namespace(),
@@ -213,19 +228,9 @@ class ExternalAuthService(Service, RootKeyStore):
         )
         return base_bakery
 
-    async def get_or_create_bakery_key(self) -> bakery.PrivateKey:
-        key = await self.secrets_service.get_simple_secret(
-            path=self.BAKERY_KEY_SECRET_PATH, default=None
-        )
-        if key:
-            return bakery.PrivateKey.deserialize(key)
-
-        key = bakery.generate_key()
-        await self.secrets_service.set_simple_secret(
-            path=self.BAKERY_KEY_SECRET_PATH,
-            value=key.serialize().decode("ascii"),
-        )
-        return key
+    async def get_bakery_key(self) -> bakery.PrivateKey:
+        assert self.bakery_key is not None
+        return self.bakery_key
 
     async def get(self, id: bytes) -> bytes | None:
         """Return the key with the specified bytes string id."""
@@ -319,3 +324,41 @@ class ExternalAuthService(Service, RootKeyStore):
         # auth_config.url comes with a /auth suffix used for some macaroon internals.
         # We don't want to diverge too much from the structure we have in maasserver, hence we simply remove the suffix here.
         return RbacAsyncClient(auth_config.url.rstrip("/auth"), auth_info)
+
+
+class ExternalAuthServiceFactory:
+    """Factory class to produce the ExternalAuth service.
+
+    The purpose of this class is to return the same ExternalAuthService object
+    everytime in order to leverage the caching mechanism of its methods.
+    """
+
+    _instance: ExternalAuthService | None = None
+
+    @classmethod
+    async def produce(
+        cls,
+        connection,
+        secrets_service,
+        users_service,
+        external_auth_repository=None,
+    ) -> ExternalAuthService:
+        """Produce an ExternalAuthService and store it as a class attribute.
+
+        Every subsequent call of this method will return the same object unless
+        `clear` has been called.
+        """
+        if cls._instance is None:
+            cls._instance = ExternalAuthService(
+                connection,
+                secrets_service,
+                users_service,
+                external_auth_repository,
+            )
+            await cls._instance._post_init()
+        return cls._instance
+
+    @classmethod
+    def clear(cls) -> None:
+        """Reset the underlying instance, allowing to recreate one from scratch."""
+        cls._instance = None

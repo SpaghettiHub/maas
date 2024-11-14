@@ -12,7 +12,10 @@ from maasservicelayer.services.configurations import ConfigurationsService
 from maasservicelayer.services.dnsresources import DNSResourcesService
 from maasservicelayer.services.domains import DomainsService
 from maasservicelayer.services.events import EventsService
-from maasservicelayer.services.external_auth import ExternalAuthService
+from maasservicelayer.services.external_auth import (
+    ExternalAuthService,
+    ExternalAuthServiceFactory,
+)
 from maasservicelayer.services.fabrics import FabricsService
 from maasservicelayer.services.interfaces import InterfacesService
 from maasservicelayer.services.ipranges import IPRangesService
@@ -77,7 +80,7 @@ class ServiceCollectionV3:
             secrets_service=services.secrets,
             users_service=services.users,
         )
-        services.external_auth = ExternalAuthService(
+        services.external_auth = ExternalAuthServiceFactory.produce(
             connection=connection,
             secrets_service=services.secrets,
             users_service=services.users,
