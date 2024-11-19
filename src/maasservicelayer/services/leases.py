@@ -5,7 +5,6 @@ from datetime import datetime
 
 from netaddr import IPNetwork
 from pydantic import IPvAnyAddress
-from sqlalchemy.ext.asyncio import AsyncConnection
 
 from maascommon.enums.ipaddress import (
     IpAddressFamily,
@@ -15,6 +14,7 @@ from maascommon.enums.ipaddress import (
 from maasservicelayer.db.repositories.staticipaddress import (
     StaticIPAddressResourceBuilder,
 )
+from maasservicelayer.logging.context import Context
 from maasservicelayer.models.interfaces import Interface
 from maasservicelayer.models.leases import Lease
 from maasservicelayer.models.staticipaddress import StaticIPAddress
@@ -45,7 +45,7 @@ def _is_valid_hostname(hostname):
 class LeasesService(Service):
     def __init__(
         self,
-        connection: AsyncConnection,
+        context: Context,
         dnsresource_service: DNSResourcesService,
         node_service: NodesService,
         staticipaddress_service: StaticIPAddressService,
@@ -53,7 +53,7 @@ class LeasesService(Service):
         interface_service: InterfacesService,
         iprange_service: IPRangesService,
     ):
-        super().__init__(connection)
+        super().__init__(context)
         self.dnsresource_service = dnsresource_service
         self.node_service = node_service
         self.staticipaddress_service = staticipaddress_service

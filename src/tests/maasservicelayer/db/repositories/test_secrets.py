@@ -7,6 +7,7 @@ from sqlalchemy.sql.operators import eq
 
 from maasservicelayer.db.repositories.secrets import SecretsRepository
 from maasservicelayer.db.tables import SecretTable
+from maasservicelayer.logging.context import Context
 from maasservicelayer.models.secrets import Secret
 from tests.fixtures.factories.secret import create_test_secret
 from tests.maasapiserver.fixtures.db import Fixture
@@ -18,7 +19,9 @@ class TestSecretsRepository:
     async def test_create_or_update(
         self, db_connection: AsyncConnection, fixture: Fixture
     ) -> None:
-        secrets_repository = SecretsRepository(db_connection)
+        secrets_repository = SecretsRepository(
+            Context(connection=db_connection)
+        )
         data = {"hello": "mate", "data": [1, 2, 3]}
         await secrets_repository.create_or_update(path="/mytest", value=data)
 
@@ -44,7 +47,9 @@ class TestSecretsRepository:
         self, db_connection: AsyncConnection, fixture: Fixture
     ) -> None:
         await create_test_secret(fixture=fixture, path="/test", value="hello")
-        secrets_repository = SecretsRepository(db_connection)
+        secrets_repository = SecretsRepository(
+            Context(connection=db_connection)
+        )
         secret = await secrets_repository.get("/test")
         assert secret.value == "hello"
         assert secret.path == "/test"
@@ -53,7 +58,9 @@ class TestSecretsRepository:
         self, db_connection: AsyncConnection, fixture: Fixture
     ) -> None:
         await create_test_secret(fixture=fixture, path="/test", value="hello")
-        secrets_repository = SecretsRepository(db_connection)
+        secrets_repository = SecretsRepository(
+            Context(connection=db_connection)
+        )
         await secrets_repository.delete("/test")
         result = await fixture.get(
             "maasserver_secret", eq(SecretTable.c.path, "/test")

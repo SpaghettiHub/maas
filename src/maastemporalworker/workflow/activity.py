@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncConnection
 import structlog
 
 from maasservicelayer.db import Database
+from maasservicelayer.logging.context import Context
 from maasservicelayer.services import CacheForServices, ServiceCollectionV3
 
 UNSET = object()
@@ -44,6 +45,7 @@ class ActivityBase:
     @asynccontextmanager
     async def start_transaction(self) -> AsyncIterator[ServiceCollectionV3]:
         async with self._start_transaction() as conn:
+            context = Context(connection=conn)
             yield await ServiceCollectionV3.produce(
-                conn, cache=self.services_cache
+                context=context, cache=self.services_cache
             )

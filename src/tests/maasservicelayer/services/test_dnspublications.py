@@ -1,7 +1,6 @@
 from unittest.mock import Mock
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncConnection
 
 from maascommon.enums.dns import DnsUpdateAction
 from maascommon.workflows.dns import (
@@ -13,6 +12,7 @@ from maasservicelayer.db.repositories.dnspublications import (
     DNSPublicationRepository,
     DNSPublicationResourceBuilder,
 )
+from maasservicelayer.logging.context import Context
 from maasservicelayer.services.dnspublications import DNSPublicationsService
 from maasservicelayer.services.temporal import TemporalService
 from maasservicelayer.utils.date import utcnow
@@ -35,7 +35,7 @@ class TestDNSPublicationsService:
         dnspublication_repository = Mock(DNSPublicationRepository)
 
         service = DNSPublicationsService(
-            connection=Mock(AsyncConnection),
+            context=Context(),
             temporal_service=Mock(TemporalService),
             dnspublication_repository=dnspublication_repository,
         )
@@ -53,7 +53,7 @@ class TestDNSPublicationsService:
         temporal_service = Mock(TemporalService)
 
         service = DNSPublicationsService(
-            connection=Mock(AsyncConnection),
+            context=Context(),
             temporal_service=temporal_service,
             dnspublication_repository=dnspublication_repository,
         )
@@ -88,7 +88,7 @@ class TestDNSPublicationsService:
         temporal_service = Mock(TemporalService)
 
         service = DNSPublicationsService(
-            connection=Mock(AsyncConnection),
+            context=Context(),
             temporal_service=temporal_service,
             dnspublication_repository=dnspublication_repository,
         )
@@ -125,7 +125,7 @@ class TestDNSPublicationsService:
         dnspublication_repository = Mock(DNSPublicationRepository)
 
         service = DNSPublicationsService(
-            connection=Mock(AsyncConnection),
+            context=Context(),
             temporal_service=Mock(TemporalService),
             dnspublication_repository=dnspublication_repository,
         )

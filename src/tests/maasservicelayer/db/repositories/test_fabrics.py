@@ -5,6 +5,7 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncConnection
 
 from maasservicelayer.db.repositories.fabrics import FabricsRepository
+from maasservicelayer.logging.context import Context
 from maasservicelayer.models.fabrics import Fabric
 from tests.fixtures.factories.fabric import create_test_fabric_entry
 from tests.maasapiserver.fixtures.db import Fixture
@@ -16,7 +17,7 @@ class TestFabricsRepository(RepositoryCommonTests[Fabric]):
     def repository_instance(
         self, db_connection: AsyncConnection
     ) -> FabricsRepository:
-        return FabricsRepository(db_connection)
+        return FabricsRepository(Context(connection=db_connection))
 
     @pytest.fixture
     async def _setup_test_list(

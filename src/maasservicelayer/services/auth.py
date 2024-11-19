@@ -3,8 +3,6 @@
 
 import os
 
-from sqlalchemy.ext.asyncio import AsyncConnection
-
 from maasservicelayer.auth.jwt import JWT, UserRole
 from maasservicelayer.exceptions.catalog import (
     BaseExceptionDetail,
@@ -13,6 +11,7 @@ from maasservicelayer.exceptions.catalog import (
 from maasservicelayer.exceptions.constants import (
     UNEXISTING_USER_OR_INVALID_CREDENTIALS_VIOLATION_TYPE,
 )
+from maasservicelayer.logging.context import Context
 from maasservicelayer.models.auth import AuthenticatedUser
 from maasservicelayer.services._base import Service
 from maasservicelayer.services.secrets import SecretNotFound, SecretsService
@@ -28,14 +27,14 @@ class AuthService(Service):
 
     def __init__(
         self,
-        connection: AsyncConnection,
+        context: Context,
         secrets_service: SecretsService,
         users_service: UsersService | None = None,
     ):
-        super().__init__(connection)
+        super().__init__(context)
         self.secrets_service = secrets_service
         self.users_service = (
-            users_service if users_service else UsersService(connection)
+            users_service if users_service else UsersService(context)
         )
 
     async def login(self, username: str, password: str) -> JWT:

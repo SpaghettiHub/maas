@@ -12,6 +12,7 @@ from maasservicelayer.db.repositories.vlans import (
     VlansRepository,
 )
 from maasservicelayer.db.tables import VlanTable
+from maasservicelayer.logging.context import Context
 from maasservicelayer.models.vlans import Vlan
 from tests.fixtures.factories.fabric import create_test_fabric_entry
 from tests.fixtures.factories.interface import create_test_interface_entry
@@ -46,7 +47,7 @@ class TestVlansRepository(RepositoryCommonTests[Vlan]):
     def repository_instance(
         self, db_connection: AsyncConnection
     ) -> VlansRepository:
-        return VlansRepository(db_connection)
+        return VlansRepository(Context(connection=db_connection))
 
     @pytest.fixture
     async def _setup_test_list(

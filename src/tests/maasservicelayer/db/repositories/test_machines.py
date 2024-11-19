@@ -10,6 +10,7 @@ from maasservicelayer.db.repositories.machines import (
     MachineClauseFactory,
     MachinesRepository,
 )
+from maasservicelayer.logging.context import Context
 from maasservicelayer.models.machines import Machine
 from tests.fixtures.factories.bmc import create_test_bmc
 from tests.fixtures.factories.machines import create_test_machine
@@ -52,7 +53,7 @@ class TestMachinesRepository(RepositoryCommonTests[Machine]):
     def repository_instance(
         self, db_connection: AsyncConnection
     ) -> MachinesRepository:
-        return MachinesRepository(db_connection)
+        return MachinesRepository(Context(connection=db_connection))
 
     @pytest.fixture
     async def _setup_test_list(

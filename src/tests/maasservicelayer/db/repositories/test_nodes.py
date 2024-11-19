@@ -13,6 +13,7 @@ from maasservicelayer.db.repositories.nodes import (
 )
 from maasservicelayer.db.tables import BMCTable, NodeTable, ZoneTable
 from maasservicelayer.exceptions.catalog import NotFoundException
+from maasservicelayer.logging.context import Context
 from maasservicelayer.models.nodes import Node
 from maasservicelayer.models.zones import Zone
 from tests.fixtures.factories.bmc import create_test_bmc
@@ -50,7 +51,7 @@ class TestNodesRepository:
                 )
             )
         )
-        nodes_repository = NodesRepository(db_connection)
+        nodes_repository = NodesRepository(Context(connection=db_connection))
         await nodes_repository.move_to_zone(zone_b.id, zone_a.id)
 
         [updated_node_b] = await fixture.get(
@@ -84,7 +85,7 @@ class TestNodesRepository:
         bmc_b = await create_test_bmc(
             fixture, zone_id=zone_b.id, power_parameters={"b": "b"}
         )
-        nodes_repository = NodesRepository(db_connection)
+        nodes_repository = NodesRepository(Context(connection=db_connection))
         await nodes_repository.move_bmcs_to_zone(zone_b.id, zone_a.id)
 
         [updated_bmc_b] = await fixture.get(
@@ -108,7 +109,7 @@ class TestNodesRepository:
         bmc = await create_test_bmc(fixture)
         user = await create_test_user(fixture)
         machine = await create_test_machine(fixture, bmc=bmc, user=user)
-        nodes_repository = NodesRepository(db_connection)
+        nodes_repository = NodesRepository(Context(connection=db_connection))
         node_bmc = await nodes_repository.get_node_bmc(machine.system_id)
 
         assert node_bmc is not None
@@ -125,7 +126,7 @@ class TestNodesRepository:
             fixture, bmc=bmc, user=user, status=NodeStatus.NEW
         )
 
-        nodes_repository = NodesRepository(db_connection)
+        nodes_repository = NodesRepository(Context(connection=db_connection))
         resource = (
             NodeCreateOrUpdateResourceBuilder()
             .with_status(status=NodeStatus.DEPLOYED)
@@ -153,7 +154,7 @@ class TestNodesRepository:
     async def test_update_failures(
         self, db_connection: AsyncConnection, fixture: Fixture
     ) -> None:
-        nodes_repository = NodesRepository(db_connection)
+        nodes_repository = NodesRepository(Context(connection=db_connection))
         resource = (
             NodeCreateOrUpdateResourceBuilder()
             .with_status(status=NodeStatus.DEPLOYED)

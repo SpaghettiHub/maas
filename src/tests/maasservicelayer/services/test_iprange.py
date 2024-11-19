@@ -13,6 +13,7 @@ from maasservicelayer.db.repositories.ipranges import (
     IPRangesRepository,
     IPRangesResourceBuilder,
 )
+from maasservicelayer.logging.context import Context
 from maasservicelayer.models.ipranges import IPRange
 from maasservicelayer.models.staticipaddress import StaticIPAddress
 from maasservicelayer.models.subnets import Subnet
@@ -79,8 +80,8 @@ class TestIPRangesService:
         mock_temporal = Mock(TemporalService)
 
         ipranges_service = IPRangesService(
-            Mock(AsyncConnection),
-            mock_temporal,
+            context=Context(),
+            temporal_service=mock_temporal,
             ipranges_repository=mock_ipranges_repository,
         )
 
@@ -121,8 +122,8 @@ class TestIPRangesService:
         mock_temporal = Mock(TemporalService)
 
         ipranges_service = IPRangesService(
-            Mock(AsyncConnection),
-            mock_temporal,
+            context=Context(),
+            temporal_service=mock_temporal,
             ipranges_repository=mock_ipranges_repository,
         )
 
@@ -165,8 +166,8 @@ class TestIPRangesService:
         mock_temporal = Mock(TemporalService)
 
         ipranges_service = IPRangesService(
-            Mock(AsyncConnection),
-            mock_temporal,
+            context=Context(),
+            temporal_service=mock_temporal,
             ipranges_repository=mock_ipranges_repository,
         )
 

@@ -1,10 +1,9 @@
 #  Copyright 2024 Canonical Ltd.  This software is licensed under the
 #  GNU Affero General Public License version 3 (see the file LICENSE).
 
-from sqlalchemy.ext.asyncio import AsyncConnection
-
 from maasservicelayer.db.repositories.base import CreateOrUpdateResource
 from maasservicelayer.db.repositories.nodes import NodesRepository
+from maasservicelayer.logging.context import Context
 from maasservicelayer.models.bmc import Bmc
 from maasservicelayer.models.nodes import Node
 from maasservicelayer.services._base import Service
@@ -14,16 +13,14 @@ from maasservicelayer.services.secrets import SecretsService
 class NodesService(Service):
     def __init__(
         self,
-        connection: AsyncConnection,
+        context: Context,
         secrets_service: SecretsService,
         nodes_repository: NodesRepository | None = None,
     ):
-        super().__init__(connection)
+        super().__init__(context)
         self.secrets_service = secrets_service
         self.nodes_repository = (
-            nodes_repository
-            if nodes_repository
-            else NodesRepository(connection)
+            nodes_repository if nodes_repository else NodesRepository(context)
         )
 
     async def get_by_id(self, id: int) -> Node | None:

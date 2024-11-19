@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncConnection
 from maasservicelayer.db.repositories.dnspublications import (
     DNSPublicationRepository,
 )
+from maasservicelayer.logging.context import Context
 from tests.fixtures.factories.dnspublication import (
     create_test_dnspublication_entry,
 )
@@ -25,8 +26,9 @@ class TestDNSPublicationRepository:
         third_publication = await create_test_dnspublication_entry(
             fixture, serial=second_publication.serial + 1
         )
-
-        dnspublication_repository = DNSPublicationRepository(db_connection)
+        dnspublication_repository = DNSPublicationRepository(
+            Context(connection=db_connection)
+        )
 
         serial = await dnspublication_repository.get_latest_serial()
 
@@ -40,7 +42,9 @@ class TestDNSPublicationRepository:
             fixture, serial=first_publication.serial + 1
         )
 
-        dnspublication_repository = DNSPublicationRepository(db_connection)
+        dnspublication_repository = DNSPublicationRepository(
+            Context(connection=db_connection)
+        )
 
         result = await dnspublication_repository.get_publications_since_serial(
             first_publication.serial

@@ -4,7 +4,6 @@
 from unittest.mock import Mock
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncConnection
 
 from maascommon.enums.node import NodeStatus
 from maascommon.workflows.dhcp import (
@@ -17,6 +16,7 @@ from maasservicelayer.db.repositories.vlans import (
     VlansRepository,
     VlansResourceBuilder,
 )
+from maasservicelayer.logging.context import Context
 from maasservicelayer.models.base import ListResult
 from maasservicelayer.models.nodes import Node
 from maasservicelayer.models.vlans import Vlan
@@ -30,14 +30,13 @@ from maastemporalworker.workflow.dhcp import ConfigureDHCPParam
 @pytest.mark.asyncio
 class TestVlansService:
     async def test_list(self) -> None:
-        db_connection = Mock(AsyncConnection)
         nodes_service_mock = Mock(NodesService)
         vlans_repository_mock = Mock(VlansRepository)
         vlans_repository_mock.list.return_value = ListResult[Vlan](
             items=[], next_token=None
         )
         vlans_service = VlansService(
-            connection=db_connection,
+            context=Context(),
             temporal_service=Mock(TemporalService),
             nodes_service=nodes_service_mock,
             vlans_repository=vlans_repository_mock,
@@ -53,7 +52,6 @@ class TestVlansService:
         assert vlans_list.items == []
 
     async def test_get_by_id(self) -> None:
-        db_connection = Mock(AsyncConnection)
         now = utcnow()
         expected_vlan = Vlan(
             id=0,
@@ -70,7 +68,7 @@ class TestVlansService:
         vlans_repository_mock = Mock(VlansRepository)
         vlans_repository_mock.find_by_id.return_value = expected_vlan
         vlans_service = VlansService(
-            connection=db_connection,
+            context=Context(),
             temporal_service=Mock(TemporalService),
             nodes_service=nodes_service_mock,
             vlans_repository=vlans_repository_mock,
@@ -107,7 +105,6 @@ class TestVlansService:
         assert vlan is None
 
     async def test_get_node_vlans(self) -> None:
-        db_connection = Mock(AsyncConnection)
         now = utcnow()
         expected_vlan = Vlan(
             id=0,
@@ -123,7 +120,7 @@ class TestVlansService:
         vlans_repository_mock = Mock(VlansRepository)
         vlans_repository_mock.get_node_vlans.return_value = expected_vlan
         vlans_service = VlansService(
-            connection=db_connection,
+            context=Context(),
             vlans_repository=vlans_repository_mock,
             temporal_service=Mock(TemporalService),
             nodes_service=Mock(NodesService),
@@ -156,7 +153,7 @@ class TestVlansService:
         mock_temporal = Mock(TemporalService)
 
         vlans_service = VlansService(
-            connection=Mock(AsyncConnection),
+            context=Context(),
             temporal_service=mock_temporal,
             nodes_service=nodes_service_mock,
             vlans_repository=vlans_repository_mock,
@@ -172,6 +169,7 @@ class TestVlansService:
             .with_fabric_id(vlan.fabric_id)
             .with_created(vlan.created)
             .with_updated(vlan.updated)
+            .build()
         )
 
         await vlans_service.create(resource)
@@ -205,7 +203,7 @@ class TestVlansService:
         mock_temporal = Mock(TemporalService)
 
         vlans_service = VlansService(
-            connection=Mock(AsyncConnection),
+            context=Context(),
             temporal_service=mock_temporal,
             nodes_service=nodes_service_mock,
             vlans_repository=vlans_repository_mock,
@@ -221,6 +219,7 @@ class TestVlansService:
             .with_fabric_id(vlan.fabric_id)
             .with_created(vlan.created)
             .with_updated(vlan.updated)
+            .build()
         )
 
         await vlans_service.update(vlan.id, resource)
@@ -264,7 +263,7 @@ class TestVlansService:
         mock_temporal = Mock(TemporalService)
 
         vlans_service = VlansService(
-            connection=Mock(AsyncConnection),
+            context=Context(),
             temporal_service=mock_temporal,
             nodes_service=nodes_service_mock,
             vlans_repository=vlans_repository_mock,

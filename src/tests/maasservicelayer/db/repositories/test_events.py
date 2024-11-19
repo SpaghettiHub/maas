@@ -13,6 +13,7 @@ from maasservicelayer.db.repositories.events import (
     EventsRepository,
 )
 from maasservicelayer.db.tables import EventTable, NodeTable
+from maasservicelayer.logging.context import Context
 from maasservicelayer.models.events import Event
 from tests.fixtures.factories.bmc import create_test_bmc
 from tests.fixtures.factories.events import (
@@ -54,7 +55,7 @@ class TestEventsRepository(RepositoryCommonTests[Event]):
     def repository_instance(
         self, db_connection: AsyncConnection
     ) -> EventsRepository:
-        return EventsRepository(db_connection)
+        return EventsRepository(Context(connection=db_connection))
 
     @pytest.fixture
     async def _setup_test_list(

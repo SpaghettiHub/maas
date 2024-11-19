@@ -4,8 +4,6 @@
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy.ext.asyncio import AsyncConnection
-
 from maascommon.enums.dns import DnsUpdateAction
 from maascommon.workflows.dns import (
     CONFIGURE_DNS_WORKFLOW_NAME,
@@ -17,6 +15,7 @@ from maasservicelayer.db.repositories.dnspublications import (
     DNSPublicationRepository,
     DNSPublicationResourceBuilder,
 )
+from maasservicelayer.logging.context import Context
 from maasservicelayer.models.dnspublications import DNSPublication
 from maasservicelayer.services._base import Service
 from maasservicelayer.services.temporal import TemporalService
@@ -30,15 +29,15 @@ class MaxSerialException(Exception):
 class DNSPublicationsService(Service):
     def __init__(
         self,
-        connection: AsyncConnection,
+        context: Context,
         temporal_service: TemporalService,
         dnspublication_repository: Optional[DNSPublicationRepository] = None,
     ):
-        super().__init__(connection)
+        super().__init__(context)
         self.dnspublication_repository = (
             dnspublication_repository
             if dnspublication_repository
-            else DNSPublicationRepository(connection)
+            else DNSPublicationRepository(context)
         )
         self.temporal_service = temporal_service
 

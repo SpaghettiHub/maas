@@ -3,8 +3,6 @@
 
 from typing import List
 
-from sqlalchemy.ext.asyncio import AsyncConnection
-
 from maascommon.workflows.dhcp import (
     CONFIGURE_DHCP_WORKFLOW_NAME,
     ConfigureDHCPParam,
@@ -13,6 +11,7 @@ from maascommon.workflows.dhcp import (
 from maasservicelayer.db.filters import QuerySpec
 from maasservicelayer.db.repositories.base import CreateOrUpdateResource
 from maasservicelayer.db.repositories.vlans import VlansRepository
+from maasservicelayer.logging.context import Context
 from maasservicelayer.models.base import ListResult
 from maasservicelayer.models.vlans import Vlan
 from maasservicelayer.services._base import Service
@@ -23,18 +22,16 @@ from maasservicelayer.services.temporal import TemporalService
 class VlansService(Service):
     def __init__(
         self,
-        connection: AsyncConnection,
+        context: Context,
         temporal_service: TemporalService,
         nodes_service: NodesService,
         vlans_repository: VlansRepository | None = None,
     ):
-        super().__init__(connection)
+        super().__init__(context)
         self.temporal_service = temporal_service
         self.nodes_service = nodes_service
         self.vlans_repository = (
-            vlans_repository
-            if vlans_repository
-            else VlansRepository(connection)
+            vlans_repository if vlans_repository else VlansRepository(context)
         )
 
     async def list(

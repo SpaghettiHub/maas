@@ -8,7 +8,6 @@ from typing import Any, Generic, Type, TypeVar
 
 from sqlalchemy import delete, desc, insert, select, Select, Table, update
 from sqlalchemy.exc import IntegrityError, NoResultFound
-from sqlalchemy.ext.asyncio import AsyncConnection
 
 from maasservicelayer.db.filters import QuerySpec
 from maasservicelayer.exceptions.catalog import (
@@ -20,6 +19,7 @@ from maasservicelayer.exceptions.constants import (
     UNEXISTING_RESOURCE_VIOLATION_TYPE,
     UNIQUE_CONSTRAINT_VIOLATION_TYPE,
 )
+from maasservicelayer.logging.context import Context
 from maasservicelayer.models.base import ListResult, MaasBaseModel
 
 T = TypeVar("T", bound=MaasBaseModel)
@@ -55,8 +55,9 @@ class CreateOrUpdateResourceBuilder(ABC):
 
 
 class BaseRepository(ABC, Generic[T]):
-    def __init__(self, connection: AsyncConnection):
-        self.connection = connection
+    def __init__(self, context: Context):
+        self.context = context
+        self.connection = context.get_connection()
 
     @abstractmethod
     def get_repository_table(self) -> Table:

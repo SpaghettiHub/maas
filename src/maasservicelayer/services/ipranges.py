@@ -4,7 +4,6 @@
 from typing import Optional
 
 from pydantic import IPvAnyAddress
-from sqlalchemy.ext.asyncio import AsyncConnection
 
 from maascommon.workflows.dhcp import (
     CONFIGURE_DHCP_WORKFLOW_NAME,
@@ -13,6 +12,7 @@ from maascommon.workflows.dhcp import (
 )
 from maasservicelayer.db.repositories.base import CreateOrUpdateResource
 from maasservicelayer.db.repositories.ipranges import IPRangesRepository
+from maasservicelayer.logging.context import Context
 from maasservicelayer.models.ipranges import IPRange
 from maasservicelayer.models.subnets import Subnet
 from maasservicelayer.services._base import Service
@@ -22,16 +22,16 @@ from maasservicelayer.services.temporal import TemporalService
 class IPRangesService(Service):
     def __init__(
         self,
-        connection: AsyncConnection,
+        context: Context,
         temporal_service: TemporalService,
         ipranges_repository: Optional[IPRangesRepository] = None,
     ):
-        super().__init__(connection)
+        super().__init__(context)
         self.temporal_service = temporal_service
         self.ipranges_repository = (
             ipranges_repository
             if ipranges_repository
-            else IPRangesRepository(connection)
+            else IPRangesRepository(context)
         )
 
     async def get_dynamic_range_for_ip(

@@ -102,7 +102,7 @@ class TestZoneHandlerDelete(MAASServerTestCase):
         with self.assertRaisesRegex(AssertionError, "Permission denied."):
             handler.delete({"id": zone.id})
 
-    def test_delete_default_zone_fails(self):
+    def test_delete_default_zone_fails(self) -> object:
         zone = DefaultResource.objects.get_default_zone()
         user = factory.make_admin()
         handler = ZoneHandler(user, {}, None)

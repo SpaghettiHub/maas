@@ -1,3 +1,6 @@
+#  Copyright 2024 Canonical Ltd.  This software is licensed under the
+#  GNU Affero General Public License version 3 (see the file LICENSE).
+
 from datetime import timedelta
 from typing import Any, AsyncIterator, Callable, Iterator
 from unittest.mock import AsyncMock, Mock
@@ -14,7 +17,6 @@ from pymacaroons import Macaroon
 import pytest
 from sqlalchemy.ext.asyncio import AsyncConnection
 from starlette.responses import Response
-from temporalio.client import Client as TemporalClient
 
 from maasapiserver.common.api.models.responses.errors import ErrorBodyResponse
 from maasapiserver.common.middlewares.exceptions import ExceptionMiddleware
@@ -58,6 +60,7 @@ from maasservicelayer.exceptions.catalog import (
     ForbiddenException,
     UnauthorizedException,
 )
+from maasservicelayer.logging.context import Context
 from maasservicelayer.models.auth import AuthenticatedUser
 from maasservicelayer.models.users import User
 from maasservicelayer.services import CacheForServices, ServiceCollectionV3
@@ -580,11 +583,11 @@ class TestValidateUserExternalAuthCandid:
             fullname="last",
             email="myusername@candid.example.com",
         )
-        temporal = Mock(TemporalClient)
+        context = Context(connection=db_connection)
         cache = CacheForServices()
         self.request = Mock(Request)
         self.request.state.services = await ServiceCollectionV3.produce(
-            db_connection, cache, temporal
+            context, cache
         )
         self.request.state.services.external_auth.get_candid_client = (
             AsyncMock(return_value=self.client)
@@ -717,13 +720,12 @@ class TestValidateUserExternalAuthRbac:
             fullname="last",
             email="myusername@rbac.example.com",
         )
-        temporal = Mock(TemporalClient)
+        context = Context(connection=db_connection)
         cache = CacheForServices()
         self.request = Mock(Request)
         self.request.state.services = await ServiceCollectionV3.produce(
-            db_connection,
+            context,
             cache,
-            temporal,
         )
         self.request.state.services.external_auth.get_rbac_client = AsyncMock(
             return_value=self.client

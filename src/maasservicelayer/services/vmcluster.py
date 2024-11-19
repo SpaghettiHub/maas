@@ -1,23 +1,22 @@
 #  Copyright 2024 Canonical Ltd.  This software is licensed under the
 #  GNU Affero General Public License version 3 (see the file LICENSE).
 
-from sqlalchemy.ext.asyncio import AsyncConnection
-
 from maasservicelayer.db.repositories.vmcluster import VmClustersRepository
+from maasservicelayer.logging.context import Context
 from maasservicelayer.services._base import Service
 
 
 class VmClustersService(Service):
     def __init__(
         self,
-        connection: AsyncConnection,
+        context: Context,
         vmcluster_repository: VmClustersRepository | None = None,
     ):
-        super().__init__(connection)
+        super().__init__(context)
         self.vmcluster_repository = (
             vmcluster_repository
             if vmcluster_repository
-            else VmClustersRepository(connection)
+            else VmClustersRepository(context)
         )
 
     async def move_to_zone(self, old_zone_id: int, new_zone_id: int) -> None:

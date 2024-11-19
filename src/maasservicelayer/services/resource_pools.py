@@ -3,13 +3,12 @@
 
 from typing import Optional
 
-from sqlalchemy.ext.asyncio import AsyncConnection
-
 from maasservicelayer.db.filters import QuerySpec
 from maasservicelayer.db.repositories.base import CreateOrUpdateResource
 from maasservicelayer.db.repositories.resource_pools import (
     ResourcePoolRepository,
 )
+from maasservicelayer.logging.context import Context
 from maasservicelayer.models.base import ListResult
 from maasservicelayer.models.resource_pools import ResourcePool
 from maasservicelayer.services._base import Service
@@ -18,12 +17,12 @@ from maasservicelayer.services._base import Service
 class ResourcePoolsService(Service):
     def __init__(
         self,
-        connection: AsyncConnection,
+        context: Context,
         resource_pools_repository: Optional[ResourcePoolRepository] = None,
     ):
-        super().__init__(connection)
+        super().__init__(context)
         self.resource_pools_repository = (
-            resource_pools_repository or ResourcePoolRepository(connection)
+            resource_pools_repository or ResourcePoolRepository(context)
         )
 
     async def create(self, resource: CreateOrUpdateResource) -> ResourcePool:
