@@ -6,13 +6,16 @@ from sqlalchemy.ext.asyncio import AsyncConnection
 from sqlalchemy.sql.operators import eq
 
 from maascommon.enums.node import NodeTypeEnum
+from maasservicelayer.context import Context
 from maasservicelayer.db.filters import QuerySpec
 from maasservicelayer.db.repositories.vlans import (
+    VlanResourceBuilder,
     VlansClauseFactory,
     VlansRepository,
 )
 from maasservicelayer.db.tables import VlanTable
 from maasservicelayer.models.vlans import Vlan
+from maasservicelayer.utils.date import utcnow
 from tests.fixtures.factories.fabric import create_test_fabric_entry
 from tests.fixtures.factories.interface import create_test_interface_entry
 from tests.fixtures.factories.node import create_test_rack_controller_entry
@@ -41,12 +44,44 @@ class TestVlansClauseFactory:
         ) == ("maasserver_node.node_type = 2")
 
 
+class TestVlansResourceBuilder:
+    def test_builder(self) -> None:
+        now = utcnow()
+        resource = (
+            VlanResourceBuilder()
+            .with_name("myvlan")
+            .with_description("mydesc")
+            .with_mtu(1500)
+            .with_vid(0)
+            .with_dhcp_on(True)
+            .with_fabric_id(0)
+            .with_primary_rack_id(0)
+            .with_secondary_rack_id(0)
+            .with_created(now)
+            .with_updated(now)
+            .build()
+        )
+
+        assert resource.get_values() == {
+            "name": "myvlan",
+            "description": "mydesc",
+            "mtu": 1500,
+            "vid": 0,
+            "dhcp_on": True,
+            "fabric_id": 0,
+            "primary_rack_id": 0,
+            "secondary_rack_id": 0,
+            "created": now,
+            "updated": now,
+        }
+
+
 class TestVlansRepository(RepositoryCommonTests[Vlan]):
     @pytest.fixture
     def repository_instance(
         self, db_connection: AsyncConnection
     ) -> VlansRepository:
-        return VlansRepository(db_connection)
+        return VlansRepository(Context(connection=db_connection))
 
     @pytest.fixture
     async def _setup_test_list(

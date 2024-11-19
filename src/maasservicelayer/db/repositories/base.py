@@ -8,8 +8,8 @@ from typing import Any, Generic, Type, TypeVar
 
 from sqlalchemy import delete, desc, insert, select, Select, Table, update
 from sqlalchemy.exc import IntegrityError, NoResultFound
-from sqlalchemy.ext.asyncio import AsyncConnection
 
+from maasservicelayer.context import Context
 from maasservicelayer.db.filters import QuerySpec
 from maasservicelayer.exceptions.catalog import (
     AlreadyExistsException,
@@ -34,7 +34,7 @@ class CreateOrUpdateResource(dict):
         self[key] = value
 
 
-class CreateOrUpdateResourceBuilder(ABC):
+class ResourceBuilder(ABC):
     """
     Every repository should provide a builder for their entity objects.
     """
@@ -42,11 +42,11 @@ class CreateOrUpdateResourceBuilder(ABC):
     def __init__(self):
         self._request = CreateOrUpdateResource()
 
-    def with_created(self, value: datetime) -> "CreateOrUpdateResourceBuilder":
+    def with_created(self, value: datetime) -> "ResourceBuilder":
         self._request.set_value("created", value)
         return self
 
-    def with_updated(self, value: datetime) -> "CreateOrUpdateResourceBuilder":
+    def with_updated(self, value: datetime) -> "ResourceBuilder":
         self._request.set_value("updated", value)
         return self
 
@@ -55,8 +55,9 @@ class CreateOrUpdateResourceBuilder(ABC):
 
 
 class BaseRepository(ABC, Generic[T]):
-    def __init__(self, connection: AsyncConnection):
-        self.connection = connection
+    def __init__(self, context: Context):
+        self.context = context
+        self.connection = context.get_connection()
 
     @abstractmethod
     def get_repository_table(self) -> Table:

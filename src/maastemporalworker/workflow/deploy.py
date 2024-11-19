@@ -15,9 +15,9 @@ from temporalio.exceptions import CancelledError, ChildWorkflowError
 
 from maascommon.enums.node import NodeStatus
 from maascommon.workflows.deploy import (
-    DEPLOY_N_WORKFLOW_NAME,
+    DEPLOY_MANY_WORKFLOW_NAME,
     DEPLOY_WORKFLOW_NAME,
-    DeployNParam,
+    DeployManyParam,
     DeployParam,
     DeployResult,
 )
@@ -27,9 +27,7 @@ from maascommon.workflows.power import (
     PowerParam,
     PowerQueryParam,
 )
-from maasservicelayer.db.repositories.nodes import (
-    NodeCreateOrUpdateResourceBuilder,
-)
+from maasservicelayer.db.repositories.nodes import NodeResourceBuilder
 from maasservicelayer.db.tables import (
     BlockDeviceTable,
     InterfaceIPAddressTable,
@@ -96,9 +94,7 @@ class DeployActivity(ActivityBase):
     async def set_node_status(self, params: SetNodeStatusParam) -> None:
         async with self.start_transaction() as services:
             resource = (
-                NodeCreateOrUpdateResourceBuilder()
-                .with_status(status=params.status)
-                .build()
+                NodeResourceBuilder().with_status(status=params.status).build()
             )
             await services.nodes.update_by_system_id(
                 system_id=params.system_id, resource=resource
@@ -270,10 +266,10 @@ class DeployActivity(ActivityBase):
             )
 
 
-@workflow.defn(name=DEPLOY_N_WORKFLOW_NAME, sandboxed=False)
-class DeployNWorkflow:
+@workflow.defn(name=DEPLOY_MANY_WORKFLOW_NAME, sandboxed=False)
+class DeployManyWorkflow:
     @workflow_run_with_context
-    async def run(self, params: DeployNParam) -> None:
+    async def run(self, params: DeployManyParam) -> None:
         child_workflows = []
         for param in params.params:
             wf = await workflow.start_child_workflow(
@@ -288,8 +284,6 @@ class DeployNWorkflow:
             child_workflows.append((param.system_id, wf))
 
         for system_id, wf in child_workflows:
-            status = None
-
             try:
                 result = await wf
             except (CancelledError, asyncio.CancelledError):

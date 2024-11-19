@@ -1,12 +1,12 @@
 from unittest.mock import Mock
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncConnection
 
 from maascommon.enums.dns import DnsUpdateAction
+from maasservicelayer.context import Context
 from maasservicelayer.db.repositories.domains import (
+    DomainResourceBuilder,
     DomainsRepository,
-    DomainsResourceBuilder,
 )
 from maasservicelayer.models.domains import Domain
 from maasservicelayer.services.dnspublications import DNSPublicationsService
@@ -34,13 +34,13 @@ class TestDomainsService:
         dnspublications_service = Mock(DNSPublicationsService)
 
         service = DomainsService(
-            connection=Mock(AsyncConnection),
+            context=Context(),
             dnspublications_service=dnspublications_service,
             domains_repository=domains_repository,
         )
 
         resource = (
-            DomainsResourceBuilder()
+            DomainResourceBuilder()
             .with_name(domain.name)
             .with_authoritative(domain.authoritative)
             .with_ttl(domain.ttl)
@@ -84,13 +84,13 @@ class TestDomainsService:
         dnspublications_service = Mock(DNSPublicationsService)
 
         service = DomainsService(
-            connection=Mock(AsyncConnection),
+            context=Context(),
             dnspublications_service=dnspublications_service,
             domains_repository=domains_repository,
         )
 
         resource = (
-            DomainsResourceBuilder()
+            DomainResourceBuilder()
             .with_name(new_domain.name)
             .with_authoritative(new_domain.authoritative)
             .with_ttl(new_domain.ttl)
@@ -136,13 +136,13 @@ class TestDomainsService:
         dnspublications_service = Mock(DNSPublicationsService)
 
         service = DomainsService(
-            connection=Mock(AsyncConnection),
+            context=Context(),
             dnspublications_service=dnspublications_service,
             domains_repository=domains_repository,
         )
 
         resource = (
-            DomainsResourceBuilder()
+            DomainResourceBuilder()
             .with_name(new_domain.name)
             .with_authoritative(new_domain.authoritative)
             .with_ttl(new_domain.ttl)
@@ -188,13 +188,13 @@ class TestDomainsService:
         dnspublications_service = Mock(DNSPublicationsService)
 
         service = DomainsService(
-            connection=Mock(AsyncConnection),
+            context=Context(),
             dnspublications_service=dnspublications_service,
             domains_repository=domains_repository,
         )
 
         resource = (
-            DomainsResourceBuilder()
+            DomainResourceBuilder()
             .with_name(new_domain.name)
             .with_authoritative(new_domain.authoritative)
             .with_ttl(new_domain.ttl)
@@ -240,13 +240,13 @@ class TestDomainsService:
         dnspublications_service = Mock(DNSPublicationsService)
 
         service = DomainsService(
-            connection=Mock(AsyncConnection),
+            context=Context(),
             dnspublications_service=dnspublications_service,
             domains_repository=domains_repository,
         )
 
         resource = (
-            DomainsResourceBuilder()
+            DomainResourceBuilder()
             .with_name(new_domain.name)
             .with_authoritative(new_domain.authoritative)
             .with_ttl(new_domain.ttl)
@@ -283,7 +283,7 @@ class TestDomainsService:
         dnspublications_service = Mock(DNSPublicationsService)
 
         service = DomainsService(
-            connection=Mock(AsyncConnection),
+            context=Context(),
             dnspublications_service=dnspublications_service,
             domains_repository=domains_repository,
         )
