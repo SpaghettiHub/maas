@@ -2,8 +2,10 @@
 #  GNU Affero General Public License version 3 (see the file LICENSE).
 
 from maasservicelayer.context import Context
+from maasservicelayer.db.filters import QuerySpec
 from maasservicelayer.db.repositories.base import CreateOrUpdateResource
 from maasservicelayer.db.repositories.users import UsersRepository
+from maasservicelayer.models.base import ListResult
 from maasservicelayer.models.users import User, UserProfile
 from maasservicelayer.services._base import Service
 
@@ -25,6 +27,9 @@ class UsersService(Service):
     async def get(self, username: str) -> User | None:
         return await self.users_repository.find_by_username(username)
 
+    async def get_by_id(self, id: int) -> User | None:
+        return await self.users_repository.find_by_id(id)
+
     async def get_by_session_id(self, sessionid: str) -> User | None:
         return await self.users_repository.find_by_sessionid(sessionid)
 
@@ -33,6 +38,13 @@ class UsersService(Service):
 
     async def get_user_apikeys(self, username: str) -> list[str] | None:
         return await self.users_repository.get_user_apikeys(username)
+
+    async def list(
+        self, token: str | None, size: int, query: QuerySpec | None = None
+    ) -> ListResult[User]:
+        return await self.users_repository.list(
+            token=token, size=size, query=query
+        )
 
     async def update(
         self, user_id: int, resource: CreateOrUpdateResource
