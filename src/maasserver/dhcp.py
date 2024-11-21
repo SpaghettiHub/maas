@@ -620,7 +620,10 @@ def get_default_dns_servers(rack_controller, subnet, use_rack_proxy=True):
             dns_servers = [default_region_ip]
         else:
             log.warn("No DNS servers found.")
-
+    # Remove item if the current address version does not match the subnet address version.
+    for address in dns_servers:
+        if (ip_version == 4 and address.version == 6) or (ip_version == 6 and address.version == 4):
+            dns_servers.remove(address)
     return dns_servers
 
 
