@@ -1,0 +1,29 @@
+name: Mypy
+
+on:
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  static-type-check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v3
+      with:
+        python-version: '3.10'
+    - run: pip install mypy  
+    - name: Get changed files
+      id: changed-files
+      uses: tj-actions/changed-files@v45
+      with:
+        files: |
+          *.py
+          **/*.py
+    - name: Run mypy
+      env:
+        ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
+      run: |
+        for file in ${ALL_CHANGED_FILES}; do
+          mypy $file --ignore-missing-imports
+        done
