@@ -76,7 +76,7 @@ class UserResourceBuilder(ResourceBuilder):
 
 class UserProfileResourceBuilder(ResourceBuilder):
     def with_auth_last_check(
-        self, value: datetime
+        self, value: datetime | None
     ) -> "UserProfileResourceBuilder":
         self._request.set_value(UserProfileTable.c.auth_last_check.name, value)
         return self
@@ -205,7 +205,7 @@ class UsersRepository(BaseRepository[User]):
             )
         return UserProfile(**updated_profile._asdict())
 
-    async def get_user_apikeys(self, username: str) -> List[str]:
+    async def get_user_apikeys(self, username: str) -> List[str] | None:
         stmt = (
             select(
                 func.concat(
