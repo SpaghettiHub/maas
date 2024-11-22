@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncConnection
 from maascommon.enums.node import NodeStatus
 from maasservicelayer.context import Context
 from maasservicelayer.db.filters import QuerySpec
+from maasservicelayer.db.repositories.base import ResourceBuilder
 from maasservicelayer.db.repositories.machines import (
     MachineClauseFactory,
     MachinesRepository,
@@ -80,6 +81,29 @@ class TestMachinesRepository(RepositoryCommonTests[Machine]):
         return await create_test_machine(
             fixture, description="description", bmc=bmc, user=user
         )
+
+    # TODO
+    @pytest.fixture
+    async def _instance_builder(self) -> ResourceBuilder:
+        return ResourceBuilder()
+
+    @pytest.mark.skip(reason="Not implemented yet")
+    async def test_create(self, repository_instance, _instance_builder):
+        pass
+
+    @pytest.mark.skip(reason="Not implemented yet")
+    async def test_create_duplicated(
+        self, repository_instance, _instance_builder
+    ):
+        pass
+
+    @pytest.mark.skip(reason="Not implemented yet")
+    async def test_delete(self, repository_instance, _created_instance):
+        pass
+
+    @pytest.mark.skip(reason="Not implemented yet")
+    async def test_update(self, repository_instance, _instance_builder):
+        pass
 
     @pytest.mark.skip(reason="Not implemented yet")
     async def test_get_by_id_not_found(

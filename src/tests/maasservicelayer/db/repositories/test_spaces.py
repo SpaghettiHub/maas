@@ -5,6 +5,7 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncConnection
 
 from maasservicelayer.context import Context
+from maasservicelayer.db.repositories.base import ResourceBuilder
 from maasservicelayer.db.repositories.spaces import SpacesRepository
 from maasservicelayer.models.spaces import Space
 from tests.fixtures.factories.spaces import create_test_space_entry
@@ -36,3 +37,26 @@ class TestSpacesRepository(RepositoryCommonTests[Space]):
         return await create_test_space_entry(
             fixture, name="name", description="description"
         )
+
+    # TODO
+    @pytest.fixture
+    async def _instance_builder(self) -> ResourceBuilder:
+        return ResourceBuilder()
+
+    @pytest.mark.skip(reason="Not implemented yet")
+    async def test_create(self, repository_instance, _instance_builder):
+        pass
+
+    @pytest.mark.skip(reason="Not implemented yet")
+    async def test_create_duplicated(
+        self, repository_instance, _instance_builder
+    ):
+        pass
+
+    @pytest.mark.skip(reason="Not implemented yet")
+    async def test_delete(self, repository_instance, _created_instance):
+        pass
+
+    @pytest.mark.skip(reason="Not implemented yet")
+    async def test_update(self, repository_instance, _instance_builder):
+        pass

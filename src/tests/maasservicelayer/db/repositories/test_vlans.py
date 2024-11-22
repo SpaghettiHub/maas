@@ -145,6 +145,21 @@ class TestVlansRepository(RepositoryCommonTests[Vlan]):
             **(await create_test_vlan_entry(fixture, fabric_id=fabric.id))
         )
 
+    @pytest.fixture
+    async def _instance_builder(self) -> VlanResourceBuilder:
+        return (
+            VlanResourceBuilder()
+            .with_name("myvlan")
+            .with_description("mydesc")
+            .with_mtu(1500)
+            .with_vid(1)
+            .with_dhcp_on(True)
+            .with_fabric_id(1)
+            .with_space_id(1)
+            .with_primary_rack_id(1)
+            .with_secondary_rack_id(1)
+        )
+
     async def test_get_node_vlans_no_system_id(
         self, repository_instance: VlansRepository
     ):
