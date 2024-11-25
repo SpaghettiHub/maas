@@ -2,6 +2,8 @@
 
 > *Errors or typos? Topics missing? Hard to read? <a href="https://docs.google.com/forms/d/e/1FAIpQLScIt3ffetkaKW3gDv6FDk7CfUTNYP_HGmqQotSTtj2htKkVBw/viewform?usp=pp_url&entry.1739714854=https://maas.io/docs/fresh-installation-of-maas" target = "_blank">Let us know.</a>*
 
+Be sure to check the [MAAS installation requirements](/t/reference-installation-requirements/6233) to make sure that your hardware will support MAAS.
+
 
 ## Install MAAS (snap or packages)
 
