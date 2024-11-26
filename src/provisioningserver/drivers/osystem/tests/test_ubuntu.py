@@ -86,9 +86,9 @@ class TestUbuntuOS(MAASTestCase):
 
     def test_get_supported_commissioning_releases_excludes_non_lts(self):
         supported = ["bionic", "focal", "jammy", "noble"]
-        self.patch_autospec(UbuntuDistroInfo, "supported").return_value = (
-            supported
-        )
+        self.patch_autospec(
+            UbuntuDistroInfo, "supported"
+        ).return_value = supported
         osystem = UbuntuOS()
         releases = osystem.get_supported_commissioning_releases()
         self.assertIsInstance(releases, list)
