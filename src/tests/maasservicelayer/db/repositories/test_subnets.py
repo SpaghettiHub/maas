@@ -1,18 +1,20 @@
 # Copyright 2024 Canonical Ltd.  This software is licensed under the
 # GNU Affero General Public License version 3 (see the file LICENSE).
 
-from datetime import timezone
-from ipaddress import IPv4Network
+from ipaddress import IPv4Address, IPv4Network
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncConnection
 
+from maascommon.bootmethods import BOOT_METHODS_METADATA
+from maascommon.enums.subnet import RdnsMode
 from maasservicelayer.context import Context
 from maasservicelayer.db.repositories.subnets import (
+    SubnetClauseFactory,
     SubnetResourceBuilder,
     SubnetsRepository,
 )
-from maasservicelayer.exceptions.catalog import AlreadyExistsException
+from maasservicelayer.exceptions.catalog import ValidationException
 from maasservicelayer.models.subnets import Subnet
 from maasservicelayer.utils.date import utcnow
 from tests.fixtures.factories.staticipaddress import (
@@ -23,20 +25,42 @@ from tests.maasapiserver.fixtures.db import Fixture
 from tests.maasservicelayer.db.repositories.base import RepositoryCommonTests
 
 
+class TestSubnetClauseFactory:
+    def test_builder(self) -> None:
+        clause = SubnetClauseFactory.with_id(id=1)
+        assert str(
+            clause.condition.compile(compile_kwargs={"literal_binds": True})
+        ) == ("maasserver_subnet.id = 1")
+        clause = SubnetClauseFactory.with_vlan_id(vlan_id=1)
+        assert str(
+            clause.condition.compile(compile_kwargs={"literal_binds": True})
+        ) == ("maasserver_subnet.vlan_id = 1")
+        clause = SubnetClauseFactory.with_fabric_id(fabric_id=1)
+        assert str(
+            clause.condition.compile(compile_kwargs={"literal_binds": True})
+        ) == ("maasserver_vlan.fabric_id = 1")
+        assert str(
+            clause.joins[0].compile(compile_kwargs={"literal_binds": True})
+        ) == (
+            "maasserver_subnet JOIN maasserver_vlan ON maasserver_subnet.vlan_id = maasserver_vlan.id"
+        )
+
+
 class TestSubnetResourceBuilder:
     def test_builder(self) -> None:
         now = utcnow()
+        net = IPv4Network("10.0.0.0/24", strict=False)
         resource = (
             SubnetResourceBuilder()
-            .with_cidr("10.0.0.1/24")
+            .with_cidr(net)
             .with_name("name")
             .with_description("description")
             .with_allow_dns(True)
             .with_allow_proxy(True)
-            .with_rdns_mode(0)
+            .with_rdns_mode(RdnsMode.DEFAULT)
             .with_active_discovery(True)
             .with_managed(True)
-            .with_disabled_boot_architectures(["amd64"])
+            .with_disabled_boot_architectures(["ipxe"])
             .with_vlan_id(0)
             .with_created(now)
             .with_updated(now)
@@ -44,19 +68,46 @@ class TestSubnetResourceBuilder:
         )
 
         assert resource.get_values() == {
-            "cidr": "10.0.0.1/24",
+            "cidr": net,
             "name": "name",
             "description": "description",
             "allow_dns": True,
             "allow_proxy": True,
-            "rdns_mode": 0,
+            "rdns_mode": RdnsMode.DEFAULT,
             "active_discovery": True,
             "managed": True,
-            "disabled_boot_architectures": ["amd64"],
+            "disabled_boot_architectures": ["ipxe"],
             "vlan_id": 0,
             "created": now,
             "updated": now,
         }
+
+    @pytest.mark.parametrize(
+        "arch, is_valid,",
+        [
+            *[
+                (method.arch_octet, True)
+                for method in BOOT_METHODS_METADATA
+                if method.arch_octet is not None
+            ],
+            *[
+                (method.name, True)
+                for method in BOOT_METHODS_METADATA
+                if method.name not in [None, "windows"]
+            ],
+            ("test", False),
+        ],
+    )
+    def test_disabled_boot_architectures(
+        self, arch: str, is_valid: bool
+    ) -> None:
+        if is_valid:
+            SubnetResourceBuilder().with_disabled_boot_architectures([arch])
+        else:
+            with pytest.raises(ValidationException):
+                SubnetResourceBuilder().with_disabled_boot_architectures(
+                    [arch]
+                )
 
 
 class TestSubnetsRepository(RepositoryCommonTests[Subnet]):
@@ -83,7 +134,7 @@ class TestSubnetsRepository(RepositoryCommonTests[Subnet]):
         return created_subnets
 
     @pytest.fixture
-    async def _created_instance(self, fixture: Fixture) -> Subnet:
+    async def created_instance(self, fixture: Fixture) -> Subnet:
         return Subnet(
             **(
                 await create_test_subnet_entry(
@@ -92,66 +143,22 @@ class TestSubnetsRepository(RepositoryCommonTests[Subnet]):
             )
         )
 
-    async def test_create(
-        self, repository_instance: SubnetsRepository
-    ) -> None:
-        now = utcnow()
-        created_subnet = await repository_instance.create(
+    @pytest.fixture
+    async def instance_builder(self) -> SubnetResourceBuilder:
+        return (
             SubnetResourceBuilder()
-            .with_cidr(IPv4Network("10.0.0.1"))
+            .with_cidr(IPv4Network("10.10.10.1"))
             .with_name("name")
             .with_description("description")
             .with_allow_dns(True)
             .with_allow_proxy(True)
-            .with_rdns_mode(0)
+            .with_rdns_mode(RdnsMode.DEFAULT)
             .with_active_discovery(True)
             .with_managed(True)
             .with_disabled_boot_architectures(["ipxe"])
+            .with_gateway_ip(IPv4Address("10.0.0.1"))
             .with_vlan_id(0)
-            .with_created(now)
-            .with_updated(now)
-            .build()
         )
-        assert created_subnet.id > 1
-        assert created_subnet.cidr == IPv4Network("10.0.0.1")
-        assert created_subnet.name == "name"
-        assert created_subnet.description == "description"
-        assert created_subnet.allow_dns is True
-        assert created_subnet.allow_proxy is True
-        assert created_subnet.rdns_mode == 0
-        assert created_subnet.active_discovery is True
-        assert created_subnet.managed is True
-        assert created_subnet.disabled_boot_architectures == ["ipxe"]
-        assert created_subnet.created.astimezone(
-            timezone.utc
-        ) >= now.astimezone(timezone.utc)
-        assert created_subnet.updated.astimezone(
-            timezone.utc
-        ) >= now.astimezone(timezone.utc)
-
-    async def test_create_duplicated(
-        self, repository_instance: SubnetsRepository, _created_instance: Subnet
-    ) -> None:
-        now = utcnow()
-        with pytest.raises(AlreadyExistsException):
-            await repository_instance.create(
-                SubnetResourceBuilder()
-                .with_cidr(_created_instance.cidr)
-                .with_name(_created_instance.name)
-                .with_description(_created_instance.description)
-                .with_allow_dns(_created_instance.allow_dns)
-                .with_allow_proxy(_created_instance.allow_proxy)
-                .with_rdns_mode(_created_instance.rdns_mode)
-                .with_active_discovery(_created_instance.active_discovery)
-                .with_managed(_created_instance.managed)
-                .with_disabled_boot_architectures(
-                    _created_instance.disabled_boot_architectures
-                )
-                .with_vlan_id(0)
-                .with_created(now)
-                .with_updated(now)
-                .build()
-            )
 
 
 @pytest.mark.usefixtures("ensuremaasdb")
