@@ -21,13 +21,6 @@ class MachinesService(NodesService):
         super().__init__(context, secrets_service, machines_repository)
         self.machines_repository = machines_repository
 
-    async def list(
-        self, token: str | None, size: int, query: QuerySpec | None = None
-    ) -> ListResult[Machine]:
-        return await self.machines_repository.list(
-            token=token, size=size, query=query
-        )
-
     async def list_machine_usb_devices(
         self, system_id: str, token: str | None, size: int
     ) -> ListResult[UsbDevice]:

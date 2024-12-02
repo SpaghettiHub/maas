@@ -7,15 +7,11 @@ from maasservicelayer.db.repositories.staticroutes import (
     StaticRoutesRepository,
 )
 from maasservicelayer.models.staticroutes import StaticRoute
-from maasservicelayer.services._base import Service
+from maasservicelayer.services._base import BaseService, Service
 
 
-class StaticRoutesService(Service):
+class StaticRoutesService(BaseService[StaticRoute, StaticRoutesRepository]):
     def __init__(
         self, context: Context, staticroutes_repository: StaticRoutesRepository
     ):
-        super().__init__(context)
-        self.staticroutes_repository = staticroutes_repository
-
-    async def delete(self, query: QuerySpec) -> StaticRoute | None:
-        return await self.staticroutes_repository.delete(query)
+        super().__init__(context, staticroutes_repository)

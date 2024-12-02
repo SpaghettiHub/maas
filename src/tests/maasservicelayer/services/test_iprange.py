@@ -19,14 +19,42 @@ from maasservicelayer.db.repositories.ipranges import (
     IPRangeResourceBuilder,
     IPRangesRepository,
 )
+from maasservicelayer.models.base import MaasBaseModel
 from maasservicelayer.models.ipranges import IPRange
 from maasservicelayer.models.staticipaddress import StaticIPAddress
 from maasservicelayer.models.subnets import Subnet
+from maasservicelayer.services._base import BaseService
 from maasservicelayer.services.dhcpsnippets import DhcpSnippetsService
 from maasservicelayer.services.ipranges import IPRangesService
 from maasservicelayer.services.temporal import TemporalService
 from maasservicelayer.utils.date import utcnow
 from maastemporalworker.workflow.dhcp import ConfigureDHCPParam
+from tests.maasservicelayer.services.base import ServiceCommonTests
+
+
+@pytest.mark.asyncio
+class TestCommonIPRangesService(ServiceCommonTests):
+    @pytest.fixture
+    def service_instance(self) -> BaseService:
+        return IPRangesService(
+            Mock(AsyncConnection),
+            Mock(TemporalService),
+            Mock(DhcpSnippetsService),
+            ipranges_repository=Mock(IPRangesRepository),
+        )
+
+    @pytest.fixture
+    def test_instance(self) -> MaasBaseModel:
+        sip = StaticIPAddress(
+            id=2,
+            ip="10.0.0.1",
+            subnet_id=0,
+            lease_time=600,
+            created=utcnow(),
+            updated=utcnow(),
+            alloc_type=IpAddressType.DISCOVERED,
+        )
+        return sip
 
 
 @pytest.mark.asyncio
@@ -105,7 +133,9 @@ class TestIPRangesService:
 
         await ipranges_service.create(resource)
 
-        mock_ipranges_repository.create.assert_called_once_with(resource)
+        mock_ipranges_repository.create.assert_called_once_with(
+            resource=resource
+        )
         mock_temporal.register_or_update_workflow_call.assert_called_once_with(
             CONFIGURE_DHCP_WORKFLOW_NAME,
             ConfigureDHCPParam(ip_range_ids=[iprange.id]),
@@ -125,6 +155,7 @@ class TestIPRangesService:
         )
 
         mock_ipranges_repository = Mock(IPRangesRepository)
+        mock_ipranges_repository.get_by_id.return_value = iprange
         mock_ipranges_repository.update_by_id.return_value = iprange
 
         mock_temporal = Mock(TemporalService)
@@ -149,7 +180,7 @@ class TestIPRangesService:
         await ipranges_service.update_by_id(iprange.id, resource)
 
         mock_ipranges_repository.update_by_id.assert_called_once_with(
-            iprange.id, resource
+            id=iprange.id, resource=resource
         )
 
         mock_temporal.register_or_update_workflow_call.assert_called_once_with(
@@ -171,6 +202,7 @@ class TestIPRangesService:
         )
 
         mock_ipranges_repository = Mock(IPRangesRepository)
+        mock_ipranges_repository.get_by_id.return_value = iprange
         mock_ipranges_repository.delete_by_id.return_value = iprange
 
         mock_temporal = Mock(TemporalService)
@@ -186,10 +218,10 @@ class TestIPRangesService:
         await ipranges_service.delete_by_id(iprange.id)
 
         mock_ipranges_repository.delete_by_id.assert_called_once_with(
-            iprange.id
+            id=iprange.id
         )
-        dhcpsnippets_service_mock.delete.assert_called_once_with(
-            QuerySpec(
+        dhcpsnippets_service_mock.delete_many.assert_called_once_with(
+            query=QuerySpec(
                 where=DhcpSnippetsClauseFactory.with_iprange_id(iprange.id)
             )
         )

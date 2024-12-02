@@ -8,9 +8,16 @@ from sqlalchemy.sql.expression import func
 from sqlalchemy.sql.operators import eq, ne, or_
 
 from maasservicelayer.db.filters import Clause, ClauseFactory
-from maasservicelayer.db.repositories.base import BaseRepository
+from maasservicelayer.db.repositories.base import (
+    BaseRepository,
+    ResourceBuilder,
+)
 from maasservicelayer.db.tables import EventTable, EventTypeTable, NodeTable
-from maasservicelayer.models.events import Event
+from maasservicelayer.models.events import (
+    EndpointChoicesEnum,
+    Event,
+    EventType,
+)
 
 
 class EventsClauseFactory(ClauseFactory):

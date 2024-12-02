@@ -10,42 +10,49 @@ from maasservicelayer.db.repositories.dnsresources import (
     DNSResourceRepository,
     DNSResourceResourceBuilder,
 )
+from maasservicelayer.models.base import MaasBaseModel
 from maasservicelayer.models.dnsresources import DNSResource
 from maasservicelayer.models.domains import Domain
 from maasservicelayer.models.staticipaddress import StaticIPAddress
+from maasservicelayer.services._base import BaseService
 from maasservicelayer.services.dnspublications import DNSPublicationsService
 from maasservicelayer.services.dnsresources import DNSResourcesService
 from maasservicelayer.services.domains import DomainsService
 from maasservicelayer.utils.date import utcnow
+from tests.maasservicelayer.services.base import ServiceCommonTests
 
 
 @pytest.mark.asyncio
-class TestDNSResourcesService:
-    async def test_get_one(self) -> None:
-        mock_domains_service = Mock(DomainsService)
-        mock_domains_service.get_default_domain.return_value = Domain(
+class TestCommonDNSResourcesService(ServiceCommonTests):
+    @pytest.fixture
+    def service_instance(self) -> BaseService:
+        return DNSResourcesService(
+            Context(),
+            domains_service=Mock(DomainsService),
+            dnspublications_service=Mock(DNSPublicationsService),
+            dnsresource_repository=Mock(DNSResourceRepository),
+        )
+
+    @pytest.fixture
+    def test_instance(self) -> MaasBaseModel:
+        domain = Domain(
             id=0,
             name="test_domain",
             authoritative=True,
             created=utcnow(),
             updated=utcnow(),
         )
-
-        mock_dnsresource_repository = Mock(DNSResourceRepository)
-        mock_dnsresource_repository.get.return_value = None
-
-        dnsresources_service = DNSResourcesService(
-            Context(),
-            domains_service=mock_domains_service,
-            dnspublications_service=Mock(DNSPublicationsService),
-            dnsresource_repository=mock_dnsresource_repository,
+        return DNSResource(
+            id=1,
+            name="example",
+            domain_id=domain.id,
+            created=utcnow(),
+            updated=utcnow(),
         )
 
-        await dnsresources_service.get_one(query=QuerySpec(where=None))
 
-        mock_dnsresource_repository.get_one.assert_called_once_with(
-            query=QuerySpec(where=None)
-        )
+@pytest.mark.asyncio
+class TestDNSResourcesService:
 
     async def test_create(self) -> None:
         mock_domains_service = Mock(DomainsService)
@@ -88,7 +95,9 @@ class TestDNSResourcesService:
 
         await service.create(resource)
 
-        mock_dnsresource_repository.create.assert_called_once_with(resource)
+        mock_dnsresource_repository.create.assert_called_once_with(
+            resource=resource
+        )
         mock_dnspublications_service.create_for_config_update.assert_called_once_with(
             source="zone test_domain added resource example",
             action=DnsUpdateAction.INSERT_NAME,
@@ -155,7 +164,7 @@ class TestDNSResourcesService:
         await service.update_by_id(old_dnsresource.id, resource)
 
         mock_dnsresource_repository.update_by_id.assert_called_once_with(
-            old_dnsresource.id, resource
+            id=old_dnsresource.id, resource=resource
         )
         mock_dnspublications_service.create_for_config_update.assert_has_calls(
             [
@@ -228,7 +237,7 @@ class TestDNSResourcesService:
         await service.update_by_id(old_dnsresource.id, resource)
 
         mock_dnsresource_repository.update_by_id.assert_called_once_with(
-            old_dnsresource.id, resource
+            id=old_dnsresource.id, resource=resource
         )
         mock_dnspublications_service.create_for_config_update.assert_called_once_with(
             source="zone test_domain updated resource example",
@@ -261,6 +270,7 @@ class TestDNSResourcesService:
 
         mock_domains_service.get_one.return_value = domain
         mock_dnsresource_repository.get_by_id.return_value = dnsresource
+        mock_dnsresource_repository.delete_by_id.return_value = dnsresource
 
         service = DNSResourcesService(
             Context(),

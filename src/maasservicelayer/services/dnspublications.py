@@ -17,7 +17,7 @@ from maasservicelayer.db.repositories.dnspublications import (
     DNSPublicationResourceBuilder,
 )
 from maasservicelayer.models.dnspublications import DNSPublication
-from maasservicelayer.services._base import Service
+from maasservicelayer.services._base import BaseService, Service
 from maasservicelayer.services.temporal import TemporalService
 from maasservicelayer.utils.date import utcnow
 
@@ -26,19 +26,17 @@ class MaxSerialException(Exception):
     pass
 
 
-class DNSPublicationsService(Service):
+class DNSPublicationsService(
+    BaseService[DNSPublication, DNSPublicationRepository]
+):
     def __init__(
         self,
         context: Context,
         temporal_service: TemporalService,
         dnspublication_repository: DNSPublicationRepository,
     ):
-        super().__init__(context)
+        super().__init__(context, dnspublication_repository)
         self.temporal_service = temporal_service
-        self.dnspublication_repository = dnspublication_repository
-
-    async def create(self, resource: CreateOrUpdateResource) -> DNSPublication:
-        return await self.dnspublication_repository.create(resource)
 
     async def create_for_config_update(
         self,
@@ -51,9 +49,7 @@ class DNSPublicationsService(Service):
         answer: Optional[str] = None,
         timestamp: Optional[datetime] = None,
     ) -> DNSPublication:
-        latest_serial = (
-            await self.dnspublication_repository.get_latest_serial()
-        )
+        latest_serial = await self.repository.get_latest_serial()
 
         update = None
         if action == DnsUpdateAction.RELOAD:
@@ -96,8 +92,4 @@ class DNSPublicationsService(Service):
     async def get_publications_since_serial(
         self, serial: int
     ) -> list[DNSPublication]:
-        return (
-            await self.dnspublication_repository.get_publications_since_serial(
-                serial
-            )
-        )
+        return await self.repository.get_publications_since_serial(serial)

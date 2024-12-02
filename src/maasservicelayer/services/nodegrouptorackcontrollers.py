@@ -9,21 +9,17 @@ from maasservicelayer.db.repositories.nodegrouptorackcontrollers import (
 from maasservicelayer.models.nodegrouptorackcontrollers import (
     NodeGroupToRackController,
 )
-from maasservicelayer.services._base import Service
+from maasservicelayer.services._base import BaseService, Service
 
 
-class NodeGroupToRackControllersService(Service):
+class NodeGroupToRackControllersService(
+    BaseService[
+        NodeGroupToRackController, NodeGroupToRackControllersRepository
+    ]
+):
     def __init__(
         self,
         context: Context,
         nodegrouptorackcontrollers_repository: NodeGroupToRackControllersRepository,
     ):
-        super().__init__(context)
-        self.nodegrouptorackcontrollers_repository = (
-            nodegrouptorackcontrollers_repository
-        )
-
-    async def delete(
-        self, query: QuerySpec
-    ) -> NodeGroupToRackController | None:
-        return await self.nodegrouptorackcontrollers_repository.delete(query)
+        super().__init__(context, nodegrouptorackcontrollers_repository)

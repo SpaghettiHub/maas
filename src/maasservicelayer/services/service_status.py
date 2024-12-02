@@ -7,17 +7,15 @@ from maasservicelayer.db.repositories.service_status import (
     ServiceStatusRepository,
 )
 from maasservicelayer.models.service_status import ServiceStatus
-from maasservicelayer.services._base import Service
+from maasservicelayer.services._base import BaseService, Service
 
 
-class ServiceStatusService(Service):
+class ServiceStatusService(
+    BaseService[ServiceStatus, ServiceStatusRepository]
+):
     def __init__(
         self,
         context: Context,
         service_status_repository: ServiceStatusRepository,
     ):
-        super().__init__(context)
-        self.service_status_repository = service_status_repository
-
-    async def get_one(self, query: QuerySpec) -> ServiceStatus | None:
-        return await self.service_status_repository.get_one(query=query)
+        super().__init__(context, service_status_repository)
