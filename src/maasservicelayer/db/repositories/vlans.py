@@ -45,6 +45,10 @@ class VlansClauseFactory(ClauseFactory):
         return Clause(condition=eq(VlanTable.c.fabric_id, fabric_id))
 
     @classmethod
+    def with_space_id(cls, space_id: int) -> Clause:
+        return Clause(condition=eq(VlanTable.c.space_id, space_id))
+
+    @classmethod
     def with_system_id(cls, system_id: str) -> Clause:
         return Clause(condition=eq(NodeTable.c.system_id, system_id))
 
@@ -108,7 +112,7 @@ class VlanResourceBuilder(ResourceBuilder):
         return self
 
     def with_primary_rack_id(
-        self, primary_rack_id: int
+        self, primary_rack_id: int | None
     ) -> "VlanResourceBuilder":
         self._request.set_value(
             VlanTable.c.primary_rack_id.name, primary_rack_id
@@ -116,14 +120,16 @@ class VlanResourceBuilder(ResourceBuilder):
         return self
 
     def with_secondary_rack_id(
-        self, secondary_rack_id: int
+        self, secondary_rack_id: int | None
     ) -> "VlanResourceBuilder":
         self._request.set_value(
             VlanTable.c.secondary_rack_id.name, secondary_rack_id
         )
         return self
 
-    def with_relay_vlan_id(self, relay_vlan_id: int) -> "VlanResourceBuilder":
+    def with_relay_vlan_id(
+        self, relay_vlan_id: int | None
+    ) -> "VlanResourceBuilder":
         self._request.set_value(VlanTable.c.relay_vlan_id.name, relay_vlan_id)
         return self
 

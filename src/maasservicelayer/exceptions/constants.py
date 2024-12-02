@@ -15,11 +15,13 @@ UNIQUE_CONSTRAINT_VIOLATION_TYPE = "UniqueConstraintViolation"
 ETAG_PRECONDITION_VIOLATION_TYPE = "EtagPreconditionViolation"
 UNEXISTING_RESOURCE_VIOLATION_TYPE = "UnexistingResourceViolation"
 INVALID_ARGUMENT_VIOLATION_TYPE = "InvalidArgumentViolation"
+PRECONDITION_FAILED = "PreconditionFailed"
 
 # VLANs
 CANNOT_DELETE_DEFAULT_FABRIC_VLAN_VIOLATION_TYPE = (
     "CannotDeleteDefaultFabricVlanViolation"
 )
+MISSING_DYNAMIC_RANGE_VIOLATION_TYPE = "MissingDynamicRangeViolation"
 
 # Zones
 CANNOT_DELETE_DEFAULT_ZONE_VIOLATION_TYPE = "CannotDeleteDefaultZoneViolation"

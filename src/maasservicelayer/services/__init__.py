@@ -4,6 +4,9 @@
 from typing import Callable
 
 from maasservicelayer.context import Context
+from maasservicelayer.db.repositories.dhcpsnippets import (
+    DhcpSnippetsRepository,
+)
 from maasservicelayer.db.repositories.dnspublications import (
     DNSPublicationRepository,
 )
@@ -17,7 +20,11 @@ from maasservicelayer.db.repositories.fabrics import FabricsRepository
 from maasservicelayer.db.repositories.interfaces import InterfaceRepository
 from maasservicelayer.db.repositories.ipranges import IPRangesRepository
 from maasservicelayer.db.repositories.machines import MachinesRepository
+from maasservicelayer.db.repositories.nodegrouptorackcontrollers import (
+    NodeGroupToRackControllersRepository,
+)
 from maasservicelayer.db.repositories.nodes import NodesRepository
+from maasservicelayer.db.repositories.reservedips import ReservedIPsRepository
 from maasservicelayer.db.repositories.resource_pools import (
     ResourcePoolRepository,
 )
@@ -28,6 +35,9 @@ from maasservicelayer.db.repositories.spaces import SpacesRepository
 from maasservicelayer.db.repositories.staticipaddress import (
     StaticIPAddressRepository,
 )
+from maasservicelayer.db.repositories.staticroutes import (
+    StaticRoutesRepository,
+)
 from maasservicelayer.db.repositories.subnets import SubnetsRepository
 from maasservicelayer.db.repositories.users import UsersRepository
 from maasservicelayer.db.repositories.vlans import VlansRepository
@@ -37,6 +47,7 @@ from maasservicelayer.services._base import ServiceCache
 from maasservicelayer.services.agents import AgentsService
 from maasservicelayer.services.auth import AuthService
 from maasservicelayer.services.configurations import ConfigurationsService
+from maasservicelayer.services.dhcpsnippets import DhcpSnippetsService
 from maasservicelayer.services.dnspublications import DNSPublicationsService
 from maasservicelayer.services.dnsresources import DNSResourcesService
 from maasservicelayer.services.domains import DomainsService
@@ -47,7 +58,11 @@ from maasservicelayer.services.interfaces import InterfacesService
 from maasservicelayer.services.ipranges import IPRangesService
 from maasservicelayer.services.leases import LeasesService
 from maasservicelayer.services.machines import MachinesService
+from maasservicelayer.services.nodegrouptorackcontrollers import (
+    NodeGroupToRackControllersService,
+)
 from maasservicelayer.services.nodes import NodesService
+from maasservicelayer.services.reservedips import ReservedIPsService
 from maasservicelayer.services.resource_pools import ResourcePoolsService
 from maasservicelayer.services.secrets import (
     SecretsService,
@@ -56,6 +71,7 @@ from maasservicelayer.services.secrets import (
 from maasservicelayer.services.service_status import ServiceStatusService
 from maasservicelayer.services.spaces import SpacesService
 from maasservicelayer.services.staticipaddress import StaticIPAddressService
+from maasservicelayer.services.staticroutes import StaticRoutesService
 from maasservicelayer.services.subnets import SubnetsService
 from maasservicelayer.services.temporal import TemporalService
 from maasservicelayer.services.users import UsersService
@@ -90,30 +106,36 @@ class CacheForServices:
 class ServiceCollectionV3:
     """Provide all v3 services."""
 
+    # Keep them in alphabetical order, please
+    agents: AgentsService
+    auth: AuthService
+    configurations: ConfigurationsService
+    dhcpsnippets: DhcpSnippetsService
+    dnspublications: DNSPublicationsService
+    dnsresources: DNSResourcesService
+    domains: DomainsService
+    events: EventsService
+    external_auth: ExternalAuthService
+    fabrics: FabricsService
+    interfaces: InterfacesService
+    ipranges: IPRangesService
+    leases: LeasesService
+    machines: MachinesService
+    nodegrouptorackcontrollers: NodeGroupToRackControllersService
     nodes: NodesService
+    reservedips: ReservedIPsService
+    resource_pools: ResourcePoolsService
+    secrets: SecretsService
+    service_status: ServiceStatusService
+    spaces: SpacesService
+    staticipaddress: StaticIPAddressService
+    staticroutes: StaticRoutesService
+    subnets: SubnetsService
+    temporal: TemporalService
+    users: UsersService
+    vlans: VlansService
     vmclusters: VmClustersService
     zones: ZonesService
-    secrets: SecretsService
-    configurations: ConfigurationsService
-    resource_pools: ResourcePoolsService
-    auth: AuthService
-    external_auth: ExternalAuthService
-    machines: MachinesService
-    events: EventsService
-    interfaces: InterfacesService
-    fabrics: FabricsService
-    spaces: SpacesService
-    vlans: VlansService
-    users: UsersService
-    subnets: SubnetsService
-    agents: AgentsService
-    leases: LeasesService
-    domains: DomainsService
-    dnsresources: DNSResourcesService
-    dnspublications: DNSPublicationsService
-    staticipaddress: StaticIPAddressService
-    ipranges: IPRangesService
-    temporal: TemporalService
 
     @classmethod
     async def produce(
@@ -182,23 +204,60 @@ class ServiceCollectionV3:
             temporal_service=services.temporal,
             interface_repository=InterfaceRepository(context),
         )
-        services.spaces = SpacesService(
-            context=context, spaces_repository=SpacesRepository(context)
-        )
         services.vlans = VlansService(
             context=context,
             temporal_service=services.temporal,
             nodes_service=services.nodes,
             vlans_repository=VlansRepository(context),
         )
+        services.spaces = SpacesService(
+            context=context,
+            vlans_service=services.vlans,
+            spaces_repository=SpacesRepository(context),
+        )
         services.fabrics = FabricsService(
             context=context,
             vlans_service=services.vlans,
             fabrics_repository=FabricsRepository(context),
         )
+        services.reservedips = ReservedIPsService(
+            context=context,
+            reservedips_repository=ReservedIPsRepository(context),
+        )
+        services.staticroutes = StaticRoutesService(
+            context=context,
+            staticroutes_repository=StaticRoutesRepository(context),
+        )
+        services.dhcpsnippets = DhcpSnippetsService(
+            context=context,
+            dhcpsnippets_repository=DhcpSnippetsRepository(context),
+        )
+        services.ipranges = IPRangesService(
+            context=context,
+            temporal_service=services.temporal,
+            dhcpsnippets_service=services.dhcpsnippets,
+            ipranges_repository=IPRangesRepository(context),
+        )
+        services.nodegrouptorackcontrollers = NodeGroupToRackControllersService(
+            context=context,
+            nodegrouptorackcontrollers_repository=NodeGroupToRackControllersRepository(
+                context
+            ),
+        )
+        services.staticipaddress = StaticIPAddressService(
+            context=context,
+            temporal_service=services.temporal,
+            staticipaddress_repository=StaticIPAddressRepository(context),
+        )
         services.subnets = SubnetsService(
             context=context,
             temporal_service=services.temporal,
+            staticipaddress_service=services.staticipaddress,
+            ipranges_service=services.ipranges,
+            staticroutes_service=services.staticroutes,
+            reservedips_service=services.reservedips,
+            dhcpsnippets_service=services.dhcpsnippets,
+            nodegrouptorackcontrollers_service=services.nodegrouptorackcontrollers,
             subnets_repository=SubnetsRepository(context),
         )
         services.agents = AgentsService(
@@ -222,16 +281,6 @@ class ServiceCollectionV3:
             domains_service=services.domains,
             dnspublications_service=services.dnspublications,
             dnsresource_repository=DNSResourceRepository(context),
-        )
-        services.staticipaddress = StaticIPAddressService(
-            context=context,
-            temporal_service=services.temporal,
-            staticipaddress_repository=StaticIPAddressRepository(context),
-        )
-        services.ipranges = IPRangesService(
-            context=context,
-            temporal_service=services.temporal,
-            ipranges_repository=IPRangesRepository(context),
         )
         services.leases = LeasesService(
             context=context,
