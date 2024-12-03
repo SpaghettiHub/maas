@@ -7,7 +7,7 @@ Data centres present complex operational challenges: uptime, reliability, securi
 MAAS is designed to meet the needs of data centre operators and administrators, across the spectrum of industry sectors.
 
 ## In this documentation
-r
+
 | Serve our study | Serve our work |
 |-----------------|----------------|
 | [Tutorial](/t/-/5360)</br>  Hands-on introduction to MAAS features       | [How-to guides](/t/how-to-guides/6663) </br> Step-by-step guides covering key operations |
