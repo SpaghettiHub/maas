@@ -4,6 +4,9 @@
 from typing import Callable
 
 from maasservicelayer.context import Context
+from maasservicelayer.db.repositories.configurations import (
+    ConfigurationsRepository,
+)
 from maasservicelayer.db.repositories.dhcpsnippets import (
     DhcpSnippetsRepository,
 )
@@ -144,7 +147,10 @@ class ServiceCollectionV3:
         cache: CacheForServices,
     ) -> "ServiceCollectionV3":
         services = cls()
-        services.configurations = ConfigurationsService(context=context)
+        services.configurations = ConfigurationsService(
+            context=context,
+            configurations_repository=ConfigurationsRepository(context),
+        )
         services.service_status = ServiceStatusService(
             context=context,
             service_status_repository=ServiceStatusRepository(context),
