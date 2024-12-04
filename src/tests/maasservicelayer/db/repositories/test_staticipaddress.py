@@ -27,13 +27,58 @@ from tests.maasservicelayer.db.repositories.base import RepositoryCommonTests
 
 
 class TestStaticIPAddressClauseFactory:
-    def test_builder(self) -> None:
+    def test_with_id(self) -> None:
+        clause = StaticIPAddressClauseFactory.with_id(1)
+        assert str(
+            clause.condition.compile(compile_kwargs={"literal_binds": True})
+        ) == ("maasserver_staticipaddress.id = 1")
+
+    def test_with_node_type(self) -> None:
         clause = StaticIPAddressClauseFactory.with_node_type(
             type=NodeTypeEnum.RACK_CONTROLLER
         )
         assert str(
             clause.condition.compile(compile_kwargs={"literal_binds": True})
         ) == ("maasserver_node.node_type = 2")
+
+    def test_with_subnet_id(self) -> None:
+        clause = StaticIPAddressClauseFactory.with_subnet_id(1)
+        assert str(
+            clause.condition.compile(compile_kwargs={"literal_binds": True})
+        ) == ("maasserver_staticipaddress.subnet_id = 1")
+
+    def test_with_ip(self) -> None:
+        clause = StaticIPAddressClauseFactory.with_ip(IPv4Address("10.10.0.2"))
+        # NOTE: compile with literal_binds can't render IPv4Address
+        assert str(clause.condition.compile()) == (
+            "maasserver_staticipaddress.ip = :ip_1"
+        )
+
+
+class TestStaticIPAddressResourceBuilder:
+    def test_builder(self) -> None:
+        now = utcnow()
+        resource = (
+            StaticIPAddressResourceBuilder()
+            .with_ip(IPv4Address("10.10.0.2"))
+            .with_alloc_type(IpAddressType.AUTO)
+            .with_lease_time(200)
+            .with_temp_expires_on(now)
+            .with_subnet_id(1)
+            .with_created(now)
+            .with_updated(now)
+            .build()
+        )
+
+        assert resource.get_values() == {
+            "ip": IPv4Address("10.10.0.2"),
+            "alloc_type": IpAddressType.AUTO,
+            "lease_time": 200,
+            "temp_expires_on": now,
+            "subnet_id": 1,
+            "created": now,
+            "updated": now,
+        }
 
 
 @pytest.mark.asyncio

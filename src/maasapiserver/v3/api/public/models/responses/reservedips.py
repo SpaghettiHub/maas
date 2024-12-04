@@ -10,6 +10,7 @@ from maasapiserver.v3.api.public.models.responses.base import (
     TokenPaginatedResponse,
 )
 from maasservicelayer.models.reservedips import ReservedIP
+from maasservicelayer.utils.validators import MacAddress
 
 
 class ReservedIPResponse(HalResponse[BaseHal]):
@@ -17,7 +18,7 @@ class ReservedIPResponse(HalResponse[BaseHal]):
     id: int
     subnet_id: int
     ip: IPvAnyAddress
-    mac_address: str
+    mac_address: MacAddress
     comment: str
 
     @classmethod
