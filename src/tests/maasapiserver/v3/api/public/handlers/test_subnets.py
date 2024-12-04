@@ -105,6 +105,8 @@ class TestSubnetApi(ApiCommonTests):
         services_mock.subnets.list.return_value = ListResult[Subnet](
             items=[TEST_SUBNET], next_token=None
         )
+        services_mock.vlans = Mock(VlansService)
+        services_mock.vlans.get_one.return_value = Mock(Vlan)
         response = await mocked_api_client_user.get(f"{self.BASE_PATH}?size=1")
         assert response.status_code == 200
         subnets_response = SubnetsListResponse(**response.json())
@@ -120,6 +122,8 @@ class TestSubnetApi(ApiCommonTests):
         services_mock.subnets.list.return_value = ListResult[Subnet](
             items=[TEST_SUBNET_2], next_token=str(TEST_SUBNET.id)
         )
+        services_mock.vlans = Mock(VlansService)
+        services_mock.vlans.get_one.return_value = Mock(Vlan)
         response = await mocked_api_client_user.get(f"{self.BASE_PATH}?size=1")
         assert response.status_code == 200
         subnets_response = SubnetsListResponse(**response.json())
@@ -129,6 +133,16 @@ class TestSubnetApi(ApiCommonTests):
             == f"{self.BASE_PATH}?{TokenPaginationParams.to_href_format(token=str(TEST_SUBNET.id), size='1')}"
         )
 
+    async def test_list_vlan_not_in_fabric(
+        self,
+        services_mock: ServiceCollectionV3,
+        mocked_api_client_user: AsyncClient,
+    ) -> None:
+        services_mock.vlans = Mock(VlansService)
+        services_mock.vlans.get_one.return_value = None
+        response = await mocked_api_client_user.get(f"{self.BASE_PATH}?size=1")
+        assert response.status_code == 404
+
     # GET /subnets/{subnet_id}
     async def test_get_200(
         self,
@@ -136,7 +150,7 @@ class TestSubnetApi(ApiCommonTests):
         mocked_api_client_user: AsyncClient,
     ) -> None:
         services_mock.subnets = Mock(SubnetsService)
-        services_mock.subnets.get_by_id.return_value = TEST_SUBNET
+        services_mock.subnets.get_one.return_value = TEST_SUBNET
         response = await mocked_api_client_user.get(
             f"{self.BASE_PATH}/{TEST_SUBNET.id}"
         )
@@ -158,9 +172,6 @@ class TestSubnetApi(ApiCommonTests):
             "disabled_boot_architectures": TEST_SUBNET.disabled_boot_architectures,
             # TODO: FastAPI response_model_exclude_none not working. We need to fix this before making the api public
             "_embedded": None,
-            "vlan": {
-                "href": f"{V3_API_PREFIX}/vlans?filter=subnet_id eq {TEST_SUBNET.id}"
-            },
             "_links": {"self": {"href": f"{self.BASE_PATH}/{TEST_SUBNET.id}"}},
         }
 
@@ -170,7 +181,7 @@ class TestSubnetApi(ApiCommonTests):
         mocked_api_client_user: AsyncClient,
     ) -> None:
         services_mock.subnets = Mock(SubnetsService)
-        services_mock.subnets.get_by_id.return_value = None
+        services_mock.subnets.get_one.return_value = None
         response = await mocked_api_client_user.get(f"{self.BASE_PATH}/100")
         assert response.status_code == 404
         assert "ETag" not in response.headers
@@ -204,7 +215,7 @@ class TestSubnetApi(ApiCommonTests):
         services_mock.subnets = Mock(SubnetsService)
         services_mock.subnets.create.return_value = TEST_SUBNET_2
         services_mock.vlans = Mock(VlansService)
-        services_mock.vlans.get_by_id.return_value = Vlan(
+        services_mock.vlans.get_one.return_value = Vlan(
             id=1,
             vid=1,
             name="test_vlan",
@@ -214,7 +225,7 @@ class TestSubnetApi(ApiCommonTests):
             external_dhcp=None,
             primary_rack_id=None,
             secondary_rack_id=None,
-            relay_vlan=None,
+            relay_vlan_id=None,
             fabric_id=1,
             space_id=None,
         )
@@ -231,9 +242,8 @@ class TestSubnetApi(ApiCommonTests):
         mocked_api_client_admin: AsyncClient,
     ) -> None:
         services_mock.subnets = Mock(SubnetsService)
-        services_mock.subnets.create.return_value = TEST_SUBNET_2
         services_mock.vlans = Mock(VlansService)
-        services_mock.vlans.get_by_id.return_value = None
+        services_mock.vlans.get_one.return_value = None
         request = SubnetRequest(cidr=TEST_SUBNET_2.cidr)
         response = await mocked_api_client_admin.post(
             self.BASE_PATH, json=jsonable_encoder(request)
@@ -248,7 +258,7 @@ class TestSubnetApi(ApiCommonTests):
         modified_subnet = TEST_SUBNET_2
         modified_subnet.name = "modified"
         services_mock.subnets = Mock(SubnetsService)
-        services_mock.subnets.update.return_value = modified_subnet
+        services_mock.subnets.update_one.return_value = modified_subnet
         services_mock.vlans = Mock(VlansService)
         services_mock.vlans.get_by_id.return_value = Vlan(
             id=1,
@@ -278,7 +288,7 @@ class TestSubnetApi(ApiCommonTests):
         modified_subnet = TEST_SUBNET_2
         modified_subnet.name = "modified"
         services_mock.subnets = Mock(SubnetsService)
-        services_mock.subnets.update.side_effect = NotFoundException()
+        services_mock.subnets.update_one.side_effect = NotFoundException()
         request = SubnetRequest(cidr=TEST_SUBNET_2.cidr, name="modified")
         response = await mocked_api_client_admin.put(
             f"{self.BASE_PATH}/1", json=jsonable_encoder(request)
@@ -291,7 +301,7 @@ class TestSubnetApi(ApiCommonTests):
         mocked_api_client_admin: AsyncClient,
     ) -> None:
         services_mock.subnets = Mock(SubnetsService)
-        services_mock.subnets.delete.return_value = None
+        services_mock.subnets.delete_one.return_value = None
         response = await mocked_api_client_admin.delete(f"{self.BASE_PATH}/1")
         assert response.status_code == 204
 
@@ -301,7 +311,7 @@ class TestSubnetApi(ApiCommonTests):
         mocked_api_client_admin: AsyncClient,
     ) -> None:
         services_mock.subnets = Mock(SubnetsService)
-        services_mock.subnets.delete.side_effect = PreconditionFailedException(
+        services_mock.subnets.delete_one.side_effect = PreconditionFailedException(
             details=[
                 BaseExceptionDetail(
                     type=ETAG_PRECONDITION_VIOLATION_TYPE,
@@ -314,7 +324,7 @@ class TestSubnetApi(ApiCommonTests):
             f"{self.BASE_PATH}/1", headers={"if-match": "wrong_etag"}
         )
         assert response.status_code == 412
-        services_mock.subnets.delete.assert_called_with(
+        services_mock.subnets.delete_one.assert_called_with(
             query=QuerySpec(
                 where=SubnetClauseFactory.and_clauses(
                     [

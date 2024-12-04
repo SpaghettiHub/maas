@@ -25,6 +25,7 @@ from maasapiserver.v3.constants import V3_API_PREFIX
 from maasservicelayer.auth.jwt import UserRole
 from maasservicelayer.db.filters import QuerySpec
 from maasservicelayer.db.repositories.subnets import SubnetClauseFactory
+from maasservicelayer.db.repositories.vlans import VlansClauseFactory
 from maasservicelayer.exceptions.catalog import (
     BaseExceptionDetail,
     NotFoundException,
@@ -62,6 +63,25 @@ class SubnetsHandler(Handler):
         token_pagination_params: TokenPaginationParams = Depends(),
         services: ServiceCollectionV3 = Depends(services),
     ) -> Response:
+        vlan = await services.vlans.get_one(
+            QuerySpec(
+                where=VlansClauseFactory.and_clauses(
+                    [
+                        VlansClauseFactory.with_id(vlan_id),
+                        VlansClauseFactory.with_fabric_id(fabric_id),
+                    ]
+                )
+            )
+        )
+        if vlan is None:
+            raise NotFoundException(
+                details=[
+                    BaseExceptionDetail(
+                        type=UNEXISTING_RESOURCE_VIOLATION_TYPE,
+                        message="Could not find VLAN {vlan_id} in fabric {fabric_id}",
+                    )
+                ]
+            )
         query = QuerySpec(
             where=SubnetClauseFactory.and_clauses(
                 [
@@ -119,8 +139,16 @@ class SubnetsHandler(Handler):
         response: Response,
         services: ServiceCollectionV3 = Depends(services),
     ) -> Response:
-        subnet = await services.subnets.get_by_id(
-            fabric_id, vlan_id, subnet_id
+        subnet = await services.subnets.get_one(
+            query=QuerySpec(
+                where=SubnetClauseFactory.and_clauses(
+                    [
+                        SubnetClauseFactory.with_id(subnet_id),
+                        SubnetClauseFactory.with_vlan_id(vlan_id),
+                        SubnetClauseFactory.with_fabric_id(fabric_id),
+                    ]
+                )
+            )
         )
         if not subnet:
             return NotFoundResponse()
@@ -166,7 +194,16 @@ class SubnetsHandler(Handler):
             .with_created(now)
             .with_updated(now)
         )
-        vlan = await services.vlans.get_by_id(fabric_id, vlan_id)
+        vlan = await services.vlans.get_one(
+            QuerySpec(
+                where=SubnetClauseFactory.and_clauses(
+                    [
+                        SubnetClauseFactory.with_vlan_id(vlan_id),
+                        SubnetClauseFactory.with_fabric_id(fabric_id),
+                    ]
+                )
+            )
+        )
         if vlan is None:
             raise NotFoundException(
                 details=[
@@ -225,7 +262,7 @@ class SubnetsHandler(Handler):
                 ]
             )
         )
-        subnet = await services.subnets.update(
+        subnet = await services.subnets.update_one(
             query=query, resource=builder.build()
         )
 
@@ -268,5 +305,7 @@ class SubnetsHandler(Handler):
                 ]
             )
         )
-        await services.subnets.delete(query=query, etag_if_match=etag_if_match)
+        await services.subnets.delete_one(
+            query=query, etag_if_match=etag_if_match
+        )
         return Response(status_code=status.HTTP_204_NO_CONTENT)
