@@ -18,7 +18,7 @@ jobs:
           ref: "refs/pull/${{ github.event.number }}/merge"
           fetch-depth: 0
       - name: Run Container Action
-        uses: ljy2855/llm_code_reviewer@v1
+        uses: spaghettihub/llm_code_reviewer@main
         with:
           # fixed field
           github_token: ${{ secrets.GITHUB_TOKEN }}
