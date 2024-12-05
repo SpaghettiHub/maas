@@ -1,22 +1,33 @@
-name: AI Code Reviewer
-
+name: Smart code review
 on:
-  pull_request:
-    types:
-      - opened
-      - synchronize
-permissions: write-all
-jobs:
-  review:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v3
+  pull_request_target:
+    types: [ labeled ]
+    
+permissions:
+  contents: read   
+  pull-requests: write
 
-      - name: AI Code Reviewer
-        uses: SpaghettiHub/ai-codereviewer@main
+jobs:
+  test-action:
+    if: ${{ github.event.label.name == 'autoreview' }}
+    runs-on: [self-hosted, tester] 
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
         with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_API_MODEL: "gpt-3.5-turbo" 
-          exclude: "**/*.json, **/*.md" 
+          ref: "refs/pull/${{ github.event.number }}/merge"
+          fetch-depth: 0
+      - name: Run Container Action
+        uses: ljy2855/llm_code_reviewer@v1
+        with:
+          # fixed field
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_owner: ${{ github.repository_owner }}
+          github_repository: ${{ github.repository }}
+          pr_number: ${{ github.event.pull_request.number }}
+          pr_title: ${{ github.event.pull_request.title }}
+          pr_body: ${{ github.event.pull_request.body }}
+          ollama_api_url: ${{ secrets.OLLAMA_ADDRESS }}
+          ollama_model: 'codellama:7b'
+          prompt_type: 'GENERAL_REVIEW'
+          prompt_language: 'EN'
