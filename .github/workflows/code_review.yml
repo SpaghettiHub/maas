@@ -28,6 +28,6 @@ jobs:
           pr_title: ${{ github.event.pull_request.title }}
           pr_body: ${{ github.event.pull_request.body }}
           ollama_api_url: ${{ secrets.OLLAMA_ADDRESS }}
-          ollama_model: 'codellama:7b'
+          ollama_model: 'qwen2.5-coder:32b'
           prompt_type: 'GENERAL_REVIEW'
           prompt_language: 'EN'
