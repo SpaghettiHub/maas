@@ -1,36 +1,6 @@
-MAAS can deploy custom OS images.  Canonical provides [gh:canonical/packer-maas](https://github.com/canonical/packer-maas)**^** to support creating custom images. 
+MAAS can deploy custom OS images.  Canonical provides both [lp:maas-image-builder](https://launchpad.net/maas-image-builder)**^** and [gh:canonical/packer-maas](https://github.com/canonical/packer-maas)**^** to support creating custom images. MAAS Image Builder requires the purchase of Ubuntu Pro support.
 
 > Pro tip: While it may be possible to deploy a certain image with MAAS, the particular use case may not be supported by that image’s vendor due to licensing or technical reasons. Canonical recommends that, whenever possible, you should customise machines using cloud-init user_data or Curtin preseed data, instead of creating a custom image.
-
-## Acquire needed dependencies
-
-The packer tool has a few common build dependencies:
-
- - Ubuntu 18.04+ minimum, on a machine that can run KVMs
- - qemu-utils 
- - Curtin 18.1-59+ minimum
- - Hosting packed image in MAAS 2.3+ minimum
-   - Some custom OS require higher MAAS hosting versions, see below
- 
-Each custom operating system also has some unique prerequisites:
-
-| Desired image | Special dependencies         | Template subdir |
-|---------------|------------------------------|-----------------|
-| centos7       | none                         | centos7         |
-|---------------|------------------------------|-----------------|
-| rhel7         | RHEL 7 DVD ISO               | rhel7           |
-|---------------|------------------------------|-----------------|
-| rhel8         | RHEL 8 DVD ISO               | rhel8           |
-|---------------|------------------------------|-----------------|
-| Ubuntu        | qemu-system                  | ????            |
-|               | ovmf                         |                 |
-|               | cloud-image-utils            |                 |
-|               | MAAS 3.0+                    |                 |
-|---------------|------------------------------|-----------------|
-| ESXi          | Python pip                   | vmware-esxi     |
-|               | VMWare EXSI installation ISO |                 |
-|               | MAAS 2.6+                    |                 |
-|---------------|------------------------------|-----------------|
 
 Using MAAS version 3.1 and above, custom images can include static Ubuntu images, created with whatever tool you choose, as well as other OS images. For MAAS versions 3.0 and below, MAAS supports deploying custom DD or TGZ images. Customised Ubuntu deployments aren't well supported for MAAS 3.0 and below. 
 
