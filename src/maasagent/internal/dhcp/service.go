@@ -194,7 +194,7 @@ type ConfigureDHCPForAgentParam struct {
 }
 
 func (s *DHCPService) configure(ctx tworkflow.Context, config DHCPServiceConfigParam) error {
-	if err := syscall.Unlink(dhcpdNotificationSocketName); err != nil {
+	if err := syscall.Unlink(s.dataPathFactory(dhcpdNotificationSocketName)); err != nil {
 		if !os.IsNotExist(err) {
 			return err
 		}
@@ -521,7 +521,7 @@ func (s *DHCPService) getConfig(ctx context.Context) (*dhcpConfig, error) {
 func (s *DHCPService) writeConfigFile(path string, data []byte) error {
 	path = s.dataPathFactory(path)
 
-	return atomicfile.WriteFile(path, data, 0o640)
+	return atomicfile.WriteFile(path, data, 0o644)
 }
 
 func (s *DHCPService) Error() error {
