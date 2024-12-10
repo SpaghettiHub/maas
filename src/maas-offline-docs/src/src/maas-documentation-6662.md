@@ -98,8 +98,9 @@ Considering MAAS for your next project? [Get in touch](/t/how-to-contact-us/5448
 | 0     |                                         |                                                                                |
 | 1     | reference                               | [Reference](/t/-/6143)                                                         |
 | 2     | reference-installation-requirements     | [Installation requirements](/t/reference-installation-requirements/6233)       |
-| 2     | maas-configuration-guide             | [Configuring MAAS settings](/t/how-to-change-maas-settings/8035)                    |
+| 2     | maas-configuration-guide                | [Configuring MAAS settings](/t/how-to-change-maas-settings/8035)               |
 | 2     | maas-troubleshooting-guide              | [Troubleshooting guide](/t/-/5333)                                             |
+| 2     | maas-logging-reference                  | [MAAS logging reference](/t/maas-logging-reference/10405                       |
 | 2     | reference-maas-source-code              | [MAAS source code](https://launchpad.net/maas)                                 |
 | 2     | reference-documentation-style-guide     | [Documentation style guide](/t/reference-documentation-style-guide/4186)       |
 | 2     | reference-maas-glossary                 | [MAAS glossary](/t/reference-maas-glossary/5416)                               |
