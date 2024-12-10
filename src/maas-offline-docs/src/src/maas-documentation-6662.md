@@ -7,7 +7,7 @@ Data centres present complex operational challenges: uptime, reliability, securi
 MAAS is designed to meet the needs of data centre operators and administrators, across the spectrum of industry sectors.
 
 ## In this documentation
-r
+
 | Serve our study | Serve our work |
 |-----------------|----------------|
 | [Tutorial](/t/-/5360)</br>  Hands-on introduction to MAAS features       | [How-to guides](/t/how-to-guides/6663) </br> Step-by-step guides covering key operations |
@@ -104,7 +104,7 @@ Considering MAAS for your next project? [Get in touch](/t/how-to-contact-us/5448
 | 0     |                                         |                                                                                |
 | 1     | reference                               | [Reference](/t/-/6143)                                                         |
 | 2     | reference-installation-requirements     | [Installation requirements](/t/reference-installation-requirements/6233)       |
-| 2     | maas-configuration-guide             | [Configuring MAAS settings](/t/how-to-change-maas-settings/8035)                    |
+| 2     | maas-settings             | [MAAS settings](/t/how-to-change-maas-settings/8035)                    |
 | 2     | maas-troubleshooting-guide              | [Troubleshooting guide](/t/-/5333)                                             |
 | 2     | reference-maas-source-code              | [MAAS source code](https://launchpad.net/maas)                                 |
 | 2     | reference-documentation-style-guide     | [Documentation style guide](/t/reference-documentation-style-guide/4186)       |
