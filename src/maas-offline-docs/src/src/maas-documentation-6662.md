@@ -78,14 +78,7 @@ Considering MAAS for your next project? [Get in touch](/t/how-to-contact-us/5448
 | 2     | how-to-interpret-testing-logs           | [Interpret testing logs](/t/how-to-interpret-testing-logs/5314)                |
 | 2     | how-to-audit-maas                       | [Audit MAAS](/t/how-to-audit-maas/5987)                                        |
 | 2     | how-to-review-audit-logs                | [Review audit logs](/t/how-to-review-audit-logs/5256)                          |
-| 2     | how-to-use-availability-zones           | [Use availability zones](/t/-/5152)                                            |
-| 2     | how-to-use-resource-pools               | [Use resource pools](/t/-/7845)                                                |
-| 2     | how-to-annotate-machines                | [Annotate machines](/t/how-to-annotate-machines/5929)                          |
-| 2     | how-to-manage-tags                      | [Manage tags](/t/how-to-manage-tags/5928)                                      |
-| 2     | how-to-use-machine-tags                 | [Use machine tags](/t/how-to-use-machine-tags/5224)                            |
-| 2     | how-to-use-network-tags                 | [Use network tags](/t/how-to-use-network-tags/5228)                            |
-| 2     | how-to-use-controller-tags              | [Use controller tags](/t/how-to-use-controller-tags/5216)                      |
-| 2     | how-to-use-storage-tags                 | [Use storage tags](/t/how-to-use-storage-tags/5232)                            |
+| 2     | how-to-group-machines                   | [Group machines](/t/-/8833)                                            |
 | 2     | how-to-use-cloud-init-with-maas         | [Use cloud-init with MAAS](/t/how-to-use-cloud-init-with-maas/9122)            |
 | 2     | how-to-authenticate-to-the-maas-api     | [Login to the MAAS API](/t/how-to-authenticate-to-the-maas-api/5060)           |
 | 2     | how-to-use-the-python-api-client        | [Script MAAS with Python](/t/how-to-use-the-python-api-client/5404)            |
@@ -104,7 +97,7 @@ Considering MAAS for your next project? [Get in touch](/t/how-to-contact-us/5448
 | 0     |                                         |                                                                                |
 | 1     | reference                               | [Reference](/t/-/6143)                                                         |
 | 2     | reference-installation-requirements     | [Installation requirements](/t/reference-installation-requirements/6233)       |
-| 2     | maas-configuration-guide             | [Configuring MAAS settings](/t/how-to-change-maas-settings/8035)                    |
+| 2     | maas-configuration-guide                | [Configuring MAAS settings](/t/how-to-change-maas-settings/8035)               |
 | 2     | maas-troubleshooting-guide              | [Troubleshooting guide](/t/-/5333)                                             |
 | 2     | reference-maas-source-code              | [MAAS source code](https://launchpad.net/maas)                                 |
 | 2     | reference-documentation-style-guide     | [Documentation style guide](/t/reference-documentation-style-guide/4186)       |
