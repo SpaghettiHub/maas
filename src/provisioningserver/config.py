@@ -573,7 +573,7 @@ class ConfigurationFile:
                             reversed(traceback.extract_stack()), 2, 5
                         )
                     )
-                    logger.warning(
+                    logger.warn(
                         "Configuration file %s locked for %.1f seconds; this "
                         "may starve other processes. Called from %s.",
                         path,
