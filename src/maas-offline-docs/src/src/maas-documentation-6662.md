@@ -104,7 +104,7 @@ Considering MAAS for your next project? [Get in touch](/t/how-to-contact-us/5448
 | 0     |                                         |                                                                                |
 | 1     | reference                               | [Reference](/t/-/6143)                                                         |
 | 2     | reference-installation-requirements     | [Installation requirements](/t/reference-installation-requirements/6233)       |
-| 2     | maas-configuration-guide             | [Configuring MAAS settings](/t/how-to-change-maas-settings/8035)                    |
+| 2     | maas-configuration-guide                | [Configuring MAAS settings](/t/how-to-change-maas-settings/8035)               |
 | 2     | maas-troubleshooting-guide              | [Troubleshooting guide](/t/-/5333)                                             |
 | 2     | reference-maas-source-code              | [MAAS source code](https://launchpad.net/maas)                                 |
 | 2     | reference-documentation-style-guide     | [Documentation style guide](/t/reference-documentation-style-guide/4186)       |
@@ -130,27 +130,27 @@ Considering MAAS for your next project? [Get in touch](/t/how-to-contact-us/5448
 | 2     | reference-release-notes-maas-2-7        | [MAAS 2.7 release notes](/t/-/5993)                                            |
 | 0     |                                         |                                                                                |
 | 1     | explanation                             | [Explanation](/t/-/6141)                                                       |
-| 2     | about-maas                              | [MAAS](/t/about-maas/6678)                                                     |
-| 2     | about-machine-basics                    | [Machine basics](/t/about-machine-basics/7917)                                 |
-| 2     | about-maas-networking                   | [Networking](/t/about-maas-networking/9620)                                    |
-| 2     | about-commissioning-machines            | [Commissioning machines](/t/about-commissioning-machines/7853)                 |
-| 2     | about-the-machine-life-cycle            | [The machine life-cycle](/t/about-the-machine-life-cycle/7847)                 |
-| 2     | about-deploying-machines                | [Deploying machines](/t/about-deploying-machines/7901)                         |
-| 2     | about-machine-customisation             | [Machine customisation](/t/about-machine-customisation/7902)                   |
-| 2     | about-deploying-running-machines        | [Deploying running machines](/t/about-deploying-running-machines/7903)         |
+| 2     | about-commissioning-machines            | [Commissioning](/t/about-commissioning-machines/7853)                          |
+| 2     | about-controllers                       | [Controllers](/t/about-controllers/6690)                                       |
+| 2     | about-deploying-machines                | [Deployment](/t/about-deploying-machines/7901)                                 |
+| 2     | about-dhcp-in-maas                      | [DHCP](/t/about-dhcp-in-maas/6682)                                             |
+| 2     | about-standard-images                   | [Images, standard](/t/about-standard-images/7904)                              |
+| 2     | about-custom-images                     | [Images, custom](/t/-/7905)                                                    |
+| 2     | about-maas-logging                      | [Logging](/t/about-maas-logging/5240)                                          |
+| 2     | about-audit-events                      | [Logging audit events](/t/about-audit-events/6372)                             |
+| 2     | about-maas-events                       | [Logging routine events](/t/about-maas-events/6510)                            |
 | 2     | about-lxd                               | [LXD](/t/-/7870)                                                               |
 | 2     | about-lxd-projects                      | [LXD projects](/t/-/7869)                                                      |
-| 2     | about-standard-images                   | [Standard images](/t/about-standard-images/7904)                               |
-| 2     | about-custom-images                     | [Custom images](/t/-/7905)                                                     |
-| 2     | about-controllers                       | [Controllers](/t/about-controllers/6690)                                       |
-| 2     | about-device-labels                     | [Device labels](/t/about-device-labels/6709)                                   |
-| 2     | about-dhcp-in-maas                      | [DHCP in MAAS](/t/about-dhcp-in-maas/6682)                                     |
-| 2     | about-cloud-networking                  | [Cloud networking](/t/about-cloud-networking/6684)                             |
-| 2     | about-maas-performance                  | [MAAS performance](/t/about-maas-performance/6178)                             |
-| 2     | about-maas-events                       | [MAAS events](/t/about-maas-events/6510)                                       |
-| 2     | about-audit-events                      | [Audit events](/t/about-audit-events/6372)                                     |
-| 2     | about-maas-logging                      | [MAAS logging](/t/about-maas-logging/5240)                                     |
-| 2     | about-maas-security                     | [MAAS security](/t/about-maas-security/6719)                                   |
+| 2     | about-maas                              | [MAAS introduction](/t/about-maas/6678)                                        |
+| 2     | about-machine-basics                    | [Machines](/t/about-machine-basics/7917)                                       |
+| 2     | about-machine-customisation             | [Machine customisations](/t/about-machine-customisation/7902)                  |
+| 2     | about-device-labels                     | [Machines, grouping](/t/about-device-labels/6709)                              |
+| 2     | about-deploying-running-machines        | [Machines, legacy](/t/about-deploying-running-machines/7903)                   |
+| 2     | about-the-machine-life-cycle            | [Machine life-cycles](/t/about-the-machine-life-cycle/7847)                    |
+| 2     | about-maas-networking                   | [Networks](/t/about-maas-networking/9620)                                      |
+| 2     | about-cloud-networking                  | [Networkings, cloud](/t/about-cloud-networking/6684)                           |
+| 2     | about-maas-performance                  | [Performance](/t/about-maas-performance/6178)                                  |
+| 2     | about-maas-security                     | [Security](/t/about-maas-security/6719)                                        |
 |       | postgresql-deprecation-notices          | [PostgreSQL deprecation notices](/t/-/8089)                                    |
 |       | how-to-manage-block-devices             | [Manage block devices](/t/-/7893)                                              |
 |       | how-to-manage-partitions                | [Manage partitions](/t/-/7894)                                                 |
