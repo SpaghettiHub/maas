@@ -7,6 +7,8 @@ This guide covers building custom images for the following operating systems usi
 - **Oracle Linux 9**
 - **VMware ESXi**
 
+You can also build **Windows** images for MAAS, following [the steps found in this template](https://github.com/canonical/packer-maas/blob/main/windows/README.md).
+
 ## 1. Verify Requirements
 
 You need a machine running **Ubuntu 18.04+** or **22.04+** with the ability to run KVM virtual machines. Ensure the following components are available:
