@@ -12,6 +12,7 @@ from maascommon.workflows.dhcp import (
 from maasservicelayer.context import Context
 from maasservicelayer.db.repositories.interfaces import InterfaceRepository
 from maasservicelayer.models.base import ListResult
+from maasservicelayer.models.fabrics import Fabric
 from maasservicelayer.models.interfaces import Interface
 from maasservicelayer.models.staticipaddress import StaticIPAddress
 from maasservicelayer.services._base import Service
@@ -38,6 +39,13 @@ class InterfacesService(Service):
 
     async def get_interfaces_for_mac(self, mac: str) -> List[Interface]:
         return await self.interface_repository.get_interfaces_for_mac(mac)
+
+    async def get_interfaces_in_fabric(
+        self, fabric: Fabric
+    ) -> List[Interface]:
+        return await self.interface_repository.get_interfaces_in_fabric(
+            fabric.id
+        )
 
     async def bulk_link_ip(
         self, sip: StaticIPAddress, interfaces: List[Interface]
