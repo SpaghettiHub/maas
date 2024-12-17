@@ -18,7 +18,9 @@ from twisted.web.server import NOT_DONE_YET
 from twisted.web.test.requesthelper import DummyRequest
 
 from maasserver.enum import INTERFACE_TYPE, IPADDRESS_TYPE, NODE_STATUS
-from maasserver.models import Event, NodeKey, Pod
+from maasserver.models import Event, Node
+from maasserver.models import node as node_module
+from maasserver.models import NodeKey, Pod
 from maasserver.models.signals.testing import SignalsDisabled
 from maasserver.models.timestampedmodel import now
 from maasserver.node_status import get_node_timeout
@@ -155,6 +157,10 @@ class TestStatusHandlerResource(MAASTestCase):
 
 class TestStatusWorkerServiceTransactional(MAASTransactionServerTestCase):
     assertRaises = TestCase.assertRaises
+
+    def setUp(self):
+        super().setUp()
+        self.patch(node_module, "stop_workflow")
 
     @transactional
     def make_nodes_with_tokens(self):
@@ -340,6 +346,7 @@ class TestStatusWorkerService(MAASServerTestCase):
         super().setUp()
         self.useFixture(SignalsDisabled("power"))
         self.patch(api_twisted_module, "signal_workflow")
+        self.patch(node_module, "stop_workflow")
 
     def processMessage(self, node, payload):
         worker = StatusWorkerService(sentinel.dbtasks)
@@ -1093,10 +1100,94 @@ class TestStatusWorkerService(MAASServerTestCase):
             node.status_expires, expected_time + timedelta(minutes=1)
         )
 
+    def test_disk_erasing_machine_failed(self):
+        node = factory.make_Node(
+            status=NODE_STATUS.DISK_ERASING,
+            status_expires=factory.make_date(),
+            with_empty_script_sets=True,
+        )
+        release_node_patch = self.patch(Node, "release")
+        payload = {
+            "name": "modules-final",
+            "description": "running modules for final",
+            "event_type": "finish",
+            "origin": "cloudinit",
+            "timestamp": datetime.now(timezone.utc),
+            "result": "FAILURE",
+        }
+        self.processMessage(node, payload)
+        node = reload_object(node)
+        self.assertEqual(node.status, NODE_STATUS.FAILED_DISK_ERASING)
+        release_node_patch.assert_not_called()
+
+    def test_disk_erasing_machine_transitioned_to_ready_with_modules_final_event(
+        self,
+    ):
+        node = factory.make_Node(
+            status=NODE_STATUS.DISK_ERASING,
+            status_expires=factory.make_date(),
+            with_empty_script_sets=True,
+        )
+        release_node_patch = self.patch(Node, "release")
+        payload = {
+            "name": "modules-final",
+            "description": "running modules for final",
+            "event_type": "finish",
+            "origin": "cloudinit",
+            "timestamp": datetime.now(timezone.utc),
+            "result": "SUCCESS",
+        }
+        self.processMessage(node, payload)
+        # Testing for the exact time will fail during testing due to now()
+        # being different in reset_status_expires vs here. Pad by 1 minute
+        # to make sure its reset but won't fail testing.
+        release_node_patch.assert_called_once()
+
+    def test_releasing_machine_failed(self):
+        node = factory.make_Node(
+            status=NODE_STATUS.RELEASING,
+            status_expires=factory.make_date(),
+            with_empty_script_sets=True,
+        )
+        release_node_patch = self.patch(Node, "release")
+        payload = {
+            "name": "modules-final",
+            "description": "running modules for final",
+            "event_type": "finish",
+            "origin": "cloudinit",
+            "timestamp": datetime.now(timezone.utc),
+            "result": "FAILURE",
+        }
+        self.processMessage(node, payload)
+        node = reload_object(node)
+        self.assertEqual(node.status, NODE_STATUS.FAILED_RELEASING)
+        release_node_patch.assert_not_called()
+
+    def test_releasing_machine_transitioned_to_ready_with_modules_final_event(
+        self,
+    ):
+        node = factory.make_Node(
+            status=NODE_STATUS.RELEASING,
+            status_expires=factory.make_date(),
+            with_empty_script_sets=True,
+        )
+        release_node_patch = self.patch(Node, "release")
+        payload = {
+            "name": "modules-final",
+            "description": "running modules for final",
+            "event_type": "finish",
+            "origin": "cloudinit",
+            "timestamp": datetime.now(timezone.utc),
+            "result": "SUCCESS",
+        }
+        self.processMessage(node, payload)
+        release_node_patch.assert_called_once()
+
 
 class TestCreateVMHostForDeployment(MAASServerTestCase):
     def setUp(self):
         super().setUp()
+        self.patch(node_module, "stop_workflow")
         self.mock_discover_and_sync = self.patch(
             api_twisted_module, "discover_and_sync_vmhost"
         )
