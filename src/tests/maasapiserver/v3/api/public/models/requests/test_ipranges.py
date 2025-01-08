@@ -7,9 +7,7 @@ from unittest.mock import Mock
 from pydantic import IPvAnyAddress, ValidationError
 import pytest
 
-from maasapiserver.v3.api.public.models.requests.ipranges import (
-    IPRangeCreateRequest,
-)
+from maasapiserver.v3.api.public.models.requests.ipranges import IPRangeRequest
 from maascommon.enums.ipranges import IPRangeType
 from maascommon.enums.subnet import RdnsMode
 from maasservicelayer.auth.jwt import UserRole
@@ -53,7 +51,7 @@ class TestIPRangeCreateRequest:
 
     def test_mandatory_params(self):
         with pytest.raises(ValidationError) as e:
-            IPRangeCreateRequest()
+            IPRangeRequest()
 
         assert len(e.value.errors()) == 3
         assert {"type", "start_ip", "end_ip"} == set(
@@ -155,7 +153,7 @@ class TestIPRangeCreateRequest:
         )
         if should_raise:
             with pytest.raises(ValidationException) as e:
-                iprange = IPRangeCreateRequest(
+                iprange = IPRangeRequest(
                     type=IPRangeType.RESERVED, start_ip=start_ip, end_ip=end_ip
                 )
                 await iprange.to_builder(
@@ -163,26 +161,13 @@ class TestIPRangeCreateRequest:
                 )
             assert e.value.details[0].message == message
         else:
-            await IPRangeCreateRequest(
+            await IPRangeRequest(
                 type=IPRangeType.RESERVED, start_ip=start_ip, end_ip=end_ip
             ).to_builder(subnet, user, Mock(ServiceCollectionV3))
 
     async def test_reserved_range_user_with_owner(self):
         user = AuthenticatedUser(id=0, username="test", roles={UserRole.USER})
-        with pytest.raises(ForbiddenException):
-            iprange = IPRangeCreateRequest(
-                type=IPRangeType.RESERVED,
-                start_ip=IPv4Address("10.0.0.1"),
-                end_ip=IPv4Address("10.0.0.2"),
-                owner_id=1,
-            )
-            await iprange.to_builder(
-                self.TEST_IPV4_SUBNET, user, Mock(ServiceCollectionV3)
-            )
-
-    async def test_reserved_range_user_with_owner_forbidden(self):
-        user = AuthenticatedUser(id=0, username="test", roles={UserRole.USER})
-        iprange = IPRangeCreateRequest(
+        iprange = IPRangeRequest(
             type=IPRangeType.RESERVED,
             start_ip=IPv4Address("10.0.0.1"),
             end_ip=IPv4Address("10.0.0.2"),
@@ -196,7 +181,7 @@ class TestIPRangeCreateRequest:
     async def test_dynamic_range_user_forbidden(self):
         user = AuthenticatedUser(id=0, username="test", roles={UserRole.USER})
         with pytest.raises(ForbiddenException):
-            iprange = IPRangeCreateRequest(
+            iprange = IPRangeRequest(
                 type=IPRangeType.DYNAMIC,
                 start_ip=IPv4Address("10.0.0.1"),
                 end_ip=IPv4Address("10.0.0.2"),
@@ -215,7 +200,7 @@ class TestIPRangeCreateRequest:
             id=0, username="test", roles={UserRole.USER, UserRole.ADMIN}
         )
         with pytest.raises(ValidationException):
-            iprange = IPRangeCreateRequest(
+            iprange = IPRangeRequest(
                 type=IPRangeType.DYNAMIC,
                 start_ip=IPv4Address("10.0.0.1"),
                 end_ip=IPv4Address("10.0.0.2"),
@@ -234,7 +219,7 @@ class TestIPRangeCreateRequest:
             id=0, username="test", roles={UserRole.USER, UserRole.ADMIN}
         )
         with pytest.raises(ValidationException) as e:
-            iprange = IPRangeCreateRequest(
+            iprange = IPRangeRequest(
                 type=IPRangeType.DYNAMIC,
                 start_ip=IPv6Address("0:0:0:0:0:0:0:1"),
                 end_ip=IPv6Address("0:0:0:0:0:0:0:2"),
