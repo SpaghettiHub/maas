@@ -765,8 +765,11 @@ class VersionIndexHandler(MetadataViewHandler):
 
     def _process_disk_erasing(self, node, request, status):
         if status == SIGNAL_STATUS.OK:
-            # disk erasing complete, release node
-            node.release()
+            # disk erasing complete. The machine will be transitioned to the ready state only when cloud-init sends the
+            # "modules-final" last event.
+            Event.objects.create_node_event(
+                node, EVENT_TYPES.NODE_DISKS_ERASED
+            )
         elif status == SIGNAL_STATUS.FAILED:
             node.mark_failed(comment="Failed to erase disks.")
         return None
