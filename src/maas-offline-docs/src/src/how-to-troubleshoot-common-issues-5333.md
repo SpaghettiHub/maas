@@ -218,7 +218,7 @@ ip a
 
 By following these steps, you should be able to configure the second NIC on a machine deployed with MAAS to use an external DHCP server for IP address allocation.
 
-## MAAS  won't use external DHCP
+## MAAS won't use external DHCP
 
 <!-- include in main doc -->
 **Problem:**
@@ -2647,7 +2647,7 @@ sudo mksquashfs xenial/ xenial-customized.squashfs -xattrs -comp xz
 
 Replace the existing MAAS image with this customised one.
 
-## Can't migreatre snap installs
+## Can't migratre snap installs
 
 For snap-based MAAS in 'all' mode, you can migrate to a local PostgreSQL:
 
