@@ -10,6 +10,7 @@ isc-dhcp-server
 libpq-dev
 lshw
 nginx-core
+nvme-cli
 postgresql
 pxelinux
 python3-aiodns
