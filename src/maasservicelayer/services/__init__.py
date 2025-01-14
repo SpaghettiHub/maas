@@ -36,6 +36,8 @@ from maasservicelayer.db.repositories.service_status import (
     ServiceStatusRepository,
 )
 from maasservicelayer.db.repositories.spaces import SpacesRepository
+from maasservicelayer.db.repositories.sshkeys import SshKeysRepository
+from maasservicelayer.db.repositories.sslkeys import SSLKeysRepository
 from maasservicelayer.db.repositories.staticipaddress import (
     StaticIPAddressRepository,
 )
@@ -75,6 +77,8 @@ from maasservicelayer.services.secrets import (
 )
 from maasservicelayer.services.service_status import ServiceStatusService
 from maasservicelayer.services.spaces import SpacesService
+from maasservicelayer.services.sshkeys import SshKeysService
+from maasservicelayer.services.sslkey import SSLKeysService
 from maasservicelayer.services.staticipaddress import StaticIPAddressService
 from maasservicelayer.services.staticroutes import StaticRoutesService
 from maasservicelayer.services.subnets import SubnetsService
@@ -133,6 +137,8 @@ class ServiceCollectionV3:
     secrets: SecretsService
     service_status: ServiceStatusService
     spaces: SpacesService
+    sshkeys: SshKeysService
+    sslkeys: SSLKeysService
     staticipaddress: StaticIPAddressService
     staticroutes: StaticRoutesService
     subnets: SubnetsService
@@ -309,5 +315,12 @@ class ServiceCollectionV3:
             subnet_service=services.subnets,
             interface_service=services.interfaces,
             iprange_service=services.ipranges,
+        )
+        services.sshkeys = SshKeysService(
+            context=context, sshkeys_repository=SshKeysRepository(context)
+        )
+        services.sslkeys = SSLKeysService(
+            context=context,
+            sslkey_repository=SSLKeysRepository(context),
         )
         return services

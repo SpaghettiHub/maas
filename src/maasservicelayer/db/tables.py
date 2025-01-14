@@ -743,6 +743,18 @@ SessionTable = Table(
     Column("expire_date", DateTime(timezone=True), nullable=False),
 )
 
+SshKeyTable = Table(
+    "maasserver_sshkey",
+    METADATA,
+    Column("id", BigInteger, primary_key=True, unique=True),
+    Column("created", DateTime(timezone=True), nullable=False),
+    Column("updated", DateTime(timezone=True), nullable=False),
+    Column("key", Text, nullable=False),
+    Column("user_id", Integer, ForeignKey("auth_user.id"), nullable=False),
+    Column("auth_id", String(255), nullable=True),
+    Column("protocol", String(64), nullable=True),
+)
+
 SpaceTable = Table(
     "maasserver_space",
     METADATA,
@@ -751,6 +763,16 @@ SpaceTable = Table(
     Column("updated", DateTime(timezone=True), nullable=False),
     Column("name", String(256), nullable=True),
     Column("description", Text, nullable=False),
+)
+
+SSLKeyTable = Table(
+    "maasserver_sslkey",
+    METADATA,
+    Column("id", BigInteger, primary_key=True, unique=True),
+    Column("created", DateTime(timezone=True), nullable=False),
+    Column("updated", DateTime(timezone=True), nullable=False),
+    Column("key", Text, nullable=False),
+    Column("user_id", BigInteger, ForeignKey("auth_user.id"), nullable=False),
 )
 
 StaticIPAddressTable = Table(
