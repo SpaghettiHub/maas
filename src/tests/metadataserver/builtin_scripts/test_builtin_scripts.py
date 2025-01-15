@@ -4,6 +4,7 @@ import random
 import pytest
 
 from maasserver.models import ControllerInfo, Script, VersionedTextFile
+from maasserver.utils import orm as orm_module
 from maasserver.utils.orm import reload_object
 from metadataserver.builtin_scripts import (
     BUILTIN_SCRIPTS,
@@ -14,7 +15,9 @@ from provisioningserver.refresh.node_info_scripts import NODE_INFO_SCRIPTS
 
 
 @pytest.fixture
-def controller(factory):
+def controller(factory, mocker):
+    mocker.patch.object(orm_module, "post_commit_hooks")
+    mocker.patch.object(orm_module, "post_commit_do")
     controller = factory.make_RegionRackController()
     ControllerInfo.objects.set_version(controller, "3.0.0")
     yield controller

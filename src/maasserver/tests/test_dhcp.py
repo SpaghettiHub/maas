@@ -31,7 +31,7 @@ from maasserver.testing.testcase import (
     MAASServerTestCase,
     MAASTransactionServerTestCase,
 )
-from maasserver.utils.orm import transactional
+from maasserver.utils.orm import post_commit_hooks, transactional
 from maasserver.utils.threads import deferToDatabase
 from maastemporalworker.workflow.dhcp import ConfigureDHCPParam
 from maastesting.crochet import wait_for
@@ -977,7 +977,10 @@ class TestGetNTPServerAddressesForRack(MAASServerTestCase):
         subnet2 = factory.make_Subnet(space=space, cidr=cidr2)
         # Expect subnet2 to be selected, since DHCP is enabled.
         subnet2.vlan.dhcp_on = True
-        subnet2.vlan.save()
+
+        with post_commit_hooks:
+            subnet2.vlan.save()
+
         interface = factory.make_Interface(node=rack)
         # Make some addresses that won't be selected since they're on the
         # incorrect VLAN (without DHCP enabled).
@@ -3053,7 +3056,10 @@ class TestGetDHCPRackcontroller(MAASTransactionServerTestCase):
         dhcp_vlan.dhcp_on = True
         dhcp_vlan.primary_rack = primary_rack
         dhcp_vlan.secondary_rack = secondary_rack
-        dhcp_vlan.save()
+
+        with post_commit_hooks:
+            dhcp_vlan.save()
+
         return dhcp_subnet
 
     def test_subnet(self):
@@ -3078,7 +3084,10 @@ class TestGetDHCPRackcontroller(MAASTransactionServerTestCase):
         self.create_dhcp_vlan("10.10.20.2/24")
         relay_subnet = factory.make_Subnet(cidr="10.10.30.0/24")
         relay_subnet.vlan.relay_vlan = dhcp_subnet.vlan
-        relay_subnet.vlan.save()
+
+        with post_commit_hooks:
+            relay_subnet.vlan.save()
+
         snippet = factory.make_DHCPSnippet(subnet=relay_subnet, enabled=True)
         self.assertCountEqual(
             [dhcp_subnet.vlan.primary_rack], _get_dhcp_rackcontrollers(snippet)
@@ -3108,7 +3117,10 @@ class TestGetDHCPRackcontroller(MAASTransactionServerTestCase):
         self.create_dhcp_vlan("10.10.20.2/24")
         relay_subnet = factory.make_Subnet(cidr="10.10.30.0/24")
         relay_subnet.vlan.relay_vlan = dhcp_subnet.vlan
-        relay_subnet.vlan.save()
+
+        with post_commit_hooks:
+            relay_subnet.vlan.save()
+
         node = factory.make_Machine_with_Interface_on_Subnet(
             subnet=relay_subnet
         )

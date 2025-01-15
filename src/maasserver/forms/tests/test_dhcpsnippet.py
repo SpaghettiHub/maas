@@ -16,9 +16,6 @@ from provisioningserver.events import AUDIT
 
 
 class TestDHCPSnippetForm(MAASServerTestCase):
-    def setUp(self):
-        super().setUp()
-
     def test_create_dhcp_snippet_requies_name(self):
         form = DHCPSnippetForm(data={"value": factory.make_string()})
         self.assertFalse(form.is_valid())

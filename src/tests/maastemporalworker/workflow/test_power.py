@@ -18,6 +18,7 @@ from maascommon.workflows.power import (
     PowerQueryParam,
 )
 from maasserver.models import bmc as model_bmc
+from maasserver.utils import orm as orm_module
 from maasservicelayer.db import Database
 from maasservicelayer.db.tables import NodeTable
 from maasservicelayer.services import CacheForServices
@@ -46,8 +47,11 @@ class TestGetTemporalQueueForMachine:
             get_temporal_task_queue_for_bmc(machine)
 
     def test_get_temporal_task_queue_for_bmc_machine_with_bmc_with_vlan(
-        self, factory
+        self, factory, mocker
     ):
+        mocker.patch.object(orm_module, "post_commit_hooks")
+        mocker.patch.object(orm_module, "post_commit_do")
+
         vlan = factory.make_VLAN()
         subnet = factory.make_Subnet(vlan=vlan)
         rack = factory.make_RackController()

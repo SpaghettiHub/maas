@@ -9,6 +9,7 @@ from maasserver.enum import NODE_STATUS, NODE_TYPE, SIMPLIFIED_NODE_STATUS
 from maasserver.rbac import rbac
 from maasserver.storage_layouts import MIN_BOOT_PARTITION_SIZE
 from maasserver.testing.factory import factory
+from maasserver.utils import orm as orm_module
 from maasserver.websockets.base import HandlerValidationError
 from maasserver.websockets.handlers.machine import MachineHandler
 from maasserver.websockets.handlers.tests.test_machine import (
@@ -765,7 +766,10 @@ class TestMachineHandlerNewSchema:
         assert result["groups"][0]["collapsed"]
         assert not result["groups"][1]["collapsed"]
 
-    def test_filter_dynamic_options(self):
+    def test_filter_dynamic_options(self, mocker):
+        mocker.patch.object(orm_module, "post_commit_hooks")
+        mocker.patch.object(orm_module, "post_commit_do")
+
         with transaction.atomic():
             user, session = factory.make_User_with_session()
             tag = factory.make_Tag()
