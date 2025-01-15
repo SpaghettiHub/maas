@@ -83,6 +83,9 @@ parts:
       - libxslt1-dev
       - python3-setuptools
     stage-packages:
+      - libpython3-stdlib
+      - libpython3.10-stdlib
+      - libpython3.10-minimal
       - amtterm # AMT
       - avahi-utils
       - bind9
@@ -136,6 +139,7 @@ parts:
       - python3-paramiko
       - python3-petname
       - python3-pexpect
+      - python3-pip
       - python3-prometheus-client
       - python3-protobuf # for macaroonbakery
       - python3-psycopg2
@@ -149,12 +153,14 @@ parts:
       - python3-requests-unixsocket  # for pylxd
       - python3-rfc3339 # for macaroonbakery
       - python3-seamicroclient
+      - python3-setuptools
       - python3-simplestreams
       - python3-tempita
       - python3-twisted
       - python3-txtftp
       - python3-tz
       - python3-urllib3 # for macaroonbakery
+      - python3-wheel
       - python3-yaml
       - python3-zhmcclient
       - python3-zope.interface
