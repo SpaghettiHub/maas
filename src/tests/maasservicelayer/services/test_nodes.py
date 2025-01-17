@@ -1,4 +1,4 @@
-#  Copyright 2024 Canonical Ltd.  This software is licensed under the
+#  Copyright 2024-2025 Canonical Ltd.  This software is licensed under the
 #  GNU Affero General Public License version 3 (see the file LICENSE).
 
 from unittest.mock import Mock
@@ -8,12 +8,11 @@ import pytest
 from maascommon.enums.node import NodeStatus
 from maasservicelayer.context import Context
 from maasservicelayer.db.filters import QuerySpec
-from maasservicelayer.db.repositories.base import CreateOrUpdateResource
 from maasservicelayer.db.repositories.nodes import (
     NodeClauseFactory,
     NodesRepository,
 )
-from maasservicelayer.models.base import MaasBaseModel
+from maasservicelayer.models.base import MaasBaseModel, ResourceBuilder
 from maasservicelayer.models.nodes import Node
 from maasservicelayer.services import NodesService
 from maasservicelayer.services._base import BaseService
@@ -48,14 +47,14 @@ class TestNodesService:
             secrets_service=secrets_service_mock,
             nodes_repository=nodes_repository_mock,
         )
-        resource = Mock(CreateOrUpdateResource)
+        builder = Mock(ResourceBuilder)
         result = await nodes_service.update_by_system_id(
-            system_id="xyzio", resource=resource
+            system_id="xyzio", builder=builder
         )
         assert result == updated_node
         nodes_repository_mock.update_one.assert_called_once_with(
             query=QuerySpec(where=NodeClauseFactory.with_system_id("xyzio")),
-            resource=resource,
+            builder=builder,
         )
 
     async def test_move_to_zone(self) -> None:

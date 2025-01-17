@@ -1,4 +1,4 @@
-#  Copyright 2024 Canonical Ltd.  This software is licensed under the
+#  Copyright 2024-2025 Canonical Ltd.  This software is licensed under the
 #  GNU Affero General Public License version 3 (see the file LICENSE).
 
 from ipaddress import IPv4Address, IPv4Network
@@ -35,7 +35,7 @@ from maasservicelayer.exceptions.constants import (
 )
 from maasservicelayer.models.base import ListResult
 from maasservicelayer.models.fields import MacAddress
-from maasservicelayer.models.reservedips import ReservedIP
+from maasservicelayer.models.reservedips import ReservedIP, ReservedIPBuilder
 from maasservicelayer.models.subnets import Subnet
 from maasservicelayer.services import ReservedIPsService, ServiceCollectionV3
 from maasservicelayer.services.ipranges import IPRangesService
@@ -70,6 +70,11 @@ TEST_RESERVEDIP_2 = ReservedIP(
 
 class TestReservedIPsApi(ApiCommonTests):
     BASE_PATH = f"{V3_API_PREFIX}/fabrics/1/vlans/1/subnets/1/reserved_ips"
+
+    def test_suca(self):
+        assert ReservedIPBuilder(comment="suca") == ReservedIPBuilder(
+            comment="suca"
+        )
 
     @pytest.fixture
     def user_endpoints(self) -> list[Endpoint]:
@@ -253,16 +258,9 @@ class TestReservedIPsApi(ApiCommonTests):
         self,
         services_mock: ServiceCollectionV3,
         mocked_api_client_admin: AsyncClient,
-        mocker,
     ) -> None:
-        now = utcnow()
-        mocker.patch(
-            "maasapiserver.v3.api.public.models.requests.reservedips.utcnow",
-            lambda: now,
-        )
         updated_reservedip = TEST_RESERVEDIP
         updated_reservedip.comment = "updated comment"
-        updated_reservedip.updated = now
         services_mock.reservedips = Mock(ReservedIPsService)
         services_mock.reservedips.get_one.return_value = TEST_RESERVEDIP
         services_mock.reservedips.update_one.return_value = updated_reservedip
@@ -294,7 +292,7 @@ class TestReservedIPsApi(ApiCommonTests):
 
         services_mock.reservedips.update_one.assert_called_once_with(
             query=query,
-            resource=reservedip_request.to_builder(TEST_RESERVEDIP).build(),
+            builder=reservedip_request.to_builder(TEST_RESERVEDIP),
             etag_if_match=None,
         )
 
