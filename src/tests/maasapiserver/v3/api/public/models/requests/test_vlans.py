@@ -1,4 +1,4 @@
-#  Copyright 2024 Canonical Ltd.  This software is licensed under the
+#  Copyright 2024-2025 Canonical Ltd.  This software is licensed under the
 #  GNU Affero General Public License version 3 (see the file LICENSE).
 
 from unittest.mock import Mock
@@ -29,23 +29,50 @@ from maasservicelayer.services import (
 )
 
 
-@pytest.mark.asyncio
 class TestVlanCreateRequest:
-    def test_mandatory_params(self):
-        with pytest.raises(ValidationError) as e:
-            VlanCreateRequest()
-
-        assert len(e.value.errors()) == 1
-        assert e.value.errors()[0]["loc"][0] == "vid"
-
+    @pytest.mark.asyncio
     async def test_to_builder(self):
-        resource = (
-            await VlanCreateRequest(vid=0).to_builder(
-                Mock(ServiceCollectionV3)
-            )
-        ).build()
-        assert resource.get_values()["dhcp_on"] is False
-        assert resource.get_values()["vid"] == 0
+        resource = await VlanCreateRequest(vid=0).to_builder(
+            Mock(ServiceCollectionV3)
+        )
+        assert resource.dhcp_on is False
+        assert resource.vid == 0
+        assert resource.mtu == 1500
+
+    @pytest.mark.parametrize(
+        "mtu, is_valid",
+        [
+            (0, False),
+            (551, False),
+            (552, True),
+            (1000, True),
+            (65535, True),
+            (65536, False),
+        ],
+    )
+    def test_mtu_validation(self, mtu: int, is_valid: bool) -> None:
+        if is_valid:
+            VlanCreateRequest(mtu=mtu)
+        else:
+            with pytest.raises(ValidationError):
+                VlanCreateRequest(mtu=mtu)
+
+    @pytest.mark.parametrize(
+        "vid, is_valid",
+        [
+            (-1, False),
+            (0, True),
+            (1000, True),
+            (4094, True),
+            (4095, False),
+        ],
+    )
+    def test_vid_validation(self, vid: int, is_valid: bool) -> None:
+        if is_valid:
+            VlanCreateRequest(vid=vid)
+        else:
+            with pytest.raises(ValidationError):
+                VlanCreateRequest(vid=vid)
 
 
 @pytest.mark.asyncio
@@ -54,9 +81,8 @@ class TestVlanUpdateRequest:
         builder = await VlanUpdateRequest(
             vid=0, dhcp_on=False, fabric_id=0
         ).to_builder(Mock(ServiceCollectionV3), 0)
-        resource = builder.build()
-        assert resource.get_values()["dhcp_on"] is False
-        assert resource.get_values()["vid"] == 0
+        assert builder.dhcp_on is False
+        assert builder.vid == 0
 
     async def test_dhcp_on_is_not_null(self):
         with pytest.raises(ValidationError) as e:
