@@ -1,4 +1,4 @@
-# Copyright 2024 Canonical Ltd.  This software is licensed under the
+# Copyright 2024-2025 Canonical Ltd.  This software is licensed under the
 # GNU Affero General Public License version 3 (see the file LICENSE).
 
 from typing import Union
@@ -16,6 +16,9 @@ from maasapiserver.v3.api.public.models.requests.query import (
     TokenPaginationParams,
 )
 from maasapiserver.v3.api.public.models.requests.subnets import SubnetRequest
+from maasapiserver.v3.api.public.models.responses.base import (
+    OPENAPI_ETAG_HEADER,
+)
 from maasapiserver.v3.api.public.models.responses.subnets import (
     SubnetResponse,
     SubnetsListResponse,
@@ -34,7 +37,6 @@ from maasservicelayer.exceptions.constants import (
     UNEXISTING_RESOURCE_VIOLATION_TYPE,
 )
 from maasservicelayer.services import ServiceCollectionV3
-from maasservicelayer.utils.date import utcnow
 
 
 class SubnetsHandler(Handler):
@@ -118,9 +120,7 @@ class SubnetsHandler(Handler):
         responses={
             200: {
                 "model": SubnetResponse,
-                "headers": {
-                    "ETag": {"description": "The ETag for the resource"}
-                },
+                "headers": {"ETag": OPENAPI_ETAG_HEADER},
             },
             404: {"model": NotFoundBodyResponse},
             422: {"model": ValidationErrorBodyResponse},
@@ -166,9 +166,7 @@ class SubnetsHandler(Handler):
         responses={
             201: {
                 "model": SubnetResponse,
-                "headers": {
-                    "ETag": {"description": "The ETag for the resource"}
-                },
+                "headers": {"ETag": OPENAPI_ETAG_HEADER},
             },
             404: {"model": NotFoundBodyResponse},
             422: {"model": ValidationErrorBodyResponse},
@@ -187,13 +185,6 @@ class SubnetsHandler(Handler):
         response: Response,
         services: ServiceCollectionV3 = Depends(services),
     ) -> Response:
-        now = utcnow()
-        builder = (
-            subnet_request.to_builder()
-            .with_vlan_id(vlan_id)
-            .with_created(now)
-            .with_updated(now)
-        )
         vlan = await services.vlans.get_one(
             QuerySpec(
                 where=VlansClauseFactory.and_clauses(
@@ -213,7 +204,8 @@ class SubnetsHandler(Handler):
                     )
                 ]
             )
-        subnet = await services.subnets.create(builder.build())
+        builder = subnet_request.to_builder(vlan_id=vlan_id)
+        subnet = await services.subnets.create(builder=builder)
         response.headers["ETag"] = subnet.etag()
         return SubnetResponse.from_model(
             subnet=subnet,
@@ -227,9 +219,7 @@ class SubnetsHandler(Handler):
         responses={
             200: {
                 "model": SubnetResponse,
-                "headers": {
-                    "ETag": {"description": "The ETag for the resource"}
-                },
+                "headers": {"ETag": OPENAPI_ETAG_HEADER},
             },
             404: {"model": NotFoundBodyResponse},
             422: {"model": ValidationErrorBodyResponse},
@@ -249,10 +239,6 @@ class SubnetsHandler(Handler):
         response: Response,
         services: ServiceCollectionV3 = Depends(services),
     ) -> Response:
-        now = utcnow()
-        builder = (
-            subnet_request.to_builder().with_vlan_id(vlan_id).with_updated(now)
-        )
         query = QuerySpec(
             where=SubnetClauseFactory.and_clauses(
                 [
@@ -262,8 +248,9 @@ class SubnetsHandler(Handler):
                 ]
             )
         )
+        builder = subnet_request.to_builder(vlan_id=vlan_id)
         subnet = await services.subnets.update_one(
-            query=query, resource=builder.build()
+            query=query, builder=builder
         )
 
         response.headers["ETag"] = subnet.etag()

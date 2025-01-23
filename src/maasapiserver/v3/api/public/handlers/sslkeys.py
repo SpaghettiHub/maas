@@ -19,6 +19,9 @@ from maasapiserver.v3.api.public.models.requests.query import (
     TokenPaginationParams,
 )
 from maasapiserver.v3.api.public.models.requests.sslkeys import SSLKeyRequest
+from maasapiserver.v3.api.public.models.responses.base import (
+    OPENAPI_ETAG_HEADER,
+)
 from maasapiserver.v3.api.public.models.responses.sslkey import (
     SSLKeyListResponse,
     SSLKeyResponse,
@@ -146,9 +149,7 @@ class SSLKeysHandler(Handler):
         responses={
             201: {
                 "model": SSLKeyResponse,
-                "headers": {
-                    "ETag": {"description": "The ETag for the resource"}
-                },
+                "headers": {"ETag": OPENAPI_ETAG_HEADER},
             },
             409: {"model": ConflictBodyResponse},
             422: {"model": ValidationErrorBodyResponse},
@@ -170,11 +171,9 @@ class SSLKeysHandler(Handler):
     ) -> SSLKeyResponse:
         assert authenticated_user is not None
 
-        new_sslkey = await services.sslkeys.create(
-            sslkey_request.to_builder()
-            .with_user_id(authenticated_user.id)
-            .build()
-        )
+        builder = sslkey_request.to_builder()
+        builder.user_id = authenticated_user.id
+        new_sslkey = await services.sslkeys.create(builder)
 
         response.headers["ETag"] = new_sslkey.etag()
         return SSLKeyResponse.from_model(sslkey=new_sslkey)

@@ -1,4 +1,4 @@
-#  Copyright 2024 Canonical Ltd.  This software is licensed under the
+#  Copyright 2024-2025 Canonical Ltd.  This software is licensed under the
 #  GNU Affero General Public License version 3 (see the file LICENSE).
 
 from typing import Union
@@ -18,6 +18,9 @@ from maasapiserver.v3.api.public.models.requests.query import (
 from maasapiserver.v3.api.public.models.requests.reservedips import (
     ReservedIPCreateRequest,
     ReservedIPUpdateRequest,
+)
+from maasapiserver.v3.api.public.models.responses.base import (
+    OPENAPI_ETAG_HEADER,
 )
 from maasapiserver.v3.api.public.models.responses.reservedips import (
     ReservedIPResponse,
@@ -112,7 +115,7 @@ class ReservedIPsHandler(Handler):
             200: {
                 "model": ReservedIPResponse,
                 "headers": {
-                    "ETag": {"description": "The ETag for the resource"}
+                    "ETag": OPENAPI_ETAG_HEADER,
                 },
             },
             404: {"model": NotFoundBodyResponse},
@@ -162,9 +165,7 @@ class ReservedIPsHandler(Handler):
         responses={
             201: {
                 "model": ReservedIPResponse,
-                "headers": {
-                    "ETag": {"description": "The ETag for the resource"}
-                },
+                "headers": {"ETag": OPENAPI_ETAG_HEADER},
             },
             404: {"model": NotFoundBodyResponse},
             422: {"model": ValidationErrorBodyResponse},
@@ -205,7 +206,7 @@ class ReservedIPsHandler(Handler):
                 ]
             )
         builder = await reservedip_request.to_builder(subnet, services)
-        reservedip = await services.reservedips.create(builder.build())
+        reservedip = await services.reservedips.create(builder)
 
         response.headers["ETag"] = reservedip.etag()
         return ReservedIPResponse.from_model(
@@ -220,9 +221,7 @@ class ReservedIPsHandler(Handler):
         responses={
             200: {
                 "model": ReservedIPResponse,
-                "headers": {
-                    "ETag": {"description": "The ETag for the resource"}
-                },
+                "headers": {"ETag": OPENAPI_ETAG_HEADER},
             },
             404: {"model": NotFoundBodyResponse},
             422: {"model": ValidationErrorBodyResponse},
@@ -262,7 +261,7 @@ class ReservedIPsHandler(Handler):
 
         builder = reservedip_request.to_builder(existing_reservedip)
         reservedip = await services.reservedips.update_one(
-            query=query, resource=builder.build(), etag_if_match=etag_if_match
+            query=query, builder=builder, etag_if_match=etag_if_match
         )
 
         response.headers["ETag"] = reservedip.etag()

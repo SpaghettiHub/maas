@@ -1,4 +1,4 @@
-# Copyright 2024 Canonical Ltd.  This software is licensed under the
+# Copyright 2024-2025 Canonical Ltd.  This software is licensed under the
 # GNU Affero General Public License version 3 (see the file LICENSE).
 
 from typing import Union
@@ -18,6 +18,9 @@ from maasapiserver.v3.api.public.models.requests.ipranges import (
 )
 from maasapiserver.v3.api.public.models.requests.query import (
     TokenPaginationParams,
+)
+from maasapiserver.v3.api.public.models.responses.base import (
+    OPENAPI_ETAG_HEADER,
 )
 from maasapiserver.v3.api.public.models.responses.ipranges import (
     IPRangeListResponse,
@@ -112,9 +115,7 @@ class IPRangesHandler(Handler):
         responses={
             201: {
                 "model": IPRangeResponse,
-                "headers": {
-                    "ETag": {"description": "The ETag for the resource"}
-                },
+                "headers": {"ETag": OPENAPI_ETAG_HEADER},
             },
             404: {"model": NotFoundBodyResponse},
             422: {"model": ValidationErrorBodyResponse},
@@ -175,7 +176,7 @@ class IPRangesHandler(Handler):
         builder = await iprange_request.to_builder(
             subnet, authenticated_user, services
         )
-        iprange = await services.ipranges.create(builder.build())
+        iprange = await services.ipranges.create(builder)
 
         response.headers["ETag"] = iprange.etag()
         return IPRangeResponse.from_model(
@@ -190,9 +191,7 @@ class IPRangesHandler(Handler):
         responses={
             200: {
                 "model": IPRangeResponse,
-                "headers": {
-                    "ETag": {"description": "The ETag for the resource"}
-                },
+                "headers": {"ETag": OPENAPI_ETAG_HEADER},
             },
             404: {"model": NotFoundBodyResponse},
             422: {"model": ValidationErrorBodyResponse},
@@ -300,9 +299,7 @@ class IPRangesHandler(Handler):
         responses={
             200: {
                 "model": IPRangeResponse,
-                "headers": {
-                    "ETag": {"description": "The ETag for the resource"}
-                },
+                "headers": {"ETag": OPENAPI_ETAG_HEADER},
             },
             404: {"model": NotFoundBodyResponse},
             422: {"model": ValidationErrorBodyResponse},
@@ -405,7 +402,7 @@ class IPRangesHandler(Handler):
                     ]
                 )
             ),
-            resource=builder.build(),
+            builder=builder,
         )
 
         response.headers["ETag"] = iprange.etag()

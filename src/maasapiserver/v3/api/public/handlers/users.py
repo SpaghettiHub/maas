@@ -1,4 +1,4 @@
-# Copyright 2024 Canonical Ltd.  This software is licensed under the
+# Copyright 2024-2025 Canonical Ltd.  This software is licensed under the
 # GNU Affero General Public License version 3 (see the file LICENSE).
 
 from fastapi import Depends, Response
@@ -16,6 +16,9 @@ from maasapiserver.v3.api.public.models.requests.query import (
     TokenPaginationParams,
 )
 from maasapiserver.v3.api.public.models.requests.users import UserRequest
+from maasapiserver.v3.api.public.models.responses.base import (
+    OPENAPI_ETAG_HEADER,
+)
 from maasapiserver.v3.api.public.models.responses.users import (
     UserInfoResponse,
     UserResponse,
@@ -150,9 +153,7 @@ class UsersHandler(Handler):
         responses={
             200: {
                 "model": UserResponse,
-                "headers": {
-                    "ETag": {"description": "The ETag for the resource"}
-                },
+                "headers": {"ETag": OPENAPI_ETAG_HEADER},
             },
             404: {"model": NotFoundBodyResponse},
             422: {"model": ValidationErrorBodyResponse},
@@ -186,9 +187,7 @@ class UsersHandler(Handler):
         responses={
             201: {
                 "model": UserResponse,
-                "headers": {
-                    "ETag": {"description": "The ETag for the resource"}
-                },
+                "headers": {"ETag": OPENAPI_ETAG_HEADER},
             },
             409: {"model": ConflictBodyResponse},
             422: {"model": ValidationErrorBodyResponse},
@@ -205,9 +204,10 @@ class UsersHandler(Handler):
         response: Response,
         services: ServiceCollectionV3 = Depends(services),
     ) -> UserResponse:
-        new_user = await services.users.create(
-            user_request.to_builder().with_date_joined(utcnow()).build()
-        )
+        builder = user_request.to_builder()
+        builder.date_joined = utcnow()
+
+        new_user = await services.users.create(builder)
 
         response.headers["ETag"] = new_user.etag()
         return UserResponse.from_model(
@@ -221,9 +221,7 @@ class UsersHandler(Handler):
         responses={
             200: {
                 "model": UserResponse,
-                "headers": {
-                    "ETag": {"description": "The ETag for the resource"}
-                },
+                "headers": {"ETag": OPENAPI_ETAG_HEADER},
             },
             404: {"model": NotFoundBodyResponse},
             422: {"model": ValidationErrorBodyResponse},
@@ -241,8 +239,9 @@ class UsersHandler(Handler):
         response: Response,
         services: ServiceCollectionV3 = Depends(services),
     ) -> UserResponse:
-        resource = user_request.to_builder().build()
-        user = await services.users.update_by_id(user_id, resource)
+        user = await services.users.update_by_id(
+            user_id, user_request.to_builder()
+        )
         if not user:
             return NotFoundResponse()
 
