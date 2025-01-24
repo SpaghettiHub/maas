@@ -19,6 +19,7 @@ from maasservicelayer.db.repositories.ipranges import (
     IPRangeClauseFactory,
     IPRangesRepository,
 )
+from maasservicelayer.db.tables import IPRangeTable
 from maasservicelayer.exceptions.catalog import (
     AlreadyExistsException,
     BaseExceptionDetail,
@@ -113,3 +114,25 @@ class IPRangesService(
 
     async def post_delete_many_hook(self, resources: List[IPRange]) -> None:
         raise NotImplementedError("Not implemented yet.")
+
+    async def update_many(
+        self, query: QuerySpec, builder: IPRangeBuilder
+    ) -> List[IPRange]:
+        updated_resources = await self.repository.update_many(
+            query=query, builder=builder
+        )
+
+        if self._must_trigger_update_hook(builder):
+            await self.post_update_many_hook(updated_resources)
+        return updated_resources
+
+    async def _must_trigger_update_hook(self, builder: IPRangeBuilder) -> bool:
+        updated_fields = builder.populated_fields()
+        fields = [
+            IPRangeTable.c.start_ip.name,
+            IPRangeTable.c.end_ip.name,
+            IPRangeTable.c.type.name,
+            IPRangeTable.c.subnet_id.name,
+        ]
+
+        return any([field in updated_fields for field in fields])

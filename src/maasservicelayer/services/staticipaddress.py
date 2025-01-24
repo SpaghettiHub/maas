@@ -14,6 +14,7 @@ from maasservicelayer.db.filters import QuerySpec
 from maasservicelayer.db.repositories.staticipaddress import (
     StaticIPAddressRepository,
 )
+from maasservicelayer.db.tables import StaticIPAddressTable
 from maasservicelayer.models.fields import MacAddress
 from maasservicelayer.models.interfaces import Interface
 from maasservicelayer.models.staticipaddress import (
@@ -122,3 +123,26 @@ class StaticIPAddressService(
 
     async def get_mac_addresses(self, query: QuerySpec) -> list[MacAddress]:
         return await self.repository.get_mac_addresses(query=query)
+
+    async def update_many(
+        self, query: QuerySpec, builder: StaticIPAddressBuilder
+    ) -> List[StaticIPAddress]:
+        updated_resources = await self.repository.update_many(
+            query=query, builder=builder
+        )
+
+        if self._must_trigger_update_hook(builder):
+            await self.post_update_many_hook(updated_resources)
+        return updated_resources
+
+    async def _must_trigger_update_hook(
+        self, builder: StaticIPAddressBuilder
+    ) -> bool:
+        updated_fields = builder.populated_fields()
+        fields = [
+            StaticIPAddressTable.c.ip.name,
+            StaticIPAddressTable.c.alloc_type.name,
+            StaticIPAddressTable.c.subnet_id.name,
+        ]
+
+        return any([field in updated_fields for field in fields])
