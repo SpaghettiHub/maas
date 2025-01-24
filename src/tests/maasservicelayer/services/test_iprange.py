@@ -67,8 +67,8 @@ class TestCommonIPRangesService(ServiceCommonTests):
     async def test_update_many(
         self, service_instance, test_instance: MaasBaseModel
     ):
-        with pytest.raises(NotImplementedError):
-            await super().test_update_many(service_instance, test_instance)
+        # post_update_many_hook tested in the next tests
+        return await super().test_update_many(service_instance, test_instance)
 
     async def test_delete_many(
         self, service_instance, test_instance: MaasBaseModel
@@ -216,6 +216,52 @@ class TestIPRangesService:
             created=utcnow(),
             updated=utcnow(),
         )
+        updated_iprange = iprange.copy()
+        updated_iprange.end_ip = "10.0.0.21"
+
+        mock_ipranges_repository = Mock(IPRangesRepository)
+        mock_ipranges_repository.get_by_id.return_value = iprange
+        mock_ipranges_repository.update_by_id.return_value = updated_iprange
+
+        mock_temporal = Mock(TemporalService)
+
+        ipranges_service = IPRangesService(
+            context=Context(),
+            temporal_service=mock_temporal,
+            dhcpsnippets_service=Mock(DhcpSnippetsService),
+            ipranges_repository=mock_ipranges_repository,
+        )
+
+        builder = IPRangeBuilder(
+            type=iprange.type,
+            start_ip=iprange.start_ip,
+            end_ip=updated_iprange.end_ip,
+            subnet_id=2,
+        )
+
+        await ipranges_service.update_by_id(iprange.id, builder)
+
+        mock_ipranges_repository.update_by_id.assert_called_once_with(
+            id=iprange.id, builder=builder
+        )
+
+        mock_temporal.register_or_update_workflow_call.assert_called_once_with(
+            CONFIGURE_DHCP_WORKFLOW_NAME,
+            ConfigureDHCPParam(ip_range_ids=[iprange.id]),
+            parameter_merge_func=merge_configure_dhcp_param,
+            wait=False,
+        )
+
+    async def test_update_doesnt_trigger_workflow(self):
+        iprange = IPRange(
+            id=1,
+            type=IPRangeType.DYNAMIC,
+            start_ip="10.0.0.1",
+            end_ip="10.0.0.20",
+            subnet_id=2,
+            created=utcnow(),
+            updated=utcnow(),
+        )
 
         mock_ipranges_repository = Mock(IPRangesRepository)
         mock_ipranges_repository.get_by_id.return_value = iprange
@@ -243,12 +289,7 @@ class TestIPRangesService:
             id=iprange.id, builder=builder
         )
 
-        mock_temporal.register_or_update_workflow_call.assert_called_once_with(
-            CONFIGURE_DHCP_WORKFLOW_NAME,
-            ConfigureDHCPParam(ip_range_ids=[iprange.id]),
-            parameter_merge_func=merge_configure_dhcp_param,
-            wait=False,
-        )
+        mock_temporal.register_or_update_workflow_call.assert_not_called()
 
     async def test_delete(self):
         iprange = IPRange(
@@ -291,3 +332,55 @@ class TestIPRangesService:
             parameter_merge_func=merge_configure_dhcp_param,
             wait=False,
         )
+
+    async def test_get_ipranges_for_user(self) -> None:
+        mock_ipranges_repository = Mock(IPRangesRepository)
+        mock_ipranges_repository.get_many.return_value = Mock()
+
+        mock_temporal = Mock(TemporalService)
+        dhcpsnippets_service_mock = Mock(DhcpSnippetsService)
+
+        ipranges_service = IPRangesService(
+            context=Context(),
+            temporal_service=mock_temporal,
+            dhcpsnippets_service=dhcpsnippets_service_mock,
+            ipranges_repository=mock_ipranges_repository,
+        )
+
+        await ipranges_service.get_ipranges_for_user(1)
+        mock_ipranges_repository.get_many.assert_called_once_with(
+            query=QuerySpec(where=IPRangeClauseFactory.with_user_id(1))
+        )
+
+    async def test_post_update_many_hook(self) -> None:
+        iprange = IPRange(
+            id=1,
+            type=IPRangeType.DYNAMIC,
+            start_ip="10.0.0.1",
+            end_ip="10.0.0.20",
+            subnet_id=2,
+            created=utcnow(),
+            updated=utcnow(),
+        )
+        mock_ipranges_repository = Mock(IPRangesRepository)
+        mock_ipranges_repository.get_many.return_value = Mock()
+
+        mock_temporal = Mock(TemporalService)
+        dhcpsnippets_service_mock = Mock(DhcpSnippetsService)
+
+        ipranges_service = IPRangesService(
+            context=Context(),
+            temporal_service=mock_temporal,
+            dhcpsnippets_service=dhcpsnippets_service_mock,
+            ipranges_repository=mock_ipranges_repository,
+        )
+        ipranges_service._update_should_trigger_workflow = Mock(
+            return_value=False
+        )
+        await ipranges_service.post_update_many_hook([iprange], [iprange])
+
+        ipranges_service._update_should_trigger_workflow = Mock(
+            return_value=True
+        )
+        with pytest.raises(NotImplementedError):
+            await ipranges_service.post_update_many_hook([iprange], [iprange])

@@ -13,7 +13,9 @@ from maascommon.workflows.dhcp import (
     merge_configure_dhcp_param,
 )
 from maasservicelayer.context import Context
+from maasservicelayer.db.filters import QuerySpec
 from maasservicelayer.db.repositories.staticipaddress import (
+    StaticIPAddressClauseFactory,
     StaticIPAddressRepository,
 )
 from maasservicelayer.models.base import MaasBaseModel
@@ -58,8 +60,8 @@ class TestCommonStaticIPAddressService(ServiceCommonTests):
     async def test_update_many(
         self, service_instance, test_instance: MaasBaseModel
     ):
-        with pytest.raises(NotImplementedError):
-            await super().test_update_many(service_instance, test_instance)
+        # post_update_many_hook tested in the next tests
+        return await super().test_update_many(service_instance, test_instance)
 
     async def test_delete_many(
         self, service_instance, test_instance: MaasBaseModel
@@ -282,6 +284,69 @@ class TestStaticIPAddressService:
             created=now,
             updated=now,
         )
+        updated_sip = sip.copy()
+        updated_sip.ip = "10.0.0.3"
+
+        mock_staticipaddress_repository = Mock(StaticIPAddressRepository)
+        mock_staticipaddress_repository.get_by_id.return_value = sip
+        mock_staticipaddress_repository.update_by_id.return_value = updated_sip
+
+        mock_temporal = Mock(TemporalService)
+
+        staticipaddress_service = StaticIPAddressService(
+            context=Context(),
+            temporal_service=mock_temporal,
+            staticipaddress_repository=mock_staticipaddress_repository,
+        )
+
+        builder = StaticIPAddressBuilder(
+            ip=updated_sip.ip,
+            lease_time=sip.lease_time,
+            alloc_type=sip.alloc_type,
+            subnet_id=sip.subnet_id,
+        )
+        await staticipaddress_service.update_by_id(
+            sip.id,
+            builder,
+        )
+
+        mock_staticipaddress_repository.update_by_id.assert_called_once_with(
+            id=sip.id,
+            builder=builder,
+        )
+        mock_temporal.register_or_update_workflow_call.assert_called_once_with(
+            CONFIGURE_DHCP_WORKFLOW_NAME,
+            ConfigureDHCPParam(
+                static_ip_addr_ids=[sip.id],
+            ),
+            parameter_merge_func=merge_configure_dhcp_param,
+            wait=False,
+        )
+
+    async def test_update_doesnt_trigger_workflow(self) -> None:
+        now = utcnow()
+        subnet = Subnet(
+            id=1,
+            cidr="10.0.0.0/24",
+            allow_dns=True,
+            allow_proxy=True,
+            disabled_boot_architectures=[],
+            rdns_mode=1,
+            active_discovery=True,
+            managed=True,
+            vlan_id=1,
+            created=now,
+            updated=now,
+        )
+        sip = StaticIPAddress(
+            id=2,
+            ip="10.0.0.2",
+            lease_time=30,
+            subnet_id=subnet.id,
+            alloc_type=IpAddressType.AUTO,
+            created=now,
+            updated=now,
+        )
 
         mock_staticipaddress_repository = Mock(StaticIPAddressRepository)
         mock_staticipaddress_repository.get_by_id.return_value = sip
@@ -310,14 +375,7 @@ class TestStaticIPAddressService:
             id=sip.id,
             builder=builder,
         )
-        mock_temporal.register_or_update_workflow_call.assert_called_once_with(
-            CONFIGURE_DHCP_WORKFLOW_NAME,
-            ConfigureDHCPParam(
-                static_ip_addr_ids=[sip.id],
-            ),
-            parameter_merge_func=merge_configure_dhcp_param,
-            wait=False,
-        )
+        mock_temporal.register_or_update_workflow_call.assert_not_called()
 
     async def test_delete(self) -> None:
         now = utcnow()
@@ -371,3 +429,47 @@ class TestStaticIPAddressService:
             parameter_merge_func=merge_configure_dhcp_param,
             wait=False,
         )
+
+    async def test_get_staticips_for_user(self) -> None:
+        mock_staticipaddress_repository = Mock(StaticIPAddressRepository)
+        mock_staticipaddress_repository.get_many.return_value = Mock()
+
+        mock_temporal = Mock(TemporalService)
+
+        staticipaddress_service = StaticIPAddressService(
+            context=Context(),
+            temporal_service=mock_temporal,
+            staticipaddress_repository=mock_staticipaddress_repository,
+        )
+
+        await staticipaddress_service.get_staticips_for_user(1)
+        mock_staticipaddress_repository.get_many.assert_called_once_with(
+            query=QuerySpec(where=StaticIPAddressClauseFactory.with_user_id(1))
+        )
+
+    async def test_post_update_many_hook(self) -> None:
+        sip = StaticIPAddress(
+            id=2,
+            ip="10.0.0.2",
+            lease_time=30,
+            subnet_id=1,
+            alloc_type=IpAddressType.AUTO,
+        )
+        mock_staticipaddress_repository = Mock(StaticIPAddressRepository)
+        mock_temporal = Mock(TemporalService)
+
+        staticipaddress_service = StaticIPAddressService(
+            context=Context(),
+            temporal_service=mock_temporal,
+            staticipaddress_repository=mock_staticipaddress_repository,
+        )
+        staticipaddress_service._update_should_trigger_workflow = Mock(
+            return_value=False
+        )
+        await staticipaddress_service.post_update_many_hook([sip], [sip])
+
+        staticipaddress_service._update_should_trigger_workflow = Mock(
+            return_value=True
+        )
+        with pytest.raises(NotImplementedError):
+            await staticipaddress_service.post_update_many_hook([sip], [sip])

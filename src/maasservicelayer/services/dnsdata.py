@@ -80,7 +80,9 @@ class DNSDataService(BaseService[DNSData, DNSDataRepository, DNSDataBuilder]):
             answer=new_resource.rrdata,
         )
 
-    async def post_update_many_hook(self, resources: List[DNSData]) -> None:
+    async def post_update_many_hook(
+        self, old_resources: List[DNSData], updated_resources: List[DNSData]
+    ) -> None:
         raise NotImplementedError("Not implemented yet.")
 
     async def post_delete_hook(self, resource: DNSData) -> None:

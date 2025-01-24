@@ -50,7 +50,9 @@ class DomainsService(BaseService[Domain, DomainsRepository, DomainBuilder]):
                 action=DnsUpdateAction.RELOAD,
             )
 
-    async def post_update_many_hook(self, resources: List[Domain]) -> None:
+    async def post_update_many_hook(
+        self, old_resources: List[Domain], updated_resources: List[Domain]
+    ) -> None:
         raise NotImplementedError("Not implemented yet.")
 
     async def post_delete_hook(self, resource: Domain) -> None:

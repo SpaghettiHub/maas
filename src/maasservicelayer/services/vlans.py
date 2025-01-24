@@ -60,7 +60,9 @@ class VlansService(BaseService[Vlan, VlansRepository, VlanBuilder]):
         )
         return
 
-    async def post_update_many_hook(self, resources: List[Vlan]) -> None:
+    async def post_update_many_hook(
+        self, old_resources: List[Vlan], updated_resources: List[Vlan]
+    ) -> None:
         raise NotImplementedError("Not implemented yet.")
 
     async def pre_delete_hook(self, resource_to_be_deleted: Vlan) -> None:

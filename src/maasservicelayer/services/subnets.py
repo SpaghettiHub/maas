@@ -91,7 +91,9 @@ class SubnetsService(BaseService[Subnet, SubnetsRepository, SubnetBuilder]):
         )
         return
 
-    async def post_update_many_hook(self, resources: List[Subnet]) -> None:
+    async def post_update_many_hook(
+        self, old_resources: List[Subnet], updated_resources: List[Subnet]
+    ) -> None:
         raise NotImplementedError("Not implemented yet.")
 
     async def post_delete_hook(self, resource: Subnet) -> None:

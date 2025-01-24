@@ -106,7 +106,9 @@ class DNSResourcesService(
         return
 
     async def post_update_many_hook(
-        self, resources: List[DNSResource]
+        self,
+        old_resources: List[DNSResource],
+        updated_resources: List[DNSResource],
     ) -> None:
         raise NotImplementedError("Not implemented yet.")
 

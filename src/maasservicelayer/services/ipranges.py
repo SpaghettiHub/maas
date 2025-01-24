@@ -87,16 +87,25 @@ class IPRangesService(
     async def post_update_hook(
         self, old_resource: IPRange, updated_resource: IPRange
     ) -> None:
-        self.temporal_service.register_or_update_workflow_call(
-            CONFIGURE_DHCP_WORKFLOW_NAME,
-            ConfigureDHCPParam(ip_range_ids=[updated_resource.id]),
-            parameter_merge_func=merge_configure_dhcp_param,
-            wait=False,
-        )
+        if self._update_should_trigger_workflow(
+            old_resource, updated_resource
+        ):
+            self.temporal_service.register_or_update_workflow_call(
+                CONFIGURE_DHCP_WORKFLOW_NAME,
+                ConfigureDHCPParam(ip_range_ids=[updated_resource.id]),
+                parameter_merge_func=merge_configure_dhcp_param,
+                wait=False,
+            )
         return
 
-    async def post_update_many_hook(self, resources: List[IPRange]) -> None:
-        raise NotImplementedError("Not implemented yet.")
+    async def post_update_many_hook(
+        self, old_resources: List[IPRange], updated_resources: List[IPRange]
+    ) -> None:
+        old_resources = sorted(old_resources, key=lambda obj: obj.id)
+        updated_resources = sorted(updated_resources, key=lambda obj: obj.id)
+        for old, updated in zip(old_resources, updated_resources):
+            if self._update_should_trigger_workflow(old, updated):
+                raise NotImplementedError("Not implemented yet.")
 
     async def post_delete_hook(self, resource: IPRange) -> None:
         await self.dhcpsnippets_service.delete_many(
@@ -113,3 +122,20 @@ class IPRangesService(
 
     async def post_delete_many_hook(self, resources: List[IPRange]) -> None:
         raise NotImplementedError("Not implemented yet.")
+
+    def _update_should_trigger_workflow(
+        self, old_resource: IPRange, updated_resource: IPRange
+    ) -> bool:
+        if (
+            old_resource.type != updated_resource.type
+            or old_resource.start_ip != updated_resource.start_ip
+            or old_resource.end_ip != updated_resource.end_ip
+            or old_resource.subnet_id != updated_resource.subnet_id
+        ):
+            return True
+        return False
+
+    async def get_ipranges_for_user(self, user_id: int) -> list[IPRange]:
+        return await self.get_many(
+            query=QuerySpec(where=IPRangeClauseFactory.with_user_id(user_id))
+        )

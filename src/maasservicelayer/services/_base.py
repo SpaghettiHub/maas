@@ -147,17 +147,20 @@ class BaseService(Service, ABC, Generic[M, R, B]):
     ) -> ListResult[M]:
         return await self.repository.list(token=token, size=size, query=query)
 
-    async def post_update_many_hook(self, resources: List[M]) -> None:
+    async def post_update_many_hook(
+        self, old_resources: List[M], updated_resources: List[M]
+    ) -> None:
         """
         Override this function in your Service to perform post-hooks with the updated objects
         """
         return None
 
     async def update_many(self, query: QuerySpec, builder: B) -> List[M]:
+        old_resources = await self.repository.get_many(query=query)
         updated_resources = await self.repository.update_many(
             query=query, builder=builder
         )
-        await self.post_update_many_hook(updated_resources)
+        await self.post_update_many_hook(old_resources, updated_resources)
         return updated_resources
 
     async def post_update_hook(
