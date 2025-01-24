@@ -21,6 +21,7 @@ from maasservicelayer.db.repositories.external_auth import (
     ExternalAuthRepository,
 )
 from maasservicelayer.db.repositories.fabrics import FabricsRepository
+from maasservicelayer.db.repositories.filestorage import FileStorageRepository
 from maasservicelayer.db.repositories.interfaces import InterfaceRepository
 from maasservicelayer.db.repositories.ipranges import IPRangesRepository
 from maasservicelayer.db.repositories.machines import MachinesRepository
@@ -28,6 +29,12 @@ from maasservicelayer.db.repositories.nodegrouptorackcontrollers import (
     NodeGroupToRackControllersRepository,
 )
 from maasservicelayer.db.repositories.nodes import NodesRepository
+from maasservicelayer.db.repositories.notification_dismissal import (
+    NotificationDismissalsRepository,
+)
+from maasservicelayer.db.repositories.notifications import (
+    NotificationsRepository,
+)
 from maasservicelayer.db.repositories.reservedips import ReservedIPsRepository
 from maasservicelayer.db.repositories.resource_pools import (
     ResourcePoolRepository,
@@ -61,6 +68,7 @@ from maasservicelayer.services.domains import DomainsService
 from maasservicelayer.services.events import EventsService
 from maasservicelayer.services.external_auth import ExternalAuthService
 from maasservicelayer.services.fabrics import FabricsService
+from maasservicelayer.services.filestorage import FileStorageService
 from maasservicelayer.services.interfaces import InterfacesService
 from maasservicelayer.services.ipranges import IPRangesService
 from maasservicelayer.services.leases import LeasesService
@@ -69,6 +77,10 @@ from maasservicelayer.services.nodegrouptorackcontrollers import (
     NodeGroupToRackControllersService,
 )
 from maasservicelayer.services.nodes import NodesService
+from maasservicelayer.services.notification_dismissal import (
+    NotificationDismissalService,
+)
+from maasservicelayer.services.notifications import NotificationsService
 from maasservicelayer.services.reservedips import ReservedIPsService
 from maasservicelayer.services.resource_pools import ResourcePoolsService
 from maasservicelayer.services.secrets import (
@@ -120,18 +132,22 @@ class ServiceCollectionV3:
     auth: AuthService
     configurations: ConfigurationsService
     dhcpsnippets: DhcpSnippetsService
+    dnsdata: DNSDataService
     dnspublications: DNSPublicationsService
     dnsresources: DNSResourcesService
     domains: DomainsService
     events: EventsService
     external_auth: ExternalAuthService
     fabrics: FabricsService
+    filestorage: FileStorageService
     interfaces: InterfacesService
     ipranges: IPRangesService
     leases: LeasesService
     machines: MachinesService
     nodegrouptorackcontrollers: NodeGroupToRackControllersService
     nodes: NodesService
+    notifications: NotificationsService
+    notifications_dismissal: NotificationDismissalService
     reservedips: ReservedIPsService
     resource_pools: ResourcePoolsService
     secrets: SecretsService
@@ -324,5 +340,15 @@ class ServiceCollectionV3:
         services.sslkeys = SSLKeysService(
             context=context,
             sslkey_repository=SSLKeysRepository(context),
+        )
+        services.notifications = NotificationsService(
+            context=context, repository=NotificationsRepository(context)
+        )
+        services.notifications_dismissal = NotificationDismissalService(
+            context=context,
+            repository=NotificationDismissalsRepository(context),
+        )
+        services.filestorage = FileStorageService(
+            context=context, repository=FileStorageRepository(context)
         )
         return services

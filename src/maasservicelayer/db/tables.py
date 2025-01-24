@@ -1,4 +1,4 @@
-#  Copyright 2023-2024 Canonical Ltd.  This software is licensed under the
+#  Copyright 2023-2025 Canonical Ltd.  This software is licensed under the
 #  GNU Affero General Public License version 3 (see the file LICENSE).
 
 from sqlalchemy import (
@@ -270,6 +270,17 @@ FabricTable = Table(
     Column("description", Text, nullable=False),
 )
 
+FileStorageTable = Table(
+    "maasserver_filestorage",
+    METADATA,
+    Column("id", BigInteger, primary_key=True, unique=True),
+    Column("filename", String(255), nullable=False),
+    Column("content", Text, nullable=False),
+    Column("key", String(36), nullable=False, unique=True),
+    Column("owner_id", BigInteger, ForeignKey("auth_user.id"), nullable=True),
+    UniqueConstraint("filename", "owner_id"),
+)
+
 GlobalDefaultTable = Table(
     "maasserver_globaldefault",
     METADATA,
@@ -536,6 +547,37 @@ NodeTagTable = Table(
     ),
     Column(
         "tag_id", BigInteger, ForeignKey("maasserver_tag.id"), nullable=False
+    ),
+)
+
+NotificationTable = Table(
+    "maasserver_notification",
+    METADATA,
+    Column("id", BigInteger, primary_key=True),
+    Column("created", DateTime(timezone=True), nullable=False),
+    Column("updated", DateTime(timezone=True), nullable=False),
+    Column("ident", String(40), nullable=True, unique=True),
+    Column("users", Boolean, nullable=False),
+    Column("admins", Boolean, nullable=False),
+    Column("message", Text, nullable=False),
+    Column("context", JSONB, nullable=False),
+    Column("user_id", Integer, ForeignKey("auth_user.id"), nullable=True),
+    Column("category", String(10), nullable=False),
+    Column("dismissable", Boolean, nullable=False),
+)
+
+NotificationDismissalTable = Table(
+    "maasserver_notificationdismissal",
+    METADATA,
+    Column("id", BigInteger, primary_key=True),
+    Column("created", DateTime(timezone=True), nullable=False),
+    Column("updated", DateTime(timezone=True), nullable=False),
+    Column("user_id", Integer, ForeignKey("auth_user.id"), nullable=False),
+    Column(
+        "notification_id",
+        Integer,
+        ForeignKey("maasserver_notification.id"),
+        nullable=False,
     ),
 )
 
