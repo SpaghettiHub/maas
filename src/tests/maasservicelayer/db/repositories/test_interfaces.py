@@ -5,17 +5,22 @@ import copy
 from math import ceil
 
 import pytest
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncConnection
 
 from maascommon.enums.ipaddress import IpAddressType
 from maasservicelayer.context import Context
 from maasservicelayer.db.repositories.interfaces import InterfaceRepository
+from maasservicelayer.db.tables import InterfaceIPAddressTable
 from maasservicelayer.models.base import ListResult
 from maasservicelayer.models.interfaces import Interface
+from maasservicelayer.models.staticipaddress import StaticIPAddress
 from tests.fixtures.factories.bmc import create_test_bmc
+from tests.fixtures.factories.fabric import create_test_fabric_entry
 from tests.fixtures.factories.interface import (
     create_test_interface,
     create_test_interface_entry,
+    create_test_interface_ip_addresses_entry,
 )
 from tests.fixtures.factories.machines import create_test_machine
 from tests.fixtures.factories.node_config import create_test_node_config_entry
@@ -400,3 +405,98 @@ class TestInterfaceRepository:
         )
 
         assert len(retrieved_interfaces) == 0
+
+    async def test_get_node_for_interface(
+        self,
+        db_connection: AsyncConnection,
+        fixture: Fixture,
+    ) -> None:
+        bmc = await create_test_bmc(fixture)
+        user = await create_test_user(fixture)
+        machine = (
+            await create_test_machine(fixture, bmc=bmc, user=user)
+        ).dict()
+        config = await create_test_node_config_entry(fixture, node=machine)
+        machine["current_config_id"] = config["id"]
+        interface = await create_test_interface_entry(fixture, node=machine)
+
+        interfaces_repository = InterfaceRepository(
+            context=Context(connection=db_connection),
+        )
+
+        node = await interfaces_repository.get_node_for_interface(interface)
+
+        assert node.id == machine["id"]
+
+    async def test_add_ip(
+        self,
+        db_connection: AsyncConnection,
+        fixture: Fixture,
+    ) -> None:
+        bmc = await create_test_bmc(fixture)
+        user = await create_test_user(fixture)
+        machine = (
+            await create_test_machine(fixture, bmc=bmc, user=user)
+        ).dict()
+        config = await create_test_node_config_entry(fixture, node=machine)
+        machine["current_config_id"] = config["id"]
+        interface = await create_test_interface_entry(fixture, node=machine)
+        fabric = await create_test_fabric_entry(fixture)
+        vlan = await create_test_vlan_entry(fixture, fabric=fabric)
+        subnet = await create_test_subnet_entry(fixture, vlan=vlan)
+        ips = await create_test_staticipaddress_entry(fixture, subnet=subnet)
+
+        interfaces_repository = InterfaceRepository(
+            context=Context(connection=db_connection),
+        )
+
+        await interfaces_repository.add_ip(
+            interface, StaticIPAddress(**ips[0])
+        )
+
+        stmt = (
+            select(InterfaceIPAddressTable.c.staticipaddress_id)
+            .select_from(InterfaceIPAddressTable)
+            .filter(InterfaceIPAddressTable.c.interface_id == interface.id)
+        )
+
+        [result] = (await db_connection.execute(stmt)).one()
+
+        assert result == ips[0]["id"]
+
+    async def remove_ip(
+        self, db_connection: AsyncConnection, fixture: Fixture
+    ) -> None:
+        bmc = await create_test_bmc(fixture)
+        user = await create_test_user(fixture)
+        machine = (
+            await create_test_machine(fixture, bmc=bmc, user=user)
+        ).dict()
+        config = await create_test_node_config_entry(fixture, node=machine)
+        machine["current_config_id"] = config["id"]
+        interface = await create_test_interface_entry(fixture, node=machine)
+        fabric = await create_test_fabric_entry(fixture)
+        vlan = await create_test_vlan_entry(fixture, fabric=fabric)
+        subnet = await create_test_subnet_entry(fixture, vlan=vlan)
+        ips = await create_test_staticipaddress_entry(fixture, subnet=subnet)
+        await create_test_interface_ip_addresses_entry(
+            fixutre, interface.id, ips[0]["id"]
+        )
+
+        interfaces_repository = InterfaceRepository(
+            context=Context(connection=db_connection),
+        )
+
+        await interfaces_repository.remove_ip(
+            interface, StaticIPAddress(**ips[0])
+        )
+
+        stmt = (
+            select(InterfaceIPAddressTable.c.staticipaddress_id)
+            .select_from(InterfaceIPAddressTable)
+            .filter(InterfaceIPAddressTable.c.interface_id == interface.id)
+        )
+
+        result = (await db_connection.execute(stmt)).one_or_none()
+
+        assert result is None

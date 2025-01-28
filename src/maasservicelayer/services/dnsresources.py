@@ -12,6 +12,7 @@ from maasservicelayer.db.repositories.dnsresources import (
     DNSResourceRepository,
 )
 from maasservicelayer.db.repositories.domains import DomainsClauseFactory
+from maasservicelayer.models.dnsdata import DNSData
 from maasservicelayer.models.dnsresources import (
     DNSResource,
     DNSResourceBuilder,
@@ -228,3 +229,53 @@ class DNSResourcesService(
                 zone=domain.name,
                 answer=str(ip.ip),
             )
+
+    async def get_dnsdata_for_dnsresource(
+        self, dnsrr: DNSResource
+    ) -> list[DNSData]:
+        return await self.repository.get_dnsdata_for_dnsresource(dnsrr)
+
+    async def add_ip(
+        self, sip: StaticIPAddress, name: str, domain: Domain
+    ) -> None:
+        if sip.alloc_type == IpAddressType.DISCOVERED:
+            await self.update_dynamic_hostname(sip, name)
+        else:
+            dnsrr = await self.repository.get_one(
+                query=QuerySpec(
+                    where=DNSResourceClauseFactory.and_clauses(
+                        [
+                            DNSResourceClauseFactory.with_name(name),
+                            DNSResourceClauseFactory.with_domain_id(domain.id),
+                        ]
+                    ),
+                )
+            )
+            await self.repository.link_ip(dnsrr, sip)
+
+    async def remove_ip(
+        self, sip: StaticIPAddress, name: str, domain: Domain
+    ) -> bool:
+        if sip.alloc_type == IpAddressType.DISCOVERED:
+            await self.release_dynamic_hostname(sip, name)
+            return False
+
+        dnsrr = await self.repository.get_one(
+            query=QuerySpec(
+                where=DNSResourceClauseFactory.and_clauses(
+                    [
+                        DNSResourceClauseFactory.with_name(name),
+                        DNSResourceClauseFactory.with_domain_id(domain.id),
+                    ]
+                ),
+            )
+        )
+        await self.repository.remove_ip_relation(dnsrr, sip)
+
+        ips = await self.repository.get_ips_for_dnsresource(dnsrr)
+        if not ips:
+            dnsdata = await self.get_dnsdata_for_dnsresource(dnsrr)
+            if not dnsdata:
+                await self.repository.delete_by_id(dnsrr.id)
+            return True
+        return False

@@ -10,10 +10,12 @@ from maascommon.enums.ipaddress import IpAddressType
 from maasservicelayer.db.filters import Clause, ClauseFactory
 from maasservicelayer.db.repositories.base import BaseRepository
 from maasservicelayer.db.tables import (
+    DNSDataTable,
     DNSResourceIPAddressTable,
     DNSResourceTable,
     StaticIPAddressTable,
 )
+from maasservicelayer.models.dnsdata import DNSData
 from maasservicelayer.models.dnsresources import DNSResource
 from maasservicelayer.models.domains import Domain
 from maasservicelayer.models.staticipaddress import StaticIPAddress
@@ -117,3 +119,28 @@ class DNSResourceRepository(BaseRepository[DNSResource]):
         )
 
         await self.connection.execute(stmt)
+
+    async def unlink_ip(self, dnsrr: DNSResource, ip: StaticIPAddress) -> None:
+        stmt = delete(DNSResourceIPAddressTable).where(
+            DNSResourceIPAddressTable.c.dnsresource_id == dnsrr.id,
+            DNSResourceIPAddressTable.c.staticipaddress_id == ip.id,
+        )
+
+        await self.connection.execute(stmt)
+
+    async def get_dnsdata_for_dnsresource(
+        self, dnsrr: DNSResource
+    ) -> list[DNSData]:
+        stmt = (
+            select(DNSDataTable)
+            .select_from(DNSResourceTable)
+            .join(
+                DNSDataTable,
+                DNSDataTable.c.dnsresource_id == DNSResourceTable.c.id,
+            )
+            .filter(DNSResourceTable.c.id == dnsrr.id)
+        )
+
+        result = (await self.connection.execute(stmt)).all()
+
+        return [DNSData(**r._asdict()) for r in result]

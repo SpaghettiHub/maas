@@ -44,6 +44,7 @@ class Interface(MaasTimestampedBaseModel):
     name: str
     type: InterfaceType
     mac_address: Optional[str]
+    node_config_id: int
     # TODO
     # effective_mtu: int = 0
     link_connected: bool = True

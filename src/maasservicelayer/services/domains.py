@@ -6,6 +6,7 @@ from maascommon.enums.dns import DnsUpdateAction
 from maasservicelayer.context import Context
 from maasservicelayer.db.repositories.domains import DomainsRepository
 from maasservicelayer.models.domains import Domain, DomainBuilder
+from maasservicelayer.models.nodes import Node
 from maasservicelayer.services._base import BaseService
 from maasservicelayer.services.dnspublications import DNSPublicationsService
 
@@ -65,3 +66,11 @@ class DomainsService(BaseService[Domain, DomainsRepository, DomainBuilder]):
 
     async def get_default_domain(self) -> Domain:
         return await self.repository.get_default_domain()
+
+    async def get_domain_for_node(self, node: Node) -> Domain:
+        if node.domain_id:
+            result = await self.repository.get_by_id(node.domain_id)
+        else:
+            result = await self.get_default_domain()
+
+        return result

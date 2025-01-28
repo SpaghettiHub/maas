@@ -15,6 +15,10 @@ class Node(MaasTimestampedBaseModel):
     power_state: PowerState
     power_state_updated: datetime | None
     owner_id: Optional[int] = None
+    hostname: Optional[str] = ""
+    boot_interface_id: Optional[int] = None
+    current_config_id: Optional[int] = None
+    domain_id: Optional[int] = None
 
 
 NodeBuilder = make_builder(Node)

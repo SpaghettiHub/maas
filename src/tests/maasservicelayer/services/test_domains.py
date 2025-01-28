@@ -6,10 +6,13 @@ from unittest.mock import Mock
 import pytest
 
 from maascommon.enums.dns import DnsUpdateAction
+from maascommon.enums.node import NodeStatus
+from maascommon.enums.power import PowerState
 from maasservicelayer.context import Context
 from maasservicelayer.db.repositories.domains import DomainsRepository
 from maasservicelayer.models.base import MaasBaseModel
 from maasservicelayer.models.domains import Domain, DomainBuilder
+from maasservicelayer.models.nodes import Node
 from maasservicelayer.services._base import BaseService
 from maasservicelayer.services.dnspublications import DNSPublicationsService
 from maasservicelayer.services.domains import DomainsService
@@ -314,3 +317,56 @@ class TestDomainsService:
             source="removed zone example.com",
             action=DnsUpdateAction.RELOAD,
         )
+
+    async def test_get_domain_for_node_domain_set(self):
+        domain = Domain(id=1, name="test-domain", authoritative=True, ttl=30)
+        node = Node(
+            id=2,
+            system_id="abcdef",
+            hostname="test-node",
+            domain_id=domain.id,
+            status=NodeStatus.READY,
+            power_state=PowerState.OFF,
+        )
+
+        domains_repository = Mock(DomainsRepository)
+        domains_repository.get_by_id.return_value = domain
+        dnspublications_service = Mock(DNSPublicationsService)
+
+        service = DomainsService(
+            context=Context(),
+            dnspublications_service=dnspublications_service,
+            domains_repository=domains_repository,
+        )
+
+        result = await service.get_domain_for_node(node)
+
+        assert result.id == domain.id
+
+        domains_repository.get_by_id.assert_called_once_with(domain.id)
+
+    async def test_get_domain_for_node_domain_not_set(self):
+        domain = Domain(id=1, name="test-domain", authoritative=True, ttl=30)
+        node = Node(
+            id=2,
+            system_id="abcdef",
+            hostname="test-node",
+            status=NodeStatus.READY,
+            power_state=PowerState.OFF,
+        )
+
+        domains_repository = Mock(DomainsRepository)
+        domains_repository.get_default_domain.return_value = domain
+        dnspublications_service = Mock(DNSPublicationsService)
+
+        service = DomainsService(
+            context=Context(),
+            dnspublications_service=dnspublications_service,
+            domains_repository=domains_repository,
+        )
+
+        result = await service.get_domain_for_node(node)
+
+        assert result.id == domain.id
+
+        domains_repository.get_default_domain.assert_called_once()

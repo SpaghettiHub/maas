@@ -3,7 +3,7 @@
 
 from typing import Any, List
 
-from sqlalchemy import desc, insert, select, Select
+from sqlalchemy import delete, desc, insert, select, Select
 from sqlalchemy.sql.expression import func
 from sqlalchemy.sql.functions import count
 from sqlalchemy.sql.operators import eq
@@ -20,6 +20,7 @@ from maasservicelayer.db.tables import (
 )
 from maasservicelayer.models.base import ListResult
 from maasservicelayer.models.interfaces import Interface, Link
+from maasservicelayer.models.nodes import Node
 from maasservicelayer.models.staticipaddress import StaticIPAddress
 
 
@@ -126,6 +127,16 @@ class InterfaceRepository:
 
         await self.connection.execute(stmt)
 
+    async def remove_ip(
+        self, interface: Interface, ip: StaticIPAddress
+    ) -> None:
+        stmt = delete(InterfaceIPAddressTable).where(
+            InterfaceIPAddressTable.c.interface_id == interface.id,
+            InterfaceIPAddressTable.c.staticipaddress_id == ip.id,
+        )
+
+        await self.connection.execute(stmt)
+
     async def _find_discovered_ip_for_dhcp_links(
         self, interfaces, node_id
     ) -> None:
@@ -226,6 +237,7 @@ class InterfaceRepository:
                 InterfaceTable.c.name,
                 InterfaceTable.c.type,
                 InterfaceTable.c.mac_address,
+                InterfaceTable.c.node_config_id,
                 # TODO
                 # VlanTable.c.mtu.label("effective_mtu"),
                 InterfaceTable.c.link_connected,
@@ -281,3 +293,22 @@ class InterfaceRepository:
                 # VlanTable.c.mtu,
             )
         )
+
+    async def get_node_for_interface(
+        self, interface: Interface
+    ) -> Node | None:
+        stmt = (
+            select(NodeTable)
+            .select_from(NodeConfigTable)
+            .join(
+                NodeTable,
+                NodeTable.c.current_config_id == NodeConfigTable.c.id,
+            )
+            .filter(NodeConfigTable.c.id == interface.node_config_id)
+        )
+
+        result = (await self.connection.execute(stmt)).one_or_none()
+        if not result:
+            return None
+
+        return Node(**result._asdict())
