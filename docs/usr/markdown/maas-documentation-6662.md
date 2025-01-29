@@ -72,7 +72,7 @@ Considering MAAS for your next project? [Get in touch](/t/how-to-contact-us/5448
 | 2     | how-to-deploy-vms-on-ibm-z              | [Deploy VMs on IBM Z](/t/how-to-deploy-vms-on-ibm-z/7885)                      |
 | 2     | how-to-use-logging                      | [Use logging](/t/how-to-use-logging/6956)                                      |
 | 2     | how-to-use-group-machines           | [Group machines](/t/-/8833)                                            |
-| 2     | how-to-use-cloud-init-with-maas         | [Use cloud-init with MAAS](/t/how-to-use-cloud-init-with-maas/9122)            |
+| 2     | how-to-use-cloud-init-with-maas         | [Use cloud-init with MAAS](/t/how-to-use-cloud-init-with-maas-step-by-step-examples/9122)            |
 | 2     | how-to-authenticate-to-the-maas-api     | [Login to the MAAS API](/t/how-to-authenticate-to-the-maas-api/5060)           |
 | 2     | how-to-use-the-python-api-client        | [Script MAAS with Python](/t/how-to-use-the-python-api-client/5404)            |
 | 2     | how-to-enhance-maas-security            | [Enhance MAAS security](/t/how-to-enhance-maas-security/5196)                  |
