@@ -130,20 +130,14 @@ def handle_single_topic(args, md_dir, api, git_root):
     repo_md_copy = copy_file_to_temp(markdown_file, temp_working_dir, args.d)
     discourse_md = api.get_markdown(args.tnum)
     write_file(markdown_file, discourse_md)
-    commit_changes_to_repo(git_root)
+    if args.p:
+        commit_changes_to_repo(git_root)
     discourse_md_copy = copy_discourse_version(
         markdown_file, temp_working_dir, args.d
     )
     edit_with_emacs(repo_md_copy, discourse_md_copy)
     handle_commit_and_publish(
-        args,
-        markdown_file,
-        repo_md_copy,
-        api,
-        temp_working_dir,
-        git_root,
-        deb_dir,
-        snap_dir,
+        args, markdown_file, repo_md_copy, api, temp_working_dir, git_root
     )
 
 
@@ -225,8 +219,6 @@ def handle_commit_and_publish(
     api,
     temp_working_dir,
     git_root,
-    deb_dir,
-    snap_dir,
 ):
     if ask_yes_no_question("commit changes to launchpad?"):
         shutil.copy(repo_md_copy, markdown_file)
@@ -245,34 +237,6 @@ def handle_commit_and_publish(
         print(f"discourse topic {args.tnum} updated.")
     else:
         print("no changes published to discourse")
-
-    if ask_yes_no_question("publish changes to html?"):
-        html_filename = re.sub(
-            r"-(\d+)\.md$", ".html", markdown_file.split("/")[-1]
-        )
-        if args.d:
-            print(f"markdown filename (markdown_file): {markdown_file}")
-            print(f"html filename (html_filename): {html_filename}")
-        with open(markdown_file, "r") as f:
-            markdown_content = f.read()
-        new_content = re.sub(
-            r"/t/([\w-]+)(?:/[\d]+)", r"\1.html", markdown_content
-        )
-        temp_markdown_file = os.path.join(
-            temp_working_dir, html_filename + ".tmp.md"
-        )
-        write_file(temp_markdown_file, new_content)
-        topic_title = api.get_title(args.tnum)
-        convert_to_html(
-            git_root,
-            temp_markdown_file,
-            topic_title,
-            deb_dir,
-            snap_dir,
-            html_filename,
-        )
-    else:
-        print("html docs not updated")
 
 
 def ask_yes_no_question(prompt):
@@ -333,6 +297,3 @@ if args.a:
 
 if not args.a:
     handle_single_topic(args, md_dir, api, git_root)
-
-print(git_root, md_dir)
-sys.exit(0)
