@@ -1,10 +1,29 @@
 #  Copyright 2024-2025 Canonical Ltd.  This software is licensed under the
 #  GNU Affero General Public License version 3 (see the file LICENSE).
 
+from datetime import datetime
+
+from pydantic import IPvAnyAddress
+
+from maascommon.enums.events import EventTypeEnum
+from maascommon.events import EVENT_DETAILS_MAP, EventDetail
 from maasservicelayer.builders.events import EventBuilder
 from maasservicelayer.context import Context
-from maasservicelayer.db.repositories.events import EventsRepository
-from maasservicelayer.models.events import Event
+from maasservicelayer.db.repositories.events import (
+    EventsRepository,
+    EventTypesRepository,
+)
+from maasservicelayer.exceptions.catalog import (
+    BadRequestException,
+    BaseExceptionDetail,
+)
+from maasservicelayer.exceptions.constants import UNKNOWN_EVENT_TYPE_TYPE
+from maasservicelayer.models.events import (
+    EndpointChoicesEnum,
+    Event,
+    EventType,
+)
+from maasservicelayer.models.nodes import Node
 from maasservicelayer.services.base import BaseService
 
 
@@ -13,5 +32,53 @@ class EventsService(BaseService[Event, EventsRepository, EventBuilder]):
         self,
         context: Context,
         events_repository: EventsRepository,
+        eventtypes_repository: EventTypesRepository,
     ):
         super().__init__(context, events_repository)
+        self.eventtypes_repository = eventtypes_repository
+
+    async def ensure_event_type(
+        self, event_type: EventTypeEnum, detail: EventDetail
+    ) -> EventType:
+        detail = detail or EVENT_DETAILS_MAP.get(event_type)
+        if not detail:
+            raise BadRequestException(
+                details=[
+                    BaseExceptionDetail(
+                        type=UNKNOWN_EVENT_TYPE_TYPE,
+                        message="Resource with such identifiers does not exist.",
+                    )
+                ]
+            )
+
+        return await self.eventtypes_repository.ensure(event_type, detail)
+
+    async def record_event(
+        self,
+        node: Node,
+        event_type: EventTypeEnum,
+        event_action: str = "",
+        event_description: str = "",
+        user: str | None = None,
+        ip_address: IPvAnyAddress | None = None,
+        endpoint: EndpointChoicesEnum = EndpointChoicesEnum.API,
+        user_agent: str = "",
+        created: datetime | None = None,
+    ) -> None:
+        await self.ensure_event_type(event_type)
+
+        await self.repository.create(
+            EventBuilder(
+                type=event_type,
+                node_system_id=node.system_id,
+                node_hostname=node.hostname,
+                user_id=None,
+                owner=user or "",
+                endpoint=endpoint,
+                user_agent=user_agent,
+                description=event_description,
+                action=event_action,
+                ip_address=ip_address,
+                created=created,
+            )
+        )

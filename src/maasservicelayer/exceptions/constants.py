@@ -21,12 +21,17 @@ CANNOT_DELETE_FABRIC_WITH_CONNECTED_INTERFACE_VIOLATION_TYPE = (
     "CannotDeleteFabricWithConnectedInterfacesViolation"
 )
 
+# Events
+
+UNKNOWN_EVENT_TYPE_TYPE = "UnknownEventType"
+
 # Generic
 UNIQUE_CONSTRAINT_VIOLATION_TYPE = "UniqueConstraintViolation"
 ETAG_PRECONDITION_VIOLATION_TYPE = "EtagPreconditionViolation"
 UNEXISTING_RESOURCE_VIOLATION_TYPE = "UnexistingResourceViolation"
 INVALID_ARGUMENT_VIOLATION_TYPE = "InvalidArgumentViolation"
 PRECONDITION_FAILED = "PreconditionFailed"
+BAD_REQUEST = "BadRequest"
 
 # VLANs
 CANNOT_DELETE_DEFAULT_FABRIC_VLAN_VIOLATION_TYPE = (

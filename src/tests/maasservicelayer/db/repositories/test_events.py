@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncConnection
 from sqlalchemy.sql.operators import eq
 
+from maasservicelayer.builders.events import EventBuilder
 from maasservicelayer.context import Context
 from maasservicelayer.db._debug import CompiledQuery
 from maasservicelayer.db.filters import QuerySpec
@@ -15,13 +16,20 @@ from maasservicelayer.db.repositories.events import (
 )
 from maasservicelayer.db.tables import EventTable, NodeTable
 from maasservicelayer.models.base import ResourceBuilder
-from maasservicelayer.models.events import Event
+from maasservicelayer.models.events import (
+    EndpointChoicesEnum,
+    Event,
+    EventType,
+)
 from tests.fixtures.factories.bmc import create_test_bmc
 from tests.fixtures.factories.events import (
     create_test_event_entry,
     create_test_event_type_entry,
 )
-from tests.fixtures.factories.machines import create_test_machine
+from tests.fixtures.factories.machines import (
+    create_test_machine,
+    create_test_machine_entry,
+)
 from tests.fixtures.factories.user import create_test_user
 from tests.maasapiserver.fixtures.db import Fixture
 from tests.maasservicelayer.db.repositories.base import RepositoryCommonTests
@@ -59,11 +67,18 @@ class TestEventsRepository(RepositoryCommonTests[Event]):
         return EventsRepository(Context(connection=db_connection))
 
     @pytest.fixture
+    async def event_type(self, fixture: Fixture) -> EventType:
+        return await create_test_event_type_entry(fixture)
+
+    @pytest.fixture
+    async def node(self, fixture: Fixture):
+        return await create_test_machine_entry(fixture)
+
+    @pytest.fixture
     async def _setup_test_list(
-        self, fixture: Fixture, num_objects: int
+        self, fixture: Fixture, event_type: EventType, num_objects: int
     ) -> list[Event]:
 
-        event_type = await create_test_event_type_entry(fixture)
         created_events = [
             (
                 await create_test_event_entry(
@@ -79,8 +94,9 @@ class TestEventsRepository(RepositoryCommonTests[Event]):
         return created_events
 
     @pytest.fixture
-    async def created_instance(self, fixture: Fixture) -> Event:
-        event_type = await create_test_event_type_entry(fixture)
+    async def created_instance(
+        self, fixture: Fixture, event_type: EventType
+    ) -> Event:
         return await create_test_event_entry(
             fixture,
             event_type=event_type,
@@ -89,69 +105,59 @@ class TestEventsRepository(RepositoryCommonTests[Event]):
             user_agent="me",
         )
 
-    # TODO
     @pytest.fixture
-    async def instance_builder(self) -> ResourceBuilder:
-        return ResourceBuilder()
+    async def instance_builder(
+        self, event_type: EventType, node
+    ) -> ResourceBuilder:
+        return EventBuilder(
+            type=event_type,
+            node_system_id=node["system_id"],
+            node_hostname=node["hostname"],
+            owner="",
+            endpoint=EndpointChoicesEnum.API,
+            user_agent="user_agent",
+            description="event_description",
+            action="event_action",
+        )
 
-    @pytest.mark.skip(reason="Not implemented yet")
-    async def test_create(self, repository_instance, instance_builder):
+    @pytest.fixture
+    async def instance_builder_model(self) -> type[ResourceBuilder]:
+        return EventBuilder
+
+    @pytest.mark.skip(reason="Not applicable")
+    async def test_create_duplicated(self):
         pass
 
     @pytest.mark.skip(reason="Not implemented yet")
-    async def test_create_duplicated(
-        self, repository_instance, instance_builder
-    ):
+    async def test_delete_one(self):
         pass
 
     @pytest.mark.skip(reason="Not implemented yet")
-    async def test_delete_one(self, repository_instance, created_instance):
+    async def test_delete_one_multiple_results(self):
         pass
 
     @pytest.mark.skip(reason="Not implemented yet")
-    async def test_delete_one_multiple_results(
-        self, repository_instance, created_instance
-    ):
+    async def test_delete_by_id(self):
         pass
 
     @pytest.mark.skip(reason="Not implemented yet")
-    async def test_delete_by_id(self, repository_instance, created_instance):
+    async def test_delete_many(self):
         pass
 
     @pytest.mark.skip(reason="Not implemented yet")
-    async def test_delete_many(self, repository_instance, created_instance):
+    async def test_update_by_id(self):
         pass
 
     @pytest.mark.skip(reason="Not implemented yet")
-    async def test_update_by_id(self, repository_instance, instance_builder):
+    async def test_update_one(self):
         pass
 
     @pytest.mark.skip(reason="Not implemented yet")
-    async def test_update_one(self, repository_instance, instance_builder):
+    async def test_update_one_multiple_results(self):
         pass
 
     @pytest.mark.skip(reason="Not implemented yet")
-    async def test_update_one_multiple_results(
-        self, repository_instance, instance_builder
-    ):
-        pass
-
-    @pytest.mark.skip(reason="Not implemented yet")
-    async def test_update_many(self, repository_instance, instance_builder):
-        pass
-
-    @pytest.mark.skip(reason="Not implemented yet")
-    async def test_get_by_id_not_found(
-        self, repository_instance: EventsRepository
-    ):
-        pass
-
-    @pytest.mark.skip(reason="Not implemented yet")
-    async def test_get_by_id(
-        self,
-        repository_instance: EventsRepository,
-        created_instance: Event,
-    ):
+    async def test_update_many(self):
         pass
 
     async def test_list_filter(
