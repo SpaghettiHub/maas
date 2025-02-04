@@ -37,8 +37,8 @@ You will need:
 * Ubuntu 18.04 LTS or higher OR Windows with Hyper-V 
 (**Note:** this tutorial has been tested with Ubuntu, but there are reports it works with Hyper-V on Windows. Read more about enabling Hyper-V [here](https://docs.microsoft.com/en-us/virtualization/hyper-v-on-windows/quick-start/enable-hyper-v).)
 * 16 GB of RAM
-* A quad core CPU with virtualisation support (Intel VT or AMD-V)
-* Virtualisation support enabled in the BIOS
+* A quad core CPU with virtualization support (Intel VT or AMD-V)
+* Virtualization support enabled in the BIOS
 * 30 GB of free disk space
 
 The memory and disk space is required because we will later be launching nested VMs inside our new environment using MAAS and LXD.
@@ -76,9 +76,9 @@ multipass delete --purge foo
 
 Congratulations, you've just run a test VM with Multipass! Now it's time to create your MAAS and LXD environment.
 
-<h2>Check whether virtualisation is working</h2>
+<h2>Check whether virtualization is working</h2>
 
-We now need to check whether virtualisation is working correctly. This is a relatively simple process. In your terminal, run:
+We now need to check whether virtualization is working correctly. This is a relatively simple process. In your terminal, run:
 
 ```bash
 sudo apt install cpu-checker
@@ -89,10 +89,10 @@ You should see the following output:
 
 ![Screenshot from 2021-10-13 18-29-37|690x201](upload://6uw2WjpTrrggXs0F395Ha33E3tU.png) 
 
-Assuming your machine supports hardware virtualisation, we are ready to move on and launch MAAS.
+Assuming your machine supports hardware virtualization, we are ready to move on and launch MAAS.
 
 > ⚠️ **Note**
-> The tutorial **will not work** unless you have ensured virtualisation support is enabled.
+> The tutorial **will not work** unless you have ensured virtualization support is enabled.
 > The first place to check if you don't see the expected output is your BIOS - consult your motherboard or laptop manufacturer documentation if you are uncertain.
 
 <h2>Launch the MAAS and LXD Multipass environment</h2>
@@ -129,7 +129,7 @@ Great work! Now you're ready to try out MAAS.
 
 <h2>Log into MAAS</h2>
 
-Now that MAAS is running, you need to log in and finalise the setup for MAAS by configuring the DNS and verifying the installation.
+Now that MAAS is running, you need to log in and finalize the setup for MAAS by configuring the DNS and verifying the installation.
 
 From a browser on your computer, go to: 
 
@@ -146,7 +146,7 @@ The DNS in the DNS forwarder field should be pre-populated with `8.8.8.8`, but y
 > ⚠️ **Note**
 > During setup, you might notice the following text displayed as a banner: **"Boot image import process not started ... Visit the boot images page to start the import."** Don't worry, this will go away once MAAS has downloaded what it needs. Don't click on the link in the banner.
 
-Scroll down and click the green **Continue** button. You should then see the **Images** screen. This is where you can tell MAAS which images to automatically download and keep synchronised.  For now, just leave the selections as they are and *Continue*.
+Scroll down and click the green **Continue** button. You should then see the **Images** screen. This is where you can tell MAAS which images to automatically download and keep synchronized.  For now, just leave the selections as they are and *Continue*.
 
 Next, you'll come to the the SSH key setup screen. This is a very important part of using MAAS, because MAAS automatically puts SSH public keys on machines when deploying them, enabling you to gain access to them. Normally you'd have to generate a key-pair or specify your GitHub or Launchpad keys. But this time around, we've taken care of this for you already - there is a key-pair ready and installed inside the VM.  Just skip to the next screen.
 

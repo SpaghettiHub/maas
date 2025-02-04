@@ -253,7 +253,7 @@ sudo make ISO=/mnt/iso/Windows_Server_2025_SERVER_EVAL_x64FRE_en-us.iso VERSION=
 
 #### EDIT
 
-The edition of a targeted ISO image. It defaults to PRO for Microsoft Windows 10/11 and SERVERSTANDARD for Microsoft Windows Servers. Many Microsoft Windows Server ISO images do contain multiple editions and this prarameter is useful to build a particular edition such as Standard or Datacenter etc.
+The edition of a targeted ISO image. It defaults to PRO for Microsoft Windows 10/11 and SERVERSTANDARD for Microsoft Windows Servers. Many Microsoft Windows Server ISO images do contain multiple editions and this parameter is useful to build a particular edition such as Standard or Datacenter etc.
 
 #### HEADLESS
 

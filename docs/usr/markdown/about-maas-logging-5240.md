@@ -9,7 +9,7 @@ This page describes basic MAAS logging operations. For more details, refer to th
 
 ## Logging updates in MAAS 3.5
 
-In 3.5, the MAAS snap uses the [pebble](https://github.com/canonical/pebble) service manager instead of `supervisord`. This means that the `systemd` component was renamed to `snap.maas.pebble.service`.  It contains Pebble logs, as well as intercepted stdout of the services running under Pebble.  The region and rack logs are cached there, as well (i.e., `regiond.log` and `rackd.log` are no more (supervisord was redirecting the stdout of the respective services).
+In 3.5, the MAAS snap uses the [Pebble](https://github.com/canonical/pebble) service manager instead of `supervisord`. This means that the `systemd` component was renamed to `snap.maas.pebble.service`.  It contains Pebble logs, as well as intercepted stdout of the services running under Pebble.  The region and rack logs are cached there, as well (i.e., `regiond.log` and `rackd.log` are no more -- supervisord was redirecting the stdout of the respective services).
 
 Here is a per-service breakdown how logging works in MAAS 3.5:
 
@@ -26,13 +26,13 @@ Pebble logs to `stdout`, redirecting the services to `stdout` if run with `--ver
 
 #### Commands to access the log
 
-To access only the pebble logs:
+To access only the Pebble logs:
 
 ```nohighlight
 journalctl -u snap.maas.pebble.service --case-sensitive -g "^[0-9TZ:.-]{24} \[pebble\]"
 ```
 
-To access pebble and its services logs:
+To access Pebble and its services logs:
 
 ```nohighlight
 journalctl -u snap.maas.pebble.service
@@ -294,11 +294,11 @@ Logs can be found at the following paths depending on your installation type (sn
   - /var/log/maas/rackd.log
   - /var/log/maas/rsyslog/$MACHINE_NAME/$RELEVANT_DATE/messages
 
-Logs can be extensive and challenging to search. The MAAS web UI does not categorise events by type.
+Logs can be extensive and challenging to search. The MAAS web UI does not categorize events by type.
 
 ## Events query (CLI)
 
-The most efficient way to review events is using the `events query` CLI sub-command. This command allows filtering and summarising events. Use `jq` and various filters to simplify output interpretation.
+The most efficient way to review events is using the `events query` CLI sub-command. This command allows filtering and summarizing events. Use `jq` and various filters to simplify output interpretation.
 
 ## Basic queries
 
@@ -334,4 +334,4 @@ Example usage of these filters can narrow down event listings significantly.
 
 Audit events, tagged with `AUDIT`, record MAAS configuration changes and machine state transitions. They're essential for tracking user actions and system updates, especially in multi-user environments.
 
-Use audit events alongside `jq` and command-line text tools to analyse actions like machine deletions, configuration changes, and user activities. This can provide insights into system changes and help identify areas for attention or improvement.
+Use audit events alongside `jq` and command-line text tools to analyze actions like machine deletions, configuration changes, and user activities. This can provide insights into system changes and help identify areas for attention or improvement.

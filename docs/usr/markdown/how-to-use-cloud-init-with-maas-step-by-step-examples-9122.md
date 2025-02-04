@@ -1,4 +1,4 @@
-Cloud-init is a powerful part of the MAAS customisation suite.  This article walks through specific usage of cloud-init scripts to customise and automate MAAS instances. Cloud-init helps you set up machines automatically; here are some common examples.
+Cloud-init is a powerful part of the MAAS customization suite.  This article walks through specific usage of cloud-init scripts to customize and automate MAAS instances. Cloud-init helps you set up machines automatically; here are some common examples.
 
 ## What is cloud-init?
 

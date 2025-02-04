@@ -601,7 +601,7 @@ You are experiencing an issue where newly commissioned servers in your MAAS 3.1 
 
 By following these steps, you should be able to troubleshoot and resolve the issue preventing your servers from commissioning successfully in MAAS.
 
-## DHCP service stops when network connection between region andf racks is disconnected
+## DHCP service stops when network connection between region and racks is disconnected
 
 **Problem:**
 When the network connection between the MAAS region controller and rack controllers is interrupted, the DHCP services on the rack nodes stop, causing deployed machines to lose their IP addresses after the lease time expires. The issue resolves itself when the network hardware is rebooted.

@@ -289,7 +289,7 @@ In addition to operational testing, MAAS can also test your network link
 
 ## Allocate a machine
 
-Allocation confers ownership of a machine to the user who allocates it.  Other users cannot commandeer an allocation machine.
+Allocation confers ownership of a machine to the user who allocates it.  Other users cannot commandeer an allocated machine.
 
 **CLI**
   ```bash

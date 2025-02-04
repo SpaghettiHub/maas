@@ -12,7 +12,7 @@ Discovery runs periodically to capture any network changes. This feature, which 
 
 Machines that MAAS can provision have a baseboard management controller or BMC. A BMC is a separate CPU often included on the motherboard of servers and devices. Its capabilities are limited to managing and monitoring the health of the device. The BMC has sensors for physical characteristics like temperature and power supply voltage, and controls for rebooting or power-cycling the device.
 
-MAAS uses the BMC to turn remote devices on or off, and reboot them at will. A BMC can also monitor BIOS or UEFI, provide a serial console for the device, and do a few other things with the hardware -- but most of them are uninteresting from a MAAS perspective. For the purposes of this discussion, our main interest in the BMC is the ability to power cycle and reboot machines.
+MAAS uses the BMC to turn remote devices on or off, and reboot them at will. A BMC can also monitor BIOS or UEFI, provide a serial console for the device, and do a few other things with the hardware -- but most of them are uninteresting from a MAAS perspective. For the purposes of this discussion, our main interest in the BMC is the ability to power-cycle and reboot machines.
 
 ## Network booting and PXE
 
@@ -22,7 +22,7 @@ This also means the NIC must be capable of PXE booting (PXE stands for Preboot E
 
 ## DHCP
 
-So we've seen that the BMC handles power cycling the machine, and the NIC handles booting it remotely. Let's quickly dive into DHCP, which mediates the boot process.
+So we've seen that the BMC handles power-cycling the machine, and the NIC handles booting it remotely. Let's quickly dive into DHCP, which mediates the boot process.
 
 DHCP stands for Dynamic Host Control Protocol, which simply means that it gives a host a unique IP address that won't collide with other devices on that network. The DHCP protocol consists of four messages:
 
@@ -34,7 +34,7 @@ DHCP stands for Dynamic Host Control Protocol, which simply means that it gives 
 DHCP also offers several optional services, like configuring DNS, gateway, and routing; load-balancing and failover; and VLAN and QoS configuration. MAAS depends on one of these optional features: bootstrapping services (PXE booting). Properly configured DHCP is capable of specifying several PXE-boot parameters:
 
 * next-server: Specifies the TFTP/HTTP server for PXE booting clients.
-* filename: Specifies the path to the boot file (e.g., bootloader) for PXE boot.
+* filename: Specifies the path to the boot file (e.g. bootloader) for PXE boot.
 * option 67: Also used to specify the boot file name in some DHCP configurations.
 * option 66: Points to the boot server hostname or IP address.
 
