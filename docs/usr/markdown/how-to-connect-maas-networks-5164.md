@@ -69,7 +69,7 @@ Netplan configurations can be used to set up bridges outside of MAAS.
                addresses:
                - 10.0.0.101/24
                gateway4: 10.0.0.1
-              interfaces:
+               interfaces:
                - enp1s0
                macaddress: 52:54:00:39:9d:f9
    ```
@@ -576,5 +576,3 @@ An administrator can also set a DNS forwarder.
   ```bash
   maas $PROFILE maas set-config name=upstream_dns value=$MY_UPSTREAM_DNS
   ```
-
-
