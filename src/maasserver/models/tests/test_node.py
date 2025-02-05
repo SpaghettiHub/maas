@@ -28,6 +28,10 @@ from twisted.internet.defer import succeed
 from twisted.internet.error import ConnectionDone
 import yaml
 
+from maascommon.workflows.dhcp import (
+    CONFIGURE_DHCP_WORKFLOW_NAME,
+    ConfigureDHCPParam,
+)
 from maasserver import server_address
 from maasserver import workflow as workflow_module
 from maasserver.clusterrpc.driver_parameters import get_driver_choices
@@ -621,7 +625,9 @@ class TestRackControllerManager(MAASServerTestCase):
         if subnet is None:
             subnet = static_ip.subnet
         static_ip.ip = factory.pick_ip_in_Subnet(subnet)
-        static_ip.save()
+
+        with post_commit_hooks:
+            static_ip.save()
         return rack
 
     def test_rack_controller_lists_node_type_rack_controller(self):
@@ -1588,8 +1594,10 @@ class TestNode(MAASServerTestCase):
             },
         )
         node.bmc = bmc
-        node.save()
-        node.delete()
+
+        with post_commit_hooks:
+            node.save()
+            node.delete()
         self.assertIsNone(reload_object(bmc))
 
     # Deleting Node deletes BMC. Regression for lp:1586555.
@@ -1602,12 +1610,14 @@ class TestNode(MAASServerTestCase):
             },
         )
         nodes = [factory.make_Node(bmc=bmc), factory.make_Node(bmc=bmc)]
-        # Shouldn't delete BMC, as 2nd node is still using it.
-        nodes[0].delete()
-        self.assertIsNotNone(reload_object(bmc))
-        # Should now delete BMC, as nobody else is using it.
-        nodes[1].delete()
-        self.assertIsNone(reload_object(bmc))
+
+        with post_commit_hooks:
+            # Shouldn't delete BMC, as 2nd node is still using it.
+            nodes[0].delete()
+            self.assertIsNotNone(reload_object(bmc))
+            # Should now delete BMC, as nobody else is using it.
+            nodes[1].delete()
+            self.assertIsNone(reload_object(bmc))
 
     def test_delete_node_doesnt_delete_pod(self):
         node = factory.make_Node()
@@ -6095,7 +6105,8 @@ class TestNode(MAASServerTestCase):
         factory.make_StaticIPAddress(interface=iface, subnet=subnet)
         node = factory.make_Node_with_Interface_on_Subnet(ifname="eth0")
         mapping = node._get_interface_mapping_between_nodes(source_node)
-        [exclude_address] = node._copy_between_interface_mappings(mapping)
+        with post_commit_hooks:
+            [exclude_address] = node._copy_between_interface_mappings(mapping)
         self.assertIn(IPAddress(exclude_address), IPNetwork(subnet.cidr))
 
     def test_delete_deletes_node_power_secrets(self):
@@ -6112,6 +6123,32 @@ class TestNode(MAASServerTestCase):
             )
         )
 
+    def test_save_does_not_call_configure_dhcp_workflow_on_new(self):
+        mock_start_workflow = self.patch(node_module, "start_workflow")
+        node = Node()
+        node.save()
+        mock_start_workflow.assert_not_called()
+
+    def test_save_calls_configure_dhcp_workflow_if_hostname_changes(self):
+        mock_start_workflow = self.patch(node_module, "start_workflow")
+        node = factory.make_Node()
+        node.hostname = factory.make_name()
+
+        with post_commit_hooks:
+            node.save()
+
+        mock_start_workflow.assert_called_once_with(
+            workflow_name=CONFIGURE_DHCP_WORKFLOW_NAME,
+            param=ConfigureDHCPParam(
+                vlan_ids=[
+                    ip.subnet.vlan.id
+                    for iface in node.current_config.interface_set.all()
+                    for ip in iface.ip_addresses.all()
+                ]
+            ),
+            task_queue="region",
+        )
+
 
 class TestNodePowerParameters(MAASServerTestCase):
     def setUp(self):
@@ -6123,7 +6160,9 @@ class TestNodePowerParameters(MAASServerTestCase):
         node = factory.make_Node(
             power_type="ipmi", power_parameters=parameters
         )
-        node.save()
+
+        with post_commit_hooks:
+            node.save()
         node = reload_object(node)
         self.assertEqual(parameters, node.get_power_parameters())
 
@@ -6134,45 +6173,61 @@ class TestNodePowerParameters(MAASServerTestCase):
 
     def test_power_parameters_from_commissioning_not_new(self):
         node = factory.make_Node(power_type="virsh")
-        node.set_power_config("ipmi", {}, from_commissioning=True)
+
+        with post_commit_hooks:
+            node.set_power_config("ipmi", {}, from_commissioning=True)
         self.assertTrue(node.bmc.created_by_commissioning)
 
     def test_power_parameters_not_from_commissioning_not_new(self):
         node = factory.make_Node(power_type="virsh")
-        node.set_power_config("ipmi", {}, from_commissioning=False)
+
+        with post_commit_hooks:
+            node.set_power_config("ipmi", {}, from_commissioning=False)
         self.assertIsNotNone(node.bmc.created_by_commissioning)
         self.assertFalse(node.bmc.created_by_commissioning)
 
     def test_power_parameters_from_commissioning_not_new_chassis(self):
         node = factory.make_Node(power_type="virsh")
-        node.set_power_config("redfish", {}, from_commissioning=True)
+
+        with post_commit_hooks:
+            node.set_power_config("redfish", {}, from_commissioning=True)
         self.assertTrue(node.bmc.created_by_commissioning)
 
     def test_power_parameters_not_from_commissioning_not_new_chassis(self):
         node = factory.make_Node(power_type="virsh")
-        node.set_power_config("redfish", {}, from_commissioning=False)
+
+        with post_commit_hooks:
+            node.set_power_config("redfish", {}, from_commissioning=False)
         self.assertIsNotNone(node.bmc.created_by_commissioning)
         self.assertFalse(node.bmc.created_by_commissioning)
 
     def test_power_parameters_from_commissioning_new(self):
         node = factory.make_Node(power_type=None)
-        node.set_power_config("ipmi", {}, from_commissioning=True)
+
+        with post_commit_hooks:
+            node.set_power_config("ipmi", {}, from_commissioning=True)
         self.assertTrue(node.bmc.created_by_commissioning)
 
     def test_power_parameters_not_from_commissioning_new(self):
         node = factory.make_Node(power_type=None)
-        node.set_power_config("ipmi", {}, from_commissioning=False)
+
+        with post_commit_hooks:
+            node.set_power_config("ipmi", {}, from_commissioning=False)
         self.assertIsNotNone(node.bmc.created_by_commissioning)
         self.assertFalse(node.bmc.created_by_commissioning)
 
     def test_power_parameters_from_commissioning_new_chassis(self):
         node = factory.make_Node(power_type=None)
-        node.set_power_config("redfish", {}, from_commissioning=True)
+
+        with post_commit_hooks:
+            node.set_power_config("redfish", {}, from_commissioning=True)
         self.assertTrue(node.bmc.created_by_commissioning)
 
     def test_power_parameters_not_from_commissioning_new_chassis(self):
         node = factory.make_Node(power_type=None)
-        node.set_power_config("redfish", {}, from_commissioning=False)
+
+        with post_commit_hooks:
+            node.set_power_config("redfish", {}, from_commissioning=False)
         self.assertIsNotNone(node.bmc.created_by_commissioning)
         self.assertFalse(node.bmc.created_by_commissioning)
 
@@ -6182,13 +6237,15 @@ class TestNodePowerParameters(MAASServerTestCase):
             power_parameters={"power_address": factory.make_ipv4_address()},
         )
         old_value = random.choice([None, True, False])
-        node.bmc.created_by_commissioning = old_value
-        node.bmc.save()
-        node.set_power_config(
-            "ipmi",
-            {"power_address": factory.make_ipv6_address()},
-            from_commissioning=True,
-        )
+
+        with post_commit_hooks:
+            node.bmc.created_by_commissioning = old_value
+            node.bmc.save()
+            node.set_power_config(
+                "ipmi",
+                {"power_address": factory.make_ipv6_address()},
+                from_commissioning=True,
+            )
         self.assertEqual(node.bmc.created_by_commissioning, old_value)
 
     def test_power_type_and_bmc_power_parameters_stored_in_bmc(self):
@@ -6197,8 +6254,10 @@ class TestNodePowerParameters(MAASServerTestCase):
         bmc_parameters = dict(power_address=ip_address)
         node_parameters = dict(server_name=factory.make_string())
         parameters = {**bmc_parameters, **node_parameters}
-        node.set_power_config("hmc", parameters)
-        node.save()
+
+        with post_commit_hooks:
+            node.set_power_config("hmc", parameters)
+            node.save()
         node = reload_object(node)
         self.assertEqual(parameters, node.get_power_parameters())
         self.assertEqual(node_parameters, node.get_instance_power_parameters())
@@ -6216,8 +6275,10 @@ class TestNodePowerParameters(MAASServerTestCase):
             power_type="virsh", power_parameters=parameters
         )
         self.assertFalse(BMC.objects.filter(power_type="manual"))
-        node.set_power_config("manual", {})
-        node.save()
+
+        with post_commit_hooks:
+            node.set_power_config("manual", {})
+            node.save()
         node = reload_object(node)
         self.assertEqual("manual", node.bmc.power_type)
         self.assertEqual({}, node.bmc.get_power_parameters())
@@ -6232,16 +6293,19 @@ class TestNodePowerParameters(MAASServerTestCase):
             power_type="manual", power_parameters=parameters
         )
         bmc_id = node.bmc.id
-        node.set_power_config("manual", {})
-        node.save()
+
+        with post_commit_hooks:
+            node.set_power_config("manual", {})
+            node.save()
         node = reload_object(node)
         self.assertEqual(bmc_id, node.bmc.id)
 
     def test_set_power_config_creates_multiple_bmcs_for_manual(self):
-        node1 = factory.make_Node()
-        node1.set_power_config("manual", {})
-        node2 = factory.make_Node()
-        node2.set_power_config("manual", {})
+        with post_commit_hooks:
+            node1 = factory.make_Node()
+            node1.set_power_config("manual", {})
+            node2 = factory.make_Node()
+            node2.set_power_config("manual", {})
         self.assertNotEqual(node1.bmc, node2.bmc)
 
     def test_power_parameters_are_stored_in_proper_scopes(self):
@@ -6252,8 +6316,10 @@ class TestNodePowerParameters(MAASServerTestCase):
         )
         node_parameters = dict(power_id="maas-x")
         parameters = {**bmc_parameters, **node_parameters}
-        node.set_power_config("virsh", parameters)
-        node.save()
+
+        with post_commit_hooks:
+            node.set_power_config("virsh", parameters)
+            node.save()
         node = reload_object(node)
         self.assertEqual(parameters, node.get_power_parameters())
         self.assertEqual(node_parameters, node.get_instance_power_parameters())
@@ -6267,18 +6333,21 @@ class TestNodePowerParameters(MAASServerTestCase):
         # This random parameters will be stored on the node instance.
         node_parameters[factory.make_string()] = factory.make_string()
         parameters = {**bmc_parameters, **node_parameters}
-        node.set_power_config("hmc", parameters)
-        node.save()
+
+        with post_commit_hooks:
+            node.set_power_config("hmc", parameters)
+            node.save()
         node = reload_object(node)
         self.assertEqual(parameters, node.get_power_parameters())
         self.assertEqual(node_parameters, node.get_instance_power_parameters())
         self.assertEqual(bmc_parameters, node.bmc.get_power_parameters())
 
     def test_none_chassis_bmc_doesnt_consolidate(self):
-        for _ in range(3):
-            node = factory.make_Node()
-            node.set_power_config("manual", {})
-            node.save()
+        with post_commit_hooks:
+            for _ in range(3):
+                node = factory.make_Node()
+                node.set_power_config("manual", {})
+                node.save()
 
         # Should be 3 BMC's even though they all have the same information.
         self.assertEqual(3, BMC.objects.count())
@@ -6290,8 +6359,10 @@ class TestNodePowerParameters(MAASServerTestCase):
             node_parameters = dict(power_id=factory.make_string())
             parameters = {**bmc_parameters, **node_parameters}
             node = factory.make_Node()
-            node.set_power_config("apc", parameters)
-            node.save()
+
+            with post_commit_hooks:
+                node.set_power_config("apc", parameters)
+                node.save()
             node = reload_object(node)
             self.assertEqual(parameters, node.get_power_parameters())
             self.assertEqual(
@@ -6306,53 +6377,54 @@ class TestNodePowerParameters(MAASServerTestCase):
         self.assertNotEqual(nodes[0].bmc_id, nodes[1].bmc_id)
         self.assertNotEqual(nodes[0].bmc_id, nodes[2].bmc_id)
 
-        # Set equivalent bmc power_parameters, and confirm BMC count decrease,
-        # even when the Node's instance_power_parameter varies.
-        parameters["power_id"] = factory.make_string()
-        nodes[0].set_power_config(nodes[0].power_type, parameters)
-        nodes[0].save()
-        nodes[0] = reload_object(nodes[0])
-        # 0 now shares a BMC with 2.
-        self.assertEqual(2, BMC.objects.count())
-        self.assertNotEqual(nodes[0].bmc_id, nodes[1].bmc_id)
-        self.assertEqual(nodes[0].bmc_id, nodes[2].bmc_id)
+        with post_commit_hooks:
+            # Set equivalent bmc power_parameters, and confirm BMC count decrease,
+            # even when the Node's instance_power_parameter varies.
+            parameters["power_id"] = factory.make_string()
+            nodes[0].set_power_config(nodes[0].power_type, parameters)
+            nodes[0].save()
+            nodes[0] = reload_object(nodes[0])
+            # 0 now shares a BMC with 2.
+            self.assertEqual(2, BMC.objects.count())
+            self.assertNotEqual(nodes[0].bmc_id, nodes[1].bmc_id)
+            self.assertEqual(nodes[0].bmc_id, nodes[2].bmc_id)
 
-        parameters["power_id"] = factory.make_string()
-        nodes[1].set_power_config(nodes[1].power_type, parameters)
-        nodes[1].save()
-        nodes[1] = reload_object(nodes[1])
-        # All 3 share the same BMC, and only one exists.
-        self.assertEqual(1, BMC.objects.count())
-        self.assertEqual(nodes[0].bmc_id, nodes[1].bmc_id)
-        self.assertEqual(nodes[0].bmc_id, nodes[2].bmc_id)
+            parameters["power_id"] = factory.make_string()
+            nodes[1].set_power_config(nodes[1].power_type, parameters)
+            nodes[1].save()
+            nodes[1] = reload_object(nodes[1])
+            # All 3 share the same BMC, and only one exists.
+            self.assertEqual(1, BMC.objects.count())
+            self.assertEqual(nodes[0].bmc_id, nodes[1].bmc_id)
+            self.assertEqual(nodes[0].bmc_id, nodes[2].bmc_id)
 
-        # Now change parameters and confirm the count doesn't change,
-        # as changing the one linked BMC should affect all linked nodes.
-        parameters["power_address"] = factory.make_ipv4_address()
-        nodes[1].set_power_config(nodes[1].power_type, parameters)
-        nodes[1].save()
-        nodes[1] = reload_object(nodes[1])
-        self.assertEqual(1, BMC.objects.count())
-        self.assertEqual(nodes[0].bmc_id, nodes[1].bmc_id)
-        self.assertEqual(nodes[0].bmc_id, nodes[2].bmc_id)
+            # Now change parameters and confirm the count doesn't change,
+            # as changing the one linked BMC should affect all linked nodes.
+            parameters["power_address"] = factory.make_ipv4_address()
+            nodes[1].set_power_config(nodes[1].power_type, parameters)
+            nodes[1].save()
+            nodes[1] = reload_object(nodes[1])
+            self.assertEqual(1, BMC.objects.count())
+            self.assertEqual(nodes[0].bmc_id, nodes[1].bmc_id)
+            self.assertEqual(nodes[0].bmc_id, nodes[2].bmc_id)
 
-        # Now change type and confirm the count goes up,
-        # as changing the type makes a new linked BMC.
-        parameters["power_address"] = factory.make_ipv4_address()
-        nodes[1].set_power_config("virsh", parameters)
-        nodes[1].save()
-        nodes[1] = reload_object(nodes[1])
-        self.assertEqual(2, BMC.objects.count())
-        self.assertNotEqual(nodes[0].bmc_id, nodes[1].bmc_id)
-        self.assertEqual(nodes[0].bmc_id, nodes[2].bmc_id)
+            # Now change type and confirm the count goes up,
+            # as changing the type makes a new linked BMC.
+            parameters["power_address"] = factory.make_ipv4_address()
+            nodes[1].set_power_config("virsh", parameters)
+            nodes[1].save()
+            nodes[1] = reload_object(nodes[1])
+            self.assertEqual(2, BMC.objects.count())
+            self.assertNotEqual(nodes[0].bmc_id, nodes[1].bmc_id)
+            self.assertEqual(nodes[0].bmc_id, nodes[2].bmc_id)
 
-        # Set new BMC's values back to match original BMC, and make
-        # sure the BMC count decreases as they consolidate.
-        parameters = nodes[0].get_power_parameters()
-        parameters["power_id"] = factory.make_string()
-        nodes[1].set_power_config(nodes[0].power_type, parameters)
-        nodes[1].save()
-        nodes[1] = reload_object(nodes[1])
+            # Set new BMC's values back to match original BMC, and make
+            # sure the BMC count decreases as they consolidate.
+            parameters = nodes[0].get_power_parameters()
+            parameters["power_id"] = factory.make_string()
+            nodes[1].set_power_config(nodes[0].power_type, parameters)
+            nodes[1].save()
+            nodes[1] = reload_object(nodes[1])
         # 1 now shares a BMC with 0 and 2.
         self.assertEqual(nodes[0].bmc_id, nodes[1].bmc_id)
         self.assertEqual(nodes[0].bmc_id, nodes[2].bmc_id)
@@ -6362,24 +6434,30 @@ class TestNodePowerParameters(MAASServerTestCase):
         node = factory.make_Node()
         ip_address = factory.make_ipv4_address()
         parameters = dict(power_address=ip_address)
-        node.set_power_config("hmc", parameters)
-        node.save()
+
+        with post_commit_hooks:
+            node.set_power_config("hmc", parameters)
+            node.save()
         self.assertEqual(parameters, node.get_power_parameters())
         self.assertEqual(ip_address, node.bmc.ip_address.ip)
 
     def test_power_parameters_unexpected_values_tolerated(self):
         node = factory.make_Node()
         parameters = {factory.make_string(): factory.make_string()}
-        node.set_power_config("virsh", parameters)
-        node.save()
+
+        with post_commit_hooks:
+            node.set_power_config("virsh", parameters)
+            node.save()
         self.assertEqual(parameters, node.get_power_parameters())
         self.assertIsNone(node.bmc.ip_address)
 
     def test_power_parameters_blank_ip_address_tolerated(self):
         node = factory.make_Node()
         parameters = dict(power_address="")
-        node.set_power_config("hmc", parameters)
-        node.save()
+
+        with post_commit_hooks:
+            node.set_power_config("hmc", parameters)
+            node.save()
         self.assertEqual(parameters, node.get_power_parameters())
         self.assertIsNone(node.bmc.ip_address)
 
@@ -6387,47 +6465,53 @@ class TestNodePowerParameters(MAASServerTestCase):
         node = factory.make_Node()
         ip_address = factory.make_ipv4_address()
         parameters = dict(power_address=ip_address)
-        node.set_power_config("hmc", parameters)
-        node.save()
-        self.assertEqual(parameters, node.get_power_parameters())
-        self.assertEqual(ip_address, node.bmc.ip_address.ip)
 
-        # StaticIPAddress can be changed after being set.
-        ip_address = factory.make_ipv4_address()
-        parameters = dict(power_address=ip_address)
-        node.set_power_config("hmc", parameters)
-        node.save()
-        self.assertEqual(parameters, node.get_power_parameters())
-        self.assertEqual(ip_address, node.bmc.ip_address.ip)
+        with post_commit_hooks:
+            node.set_power_config("hmc", parameters)
+            node.save()
+            self.assertEqual(parameters, node.get_power_parameters())
+            self.assertEqual(ip_address, node.bmc.ip_address.ip)
 
-        # StaticIPAddress can be made None after being set.
-        ip_address = factory.make_ipv4_address()
-        parameters = dict(power_address="")
-        node.set_power_config("hmc", parameters)
-        node.save()
-        self.assertEqual(parameters, node.get_power_parameters())
-        self.assertIsNone(node.bmc.ip_address)
+            # StaticIPAddress can be changed after being set.
+            ip_address = factory.make_ipv4_address()
+            parameters = dict(power_address=ip_address)
+            node.set_power_config("hmc", parameters)
+            node.save()
+            self.assertEqual(parameters, node.get_power_parameters())
+            self.assertEqual(ip_address, node.bmc.ip_address.ip)
 
-        # StaticIPAddress can be changed after being made None.
-        ip_address = factory.make_ipv4_address()
-        parameters = dict(power_address=ip_address)
-        node.set_power_config("hmc", parameters)
-        node.save()
+            # StaticIPAddress can be made None after being set.
+            ip_address = factory.make_ipv4_address()
+            parameters = dict(power_address="")
+            node.set_power_config("hmc", parameters)
+            node.save()
+            self.assertEqual(parameters, node.get_power_parameters())
+            self.assertIsNone(node.bmc.ip_address)
+
+            # StaticIPAddress can be changed after being made None.
+            ip_address = factory.make_ipv4_address()
+            parameters = dict(power_address=ip_address)
+            node.set_power_config("hmc", parameters)
+            node.save()
         self.assertEqual(parameters, node.get_power_parameters())
         self.assertEqual(ip_address, node.bmc.ip_address.ip)
 
     def test_orphaned_bmcs_are_removed(self):
         bmc = factory.make_BMC()
         machine = factory.make_Node(bmc=factory.make_BMC())
-        machine.bmc = None
-        machine.save()
+
+        with post_commit_hooks:
+            machine.bmc = None
+            machine.save()
         self.assertIsNone(reload_object(bmc))
 
     def test_orphaned_pods_are_removed(self):
         pod = factory.make_Pod()
         machine = factory.make_Node(bmc=factory.make_BMC())
-        machine.bmc = None
-        machine.save()
+
+        with post_commit_hooks:
+            machine.bmc = None
+            machine.save()
         self.assertIsNotNone(reload_object(pod))
 
     def test_is_sync_healthy_returns_false_when_enable_hw_sync_is_false(self):
@@ -6437,8 +6521,10 @@ class TestNodePowerParameters(MAASServerTestCase):
     def test_is_sync_healthy_returns_true_when_last_sync_within_window(self):
         node = factory.make_Node(enable_hw_sync=True)
         now = timezone.now()
-        node.last_sync = now - timedelta(seconds=node.sync_interval)
-        node.save()
+
+        with post_commit_hooks:
+            node.last_sync = now - timedelta(seconds=node.sync_interval)
+            node.save()
         self.assertTrue(node.is_sync_healthy)
 
     def test_is_sync_healthy_returns_false_when_last_sync_is_beyond_window(
@@ -6446,8 +6532,10 @@ class TestNodePowerParameters(MAASServerTestCase):
     ):
         node = factory.make_Node(enable_hw_sync=True)
         now = timezone.now()
-        node.last_sync = now - (2 * timedelta(seconds=node.sync_interval))
-        node.save()
+
+        with post_commit_hooks:
+            node.last_sync = now - (2 * timedelta(seconds=node.sync_interval))
+            node.save()
         self.assertFalse(node.is_sync_healthy)
 
 
@@ -7893,7 +7981,10 @@ class TestNodeNetworking(MAASTransactionServerTestCase):
             INTERFACE_TYPE.BRIDGE, parents=[parent]
         )
         bridge.acquired = True
-        bridge.save()
+
+        with post_commit_hooks:
+            bridge.save()
+
         subnet = factory.make_Subnet(vlan=parent.vlan)
         static_ip = factory.make_StaticIPAddress(
             alloc_type=IPADDRESS_TYPE.AUTO,
@@ -7914,7 +8005,10 @@ class TestNodeNetworking(MAASTransactionServerTestCase):
             INTERFACE_TYPE.VLAN, parents=[interface]
         )
         vlan_if.acquired = True
-        vlan_if.save()
+
+        with post_commit_hooks:
+            vlan_if.save()
+
         subnet = factory.make_Subnet()
         static_ip = factory.make_StaticIPAddress(
             alloc_type=IPADDRESS_TYPE.AUTO,
@@ -8018,7 +8112,8 @@ class TestNodeNetworking(MAASTransactionServerTestCase):
             nic0_gw, nic1_gw, [nic0_gw, nic1_gw]
         )
         self.assertEqual(expected_gateways, node.get_default_gateways())
-        node._clear_networking_configuration()
+        with post_commit_hooks:
+            node._clear_networking_configuration()
         self.assertIsNone(node.gateway_link_ipv4)
         self.assertIsNone(node.gateway_link_ipv6)
 
@@ -8174,7 +8269,9 @@ class TestNodeNetworking(MAASTransactionServerTestCase):
             .first()
             .subnet
         )
-        boot_interface.link_subnet(INTERFACE_LINK_TYPE.AUTO, subnet)
+
+        with post_commit_hooks:
+            boot_interface.link_subnet(INTERFACE_LINK_TYPE.AUTO, subnet)
 
         @transactional
         def set_initial_networking_configuration():
@@ -8219,7 +8316,8 @@ class TestNodeNetworking(MAASTransactionServerTestCase):
         # reset network intefaces from commissioning data
         @transactional
         def restore_network_interfaces():
-            node.restore_network_interfaces()
+            with post_commit_hooks:
+                node.restore_network_interfaces()
 
         restore_network_interfaces()
         self.assertCountEqual(
@@ -8287,7 +8385,8 @@ class TestNodeNetworking(MAASTransactionServerTestCase):
         # reset network intefaces from commissioning data
         @transactional
         def restore_network_interfaces():
-            node.restore_network_interfaces()
+            with post_commit_hooks:
+                node.restore_network_interfaces()
 
         restore_network_interfaces()
         self.assertCountEqual(
@@ -8323,7 +8422,8 @@ class TestNodeNetworking(MAASTransactionServerTestCase):
 
         @transactional
         def restore_network_interfaces():
-            node.restore_network_interfaces()
+            with post_commit_hooks:
+                node.restore_network_interfaces()
 
         restore_network_interfaces()
 
@@ -8378,7 +8478,9 @@ class TestNodeNetworking(MAASTransactionServerTestCase):
         test_hooks.create_numa_nodes(node)
         iface_name = factory.make_name()
         factory.make_Interface(name=iface_name, node=node)
-        node.restore_network_interfaces()
+
+        with post_commit_hooks:
+            node.restore_network_interfaces()
         self.assertIn(
             iface_name,
             [iface.name for iface in node.current_config.interface_set.all()],
@@ -8961,20 +9063,26 @@ class TestGetDefaultDNSServers(MAASServerTestCase):
         resolve_hostname.side_effect = get_address
         rack.current_config.interface_set.all().delete()
         rackif = factory.make_Interface(vlan=vlan, node=rack)
-        if ipv4:
-            rackif.link_subnet(INTERFACE_LINK_TYPE.STATIC, v4_subnet, rack_v4)
-        if ipv6:
-            rackif.link_subnet(INTERFACE_LINK_TYPE.STATIC, v6_subnet, rack_v6)
-        rack.boot_interface = rackif
-        rack.save()
+        with post_commit_hooks:
+            if ipv4:
+                rackif.link_subnet(
+                    INTERFACE_LINK_TYPE.STATIC, v4_subnet, rack_v4
+                )
+            if ipv6:
+                rackif.link_subnet(
+                    INTERFACE_LINK_TYPE.STATIC, v6_subnet, rack_v6
+                )
+            rack.boot_interface = rackif
+            rack.save()
         node = factory.make_Node(status=NODE_STATUS.READY)
         nodeif = factory.make_Interface(vlan=vlan, node=node)
-        if ipv4:
-            nodeif.link_subnet(INTERFACE_LINK_TYPE.STATIC, v4_subnet)
-        if ipv6:
-            nodeif.link_subnet(INTERFACE_LINK_TYPE.STATIC, v6_subnet)
-        node.boot_interface = nodeif
-        node.save()
+        with post_commit_hooks:
+            if ipv4:
+                nodeif.link_subnet(INTERFACE_LINK_TYPE.STATIC, v4_subnet)
+            if ipv6:
+                nodeif.link_subnet(INTERFACE_LINK_TYPE.STATIC, v6_subnet)
+            node.boot_interface = nodeif
+            node.save()
         return rack_v4, rack_v6, node
 
     def make_RackController_routable_to_node(self, node, subnet=None):
@@ -8984,9 +9092,10 @@ class TestGetDefaultDNSServers(MAASServerTestCase):
         other_rack.current_config.interface_set.all().delete()
         other_rackif = factory.make_Interface(vlan=vlan, node=other_rack)
         other_rackif_ip = factory.pick_ip_in_Subnet(subnet)
-        other_rackif.link_subnet(
-            INTERFACE_LINK_TYPE.STATIC, subnet, other_rackif_ip
-        )
+        with post_commit_hooks:
+            other_rackif.link_subnet(
+                INTERFACE_LINK_TYPE.STATIC, subnet, other_rackif_ip
+            )
         return other_rackif_ip, other_rack
 
     def test_uses_rack_ipv4_if_ipv4_only_with_no_gateway(self):
@@ -9376,7 +9485,9 @@ class TestNode_Start(MAASTransactionServerTestCase):
         orig_subnet = ip_address.subnet
         ip_address.alloc_type = IPADDRESS_TYPE.DHCP
         ip_address.subnet = None
-        ip_address.save()
+
+        with post_commit_hooks:
+            ip_address.save()
         # Force an address family mismatch.  See Bug#1630361.
         if IPNetwork(orig_subnet.cidr).version == 6:
             gethost.return_value = "192.168.1.1"
@@ -9653,11 +9764,16 @@ class TestNode_Start(MAASTransactionServerTestCase):
         rack.current_config.interface_set.all().delete()
         rackif = factory.make_Interface(vlan=node_interface.vlan, node=rack)
         rackif.neighbour_discovery_state = True
-        rackif.save()
+
+        with post_commit_hooks:
+            rackif.save()
+
         rackif_ip = factory.pick_ip_in_Subnet(auto_ip.subnet)
-        rackif.link_subnet(
-            INTERFACE_LINK_TYPE.STATIC, auto_ip.subnet, rackif_ip
-        )
+
+        with post_commit_hooks:
+            rackif.link_subnet(
+                INTERFACE_LINK_TYPE.STATIC, auto_ip.subnet, rackif_ip
+            )
 
         # Mock the rack controller connected to the region controller.
         client = Mock()
@@ -9668,27 +9784,33 @@ class TestNode_Start(MAASTransactionServerTestCase):
         with transaction.atomic():
             # Allocate 2 AUTO IP addresses and set the first as temp expired
             # and free the second IP address.
-            first_ip = StaticIPAddress.objects.allocate_new(
-                subnet=auto_ip.subnet, alloc_type=IPADDRESS_TYPE.AUTO
-            )
-            first_ip.temp_expires_on = timezone.now() - timedelta(minutes=5)
-            first_ip.save()
-            second_ip = StaticIPAddress.objects.allocate_new(
-                subnet=auto_ip.subnet,
-                alloc_type=IPADDRESS_TYPE.AUTO,
-                exclude_addresses=[first_ip.ip],
-            )
-            second_ip.delete()
+            with post_commit_hooks:
+                first_ip = StaticIPAddress.objects.allocate_new(
+                    subnet=auto_ip.subnet, alloc_type=IPADDRESS_TYPE.AUTO
+                )
+                first_ip.temp_expires_on = timezone.now() - timedelta(
+                    minutes=5
+                )
 
-            # This is the next IP address that will actaully get picked for the
-            # machine as it will be free from the database and will no be
-            # reported as used from the rack controller.
-            third_ip = StaticIPAddress.objects.allocate_new(
-                subnet=auto_ip.subnet,
-                alloc_type=IPADDRESS_TYPE.AUTO,
-                exclude_addresses=[first_ip.ip, second_ip.ip],
-            )
-            third_ip.delete()
+                first_ip.save()
+                second_ip = StaticIPAddress.objects.allocate_new(
+                    subnet=auto_ip.subnet,
+                    alloc_type=IPADDRESS_TYPE.AUTO,
+                    exclude_addresses=[first_ip.ip],
+                )
+
+                second_ip.delete()
+
+                # This is the next IP address that will actaully get picked for the
+                # machine as it will be free from the database and will no be
+                # reported as used from the rack controller.
+                third_ip = StaticIPAddress.objects.allocate_new(
+                    subnet=auto_ip.subnet,
+                    alloc_type=IPADDRESS_TYPE.AUTO,
+                    exclude_addresses=[first_ip.ip, second_ip.ip],
+                )
+
+                third_ip.delete()
 
         # 2 tries will be made on the rack controller, both IP will be
         # used.
@@ -9743,9 +9865,11 @@ class TestNode_Start(MAASTransactionServerTestCase):
         rack.current_config.interface_set.all().delete()
         rackif = factory.make_Interface(vlan=node_interface.vlan, node=rack)
         rackif_ip = factory.pick_ip_in_Subnet(auto_ip.subnet)
-        rackif.link_subnet(
-            INTERFACE_LINK_TYPE.STATIC, auto_ip.subnet, rackif_ip
-        )
+
+        with post_commit_hooks:
+            rackif.link_subnet(
+                INTERFACE_LINK_TYPE.STATIC, auto_ip.subnet, rackif_ip
+            )
 
         # Mock the rack controller connected to the region controller.
         client = Mock()
@@ -9754,19 +9878,20 @@ class TestNode_Start(MAASTransactionServerTestCase):
 
         # Must be executed in a transaction as `allocate_new` uses savepoints.
         with transaction.atomic():
-            # Get two IPs and remove them so they're unknown
-            ip = StaticIPAddress.objects.allocate_new(
-                subnet=auto_ip.subnet, alloc_type=IPADDRESS_TYPE.AUTO
-            )
-            ip1 = ip.ip
-            ip.delete()
-            ip = StaticIPAddress.objects.allocate_new(
-                subnet=auto_ip.subnet,
-                alloc_type=IPADDRESS_TYPE.AUTO,
-                exclude_addresses=[ip1],
-            )
-            ip2 = ip.ip
-            ip.delete()
+            with post_commit_hooks:
+                # Get two IPs and remove them so they're unknown
+                ip = StaticIPAddress.objects.allocate_new(
+                    subnet=auto_ip.subnet, alloc_type=IPADDRESS_TYPE.AUTO
+                )
+                ip1 = ip.ip
+                ip.delete()
+                ip = StaticIPAddress.objects.allocate_new(
+                    subnet=auto_ip.subnet,
+                    alloc_type=IPADDRESS_TYPE.AUTO,
+                    exclude_addresses=[ip1],
+                )
+                ip2 = ip.ip
+                ip.delete()
 
         client.side_effect = [
             defer.succeed(
@@ -9811,11 +9936,15 @@ class TestNode_Start(MAASTransactionServerTestCase):
         rack.current_config.interface_set.all().delete()
         rackif = factory.make_Interface(vlan=node_interface.vlan, node=rack)
         rackif.neighbour_discovery_state = True
-        rackif.save()
+
+        with post_commit_hooks:
+            rackif.save()
+
         rackif_ip = factory.pick_ip_in_Subnet(auto_ip.subnet)
-        rackif.link_subnet(
-            INTERFACE_LINK_TYPE.STATIC, auto_ip.subnet, rackif_ip
-        )
+        with post_commit_hooks:
+            rackif.link_subnet(
+                INTERFACE_LINK_TYPE.STATIC, auto_ip.subnet, rackif_ip
+            )
 
         # Mock the rack controller connected to the region controller.
         client = Mock()
@@ -9824,11 +9953,14 @@ class TestNode_Start(MAASTransactionServerTestCase):
 
         # Must be executed in a transaction as `allocate_new` uses savepoints.
         with transaction.atomic():
-            first_ip = StaticIPAddress.objects.allocate_new(
-                subnet=auto_ip.subnet, alloc_type=IPADDRESS_TYPE.AUTO
-            )
-            first_ip.temp_expires_on = timezone.now() - timedelta(minutes=5)
-            first_ip.save()
+            with post_commit_hooks:
+                first_ip = StaticIPAddress.objects.allocate_new(
+                    subnet=auto_ip.subnet, alloc_type=IPADDRESS_TYPE.AUTO
+                )
+                first_ip.temp_expires_on = timezone.now() - timedelta(
+                    minutes=5
+                )
+                first_ip.save()
         last_ip = str(first_ip.get_ipaddress())
 
         client.side_effect = [
@@ -9862,11 +9994,16 @@ class TestNode_Start(MAASTransactionServerTestCase):
         rack.current_config.interface_set.all().delete()
         rackif = factory.make_Interface(vlan=node_interface.vlan, node=rack)
         rackif.neighbour_discovery_state = True
-        rackif.save()
+
+        with post_commit_hooks:
+            rackif.save()
+
         rackif_ip = factory.pick_ip_in_Subnet(auto_ip.subnet)
-        rackif.link_subnet(
-            INTERFACE_LINK_TYPE.STATIC, auto_ip.subnet, rackif_ip
-        )
+
+        with post_commit_hooks:
+            rackif.link_subnet(
+                INTERFACE_LINK_TYPE.STATIC, auto_ip.subnet, rackif_ip
+            )
 
         # Mock the rack controller connected to the region controller.
         client = Mock()
@@ -9875,11 +10012,14 @@ class TestNode_Start(MAASTransactionServerTestCase):
 
         # Must be executed in a transaction as `allocate_new` uses savepoints.
         with transaction.atomic():
-            first_ip = StaticIPAddress.objects.allocate_new(
-                subnet=auto_ip.subnet, alloc_type=IPADDRESS_TYPE.AUTO
-            )
-            first_ip.temp_expires_on = timezone.now() - timedelta(minutes=5)
-            first_ip.save()
+            with post_commit_hooks:
+                first_ip = StaticIPAddress.objects.allocate_new(
+                    subnet=auto_ip.subnet, alloc_type=IPADDRESS_TYPE.AUTO
+                )
+                first_ip.temp_expires_on = timezone.now() - timedelta(
+                    minutes=5
+                )
+                first_ip.save()
 
         client.side_effect = [
             defer.fail(Exception()),
@@ -9914,11 +10054,16 @@ class TestNode_Start(MAASTransactionServerTestCase):
         rack.current_config.interface_set.all().delete()
         rackif = factory.make_Interface(vlan=node_interface.vlan, node=rack)
         rackif.neighbour_discovery_state = True
-        rackif.save()
+
+        with post_commit_hooks:
+            rackif.save()
+
         rackif_ip = factory.pick_ip_in_Subnet(auto_ip.subnet)
-        rackif.link_subnet(
-            INTERFACE_LINK_TYPE.STATIC, auto_ip.subnet, rackif_ip
-        )
+
+        with post_commit_hooks:
+            rackif.link_subnet(
+                INTERFACE_LINK_TYPE.STATIC, auto_ip.subnet, rackif_ip
+            )
 
         # Mock the rack controller connected to the region controller.
         client = Mock()
@@ -9929,32 +10074,35 @@ class TestNode_Start(MAASTransactionServerTestCase):
         with transaction.atomic():
             # Allocate 2 AUTO IP addresses and set the first as temp expired
             # and free the second IP address.
-            first_ip = StaticIPAddress.objects.allocate_new(
-                subnet=auto_ip.subnet, alloc_type=IPADDRESS_TYPE.AUTO
-            )
-            first_ip.temp_expires_on = timezone.now() - timedelta(minutes=5)
-            first_ip.save()
-            second_ip = StaticIPAddress.objects.allocate_new(
-                subnet=auto_ip.subnet,
-                alloc_type=IPADDRESS_TYPE.AUTO,
-                exclude_addresses=[first_ip.ip],
-            )
-            second_ip.delete()
-            third_ip = StaticIPAddress.objects.allocate_new(
-                subnet=auto_ip.subnet,
-                alloc_type=IPADDRESS_TYPE.AUTO,
-                exclude_addresses=[first_ip.ip, second_ip.ip],
-            )
-            third_ip.delete()
-            # This is the next IP address that will actually get picked for the
-            # machine as it will be free from the database and will not be
-            # reported as used from the rack controller.
-            fourth_ip = StaticIPAddress.objects.allocate_new(
-                subnet=auto_ip.subnet,
-                alloc_type=IPADDRESS_TYPE.AUTO,
-                exclude_addresses=[first_ip.ip, second_ip.ip, third_ip.ip],
-            )
-            fourth_ip.delete()
+            with post_commit_hooks:
+                first_ip = StaticIPAddress.objects.allocate_new(
+                    subnet=auto_ip.subnet, alloc_type=IPADDRESS_TYPE.AUTO
+                )
+                first_ip.temp_expires_on = timezone.now() - timedelta(
+                    minutes=5
+                )
+                first_ip.save()
+                second_ip = StaticIPAddress.objects.allocate_new(
+                    subnet=auto_ip.subnet,
+                    alloc_type=IPADDRESS_TYPE.AUTO,
+                    exclude_addresses=[first_ip.ip],
+                )
+                second_ip.delete()
+                third_ip = StaticIPAddress.objects.allocate_new(
+                    subnet=auto_ip.subnet,
+                    alloc_type=IPADDRESS_TYPE.AUTO,
+                    exclude_addresses=[first_ip.ip, second_ip.ip],
+                )
+                third_ip.delete()
+                # This is the next IP address that will actually get picked for the
+                # machine as it will be free from the database and will not be
+                # reported as used from the rack controller.
+                fourth_ip = StaticIPAddress.objects.allocate_new(
+                    subnet=auto_ip.subnet,
+                    alloc_type=IPADDRESS_TYPE.AUTO,
+                    exclude_addresses=[first_ip.ip, second_ip.ip, third_ip.ip],
+                )
+                fourth_ip.delete()
 
         # 2 tries will be made on the rack controller, both IP will be
         # used.
@@ -9996,11 +10144,16 @@ class TestNode_Start(MAASTransactionServerTestCase):
         rack.current_config.interface_set.all().delete()
         rackif = factory.make_Interface(vlan=node_interface.vlan, node=rack)
         rackif.neighbour_discovery_state = True
-        rackif.save()
+
+        with post_commit_hooks:
+            rackif.save()
+
         rackif_ip = factory.pick_ip_in_Subnet(auto_ip.subnet)
-        rackif.link_subnet(
-            INTERFACE_LINK_TYPE.STATIC, auto_ip.subnet, rackif_ip
-        )
+
+        with post_commit_hooks:
+            rackif.link_subnet(
+                INTERFACE_LINK_TYPE.STATIC, auto_ip.subnet, rackif_ip
+            )
 
         # Mock the rack controller connected to the region controller.
         client = Mock()
@@ -10009,11 +10162,12 @@ class TestNode_Start(MAASTransactionServerTestCase):
 
         # Must be executed in a transaction as `allocate_new` uses savepoints.
         with transaction.atomic():
-            used_ip = StaticIPAddress.objects.allocate_new(
-                subnet=auto_ip.subnet, alloc_type=IPADDRESS_TYPE.AUTO
-            )
-            # save the address for now, so it doesn't show in free ranges
-            used_ip.save()
+            with post_commit_hooks:
+                used_ip = StaticIPAddress.objects.allocate_new(
+                    subnet=auto_ip.subnet, alloc_type=IPADDRESS_TYPE.AUTO
+                )
+                # save the address for now, so it doesn't show in free ranges
+                used_ip.save()
 
         # reserve all available ranges
         subnet_ranges = auto_ip.subnet.get_ipranges_not_in_use()
@@ -10026,7 +10180,8 @@ class TestNode_Start(MAASTransactionServerTestCase):
             )
         # remove the used IP, MAAS thinks it's available, but return it as used
         # in checks
-        used_ip.delete()
+        with post_commit_hooks:
+            used_ip.delete()
         client.return_value = defer.succeed(
             {"ip_addresses": [{"ip_address": used_ip.ip, "used": True}]}
         )
@@ -10052,7 +10207,9 @@ class TestNode_Start(MAASTransactionServerTestCase):
         static_ip = factory.pick_ip_in_Subnet(ip.subnet)
         ip.alloc_type = IPADDRESS_TYPE.STICKY
         ip.ip = static_ip
-        ip.save()
+
+        with post_commit_hooks:
+            ip.save()
 
         with post_commit_hooks:
             node.start(user)
@@ -11910,24 +12067,25 @@ class TestNodeStorageClone_SimpleMBRLayout(
             mount_options="rw,nosuid,nodev,noexec,relatime",
         )
 
-        dest_node = factory.make_Node(
-            status=NODE_STATUS.ALLOCATED, with_boot_disk=False
-        )
-        self.create_physical_disks(dest_node)
-        dest_node.set_storage_configuration_from_node(node)
+        with post_commit_hooks:
+            dest_node = factory.make_Node(
+                status=NODE_STATUS.ALLOCATED, with_boot_disk=False
+            )
+            self.create_physical_disks(dest_node)
+            dest_node.set_storage_configuration_from_node(node)
 
-        node._create_acquired_filesystems()
-        dest_node._create_acquired_filesystems()
-        self.assertStorageConfig(
-            self.STORAGE_CONFIG,
-            compose_curtin_storage_config(node),
-            strip_uuids=True,
-        )
-        self.assertStorageConfig(
-            self.STORAGE_CONFIG,
-            compose_curtin_storage_config(dest_node),
-            strip_uuids=True,
-        )
+            node._create_acquired_filesystems()
+            dest_node._create_acquired_filesystems()
+            self.assertStorageConfig(
+                self.STORAGE_CONFIG,
+                compose_curtin_storage_config(node),
+                strip_uuids=True,
+            )
+            self.assertStorageConfig(
+                self.STORAGE_CONFIG,
+                compose_curtin_storage_config(dest_node),
+                strip_uuids=True,
+            )
 
 
 class TestNodeStorageClone_ComplexDiskLayout(
@@ -12442,7 +12600,9 @@ class TestNodeInterfaceClone__IPCloning(MAASServerTestCase):
 
         dest_node = factory.make_Node()
         dest_node_eth0 = factory.make_Interface(node=dest_node, name="eth0")
-        dest_node.set_networking_configuration_from_node(node)
+
+        with post_commit_hooks:
+            dest_node.set_networking_configuration_from_node(node)
         dest_ip = dest_node_eth0.ip_addresses.first()
         self.assertIsNotNone(dest_ip.ip)
         self.assertNotEqual(node_ip.ip, dest_ip.ip)
@@ -12457,7 +12617,9 @@ class TestNodeInterfaceClone__IPCloning(MAASServerTestCase):
 
         dest_node = factory.make_Node()
         dest_node_eth0 = factory.make_Interface(node=dest_node, name="eth0")
-        dest_node.set_networking_configuration_from_node(node)
+
+        with post_commit_hooks:
+            dest_node.set_networking_configuration_from_node(node)
         dest_ip = dest_node_eth0.ip_addresses.first()
         self.assertIsNone(dest_ip.ip)
 
@@ -12471,7 +12633,9 @@ class TestNodeInterfaceClone__IPCloning(MAASServerTestCase):
 
         dest_node = factory.make_Node()
         dest_node_eth0 = factory.make_Interface(node=dest_node, name="eth0")
-        dest_node.set_networking_configuration_from_node(node)
+
+        with post_commit_hooks:
+            dest_node.set_networking_configuration_from_node(node)
         dest_ip = dest_node_eth0.ip_addresses.first()
         self.assertIsNotNone(dest_ip.ip)
         self.assertNotEqual(node_ip.ip, dest_ip.ip)
@@ -12491,7 +12655,9 @@ class TestNodeInterfaceClone__IPCloning(MAASServerTestCase):
 
         dest_node = factory.make_Node()
         dest_node_eth0 = factory.make_Interface(node=dest_node, name="eth0")
-        dest_node.set_networking_configuration_from_node(node)
+
+        with post_commit_hooks:
+            dest_node.set_networking_configuration_from_node(node)
         dest_ip = dest_node_eth0.ip_addresses.first()
         self.assertIsNotNone(dest_ip.ip)
         self.assertNotEqual(node_ip.ip, dest_ip.ip)
@@ -12506,7 +12672,9 @@ class TestNodeInterfaceClone__IPCloning(MAASServerTestCase):
 
         dest_node = factory.make_Node()
         dest_node_eth0 = factory.make_Interface(node=dest_node, name="eth0")
-        dest_node.set_networking_configuration_from_node(node)
+
+        with post_commit_hooks:
+            dest_node.set_networking_configuration_from_node(node)
         dest_ip = dest_node_eth0.ip_addresses.first()
         self.assertEqual(IPADDRESS_TYPE.DHCP, dest_ip.alloc_type)
 
@@ -12519,7 +12687,9 @@ class TestNodeInterfaceClone__IPCloning(MAASServerTestCase):
 
         dest_node = factory.make_Node()
         dest_node_eth0 = factory.make_Interface(node=dest_node, name="eth0")
-        dest_node.set_networking_configuration_from_node(node)
+
+        with post_commit_hooks:
+            dest_node.set_networking_configuration_from_node(node)
         dest_ip = dest_node_eth0.ip_addresses.first()
         self.assertIsNone(dest_ip)
 
@@ -12545,7 +12715,9 @@ class TestNodeInterfaceClone_SimpleNetworkLayout(
             interface=extra_interface,
         )
         sip.subnet = None
-        sip.save()
+
+        with post_commit_hooks:
+            sip.save()
 
     def test_copy(self):
         # Keep them in the same domain to make the checking of configuraton
@@ -12568,7 +12740,9 @@ class TestNodeInterfaceClone_SimpleNetworkLayout(
             extra_ifnames=["eth1"],
             domain=domain,
         )
-        dest_node.set_networking_configuration_from_node(node)
+
+        with post_commit_hooks:
+            dest_node.set_networking_configuration_from_node(node)
         dest_config = self.collect_interface_config(dest_node)
         dest_config += self.collect_dns_config(dest_node)
 
@@ -12602,7 +12776,9 @@ class TestNodeInterfaceClone_VLANOnBondNetworkLayout(
             parents=phys_ifaces,
         )
         bond_iface.params = {"bond_mode": "balance-rr"}
-        bond_iface.save()
+
+        with post_commit_hooks:
+            bond_iface.save()
         vlan_iface = factory.make_Interface(
             iftype=INTERFACE_TYPE.VLAN, node=node, parents=[bond_iface]
         )
@@ -12619,7 +12795,8 @@ class TestNodeInterfaceClone_VLANOnBondNetworkLayout(
             extra_ifnames=["eth1"],
             domain=domain,
         )
-        dest_node.set_networking_configuration_from_node(node)
+        with post_commit_hooks:
+            dest_node.set_networking_configuration_from_node(node)
         dest_config = self.collect_interface_config(
             dest_node, filter="physical"
         )
@@ -12664,7 +12841,9 @@ class TestNodeInterfaceClone_BridgeNetworkLayout(
             mac_address=mac_address,
         )
         bridge_iface.params = {"bridge_fd": 0, "bridge_stp": True}
-        bridge_iface.save()
+
+        with post_commit_hooks:
+            bridge_iface.save()
         factory.make_StaticIPAddress(
             interface=bridge_iface,
             alloc_type=IPADDRESS_TYPE.STICKY,
@@ -12675,7 +12854,9 @@ class TestNodeInterfaceClone_BridgeNetworkLayout(
         node_config += self.collect_dns_config(node)
 
         dest_node = factory.make_Node_with_Interface_on_Subnet(ifname="eth0")
-        dest_node.set_networking_configuration_from_node(node)
+
+        with post_commit_hooks:
+            dest_node.set_networking_configuration_from_node(node)
         dest_config = self.collect_interface_config(
             dest_node, filter="physical"
         )
@@ -12739,4 +12920,6 @@ class TestNodeClone__Prefetches(MAASServerTestCase):
             "current_config__interface_set",
         ).get(id=source.id)
         destination.set_storage_configuration_from_node(source)
-        destination.set_networking_configuration_from_node(source)
+
+        with post_commit_hooks:
+            destination.set_networking_configuration_from_node(source)

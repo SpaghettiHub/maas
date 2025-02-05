@@ -26,6 +26,7 @@ from maasserver.testing.osystems import (
     patch_usable_osystems,
 )
 from maasserver.testing.testcase import MAASServerTestCase
+from maasserver.utils.orm import post_commit_hooks
 from provisioningserver.certificates import Certificate
 from provisioningserver.rpc.exceptions import (
     NoConnectionsAvailable,
@@ -214,7 +215,8 @@ class TestMachineForm(MAASServerTestCase):
             instance=node,
         )
         form.set_distro_series(release)
-        form.save()
+        with post_commit_hooks:
+            form.save()
         self.assertEqual(release + "6", node.distro_series)
 
     def test_set_distro_series_accepts_short_alias_series(self):
@@ -237,7 +239,8 @@ class TestMachineForm(MAASServerTestCase):
             instance=node,
         )
         form.set_distro_series(alias)
-        form.save()
+        with post_commit_hooks:
+            form.save()
         self.assertEqual(release, node.distro_series)
 
     def test_set_distro_series_accepts_full_alias_series(self):
@@ -261,7 +264,8 @@ class TestMachineForm(MAASServerTestCase):
             instance=node,
         )
         form.set_distro_series(f"ubuntu/{alias}")
-        form.save()
+        with post_commit_hooks:
+            form.save()
         self.assertEqual(release, node.distro_series)
 
     def test_set_distro_series_doesnt_allow_short_ubuntu_series(self):
@@ -579,7 +583,9 @@ class TestAdminMachineForm(MAASServerTestCase):
             },
         )
         self.assertTrue(form.is_valid(), form.errors)
-        node = form.save()
+
+        with post_commit_hooks:
+            node = form.save()
         self.assertEqual(node.status, NODE_STATUS.NEW)
         self.assertIsNone(node.owner)
 
@@ -604,7 +610,9 @@ class TestAdminMachineForm(MAASServerTestCase):
             },
             instance=node,
         )
-        form.save()
+
+        with post_commit_hooks:
+            form.save()
 
         self.assertEqual(
             (hostname, power_type, {"field": power_parameters_field}),
@@ -624,7 +632,9 @@ class TestAdminMachineForm(MAASServerTestCase):
             },
             instance=node,
         )
-        node = form.save()
+
+        with post_commit_hooks:
+            node = form.save()
         self.assertEqual(power_parameters, node.get_power_parameters())
 
     def test_AdminMachineForm_doesnt_change_power_type(self):
@@ -640,7 +650,9 @@ class TestAdminMachineForm(MAASServerTestCase):
             },
             instance=node,
         )
-        node = form.save()
+
+        with post_commit_hooks:
+            node = form.save()
         self.assertEqual(power_type, node.power_type)
 
     def test_AdminMachineForm_changes_power_type(self):
@@ -657,7 +669,9 @@ class TestAdminMachineForm(MAASServerTestCase):
             },
             instance=node,
         )
-        node = form.save()
+
+        with post_commit_hooks:
+            node = form.save()
         self.assertEqual(power_type, node.power_type)
 
     def test_AdminMachineForm_needs_interface_for_power_types(self):
@@ -691,7 +705,9 @@ class TestAdminMachineForm(MAASServerTestCase):
                 "deployed": True,
             },
         )
-        machine = form.save()
+
+        with post_commit_hooks:
+            machine = form.save()
         self.assertIsNotNone(machine.current_commissioning_script_set)
 
     def test_AdminMachineForm_creates_node_token_for_deployed(self):
@@ -704,7 +720,9 @@ class TestAdminMachineForm(MAASServerTestCase):
                 "deployed": True,
             },
         )
-        machine = form.save()
+
+        with post_commit_hooks:
+            machine = form.save()
         self.assertTrue(NodeKey.objects.filter(node=machine).exists())
 
 
@@ -728,7 +746,10 @@ class TestAdminMachineWithMACAddressForm(MAASServerTestCase):
             },
         )
         self.assertTrue(form.is_valid())
-        machine = form.save()
+
+        with post_commit_hooks:
+            machine = form.save()
+
         power_params = machine.bmc.get_power_parameters()
         self.assertIn("certificate", power_params)
         self.assertIn("key", power_params)

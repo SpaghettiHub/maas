@@ -2415,17 +2415,18 @@ class TestMachineHandler(MAASServerTestCase):
 
         self.patch(node_model, "start_commissioning")
 
-        created_node = handler.create(
-            {
-                "hostname": hostname,
-                "pxe_mac": mac,
-                "architecture": architecture,
-                "description": description,
-                "zone": {"name": zone.name},
-                "power_type": "manual",
-                "power_parameters": {},
-            }
-        )
+        with post_commit_hooks:
+            created_node = handler.create(
+                {
+                    "hostname": hostname,
+                    "pxe_mac": mac,
+                    "architecture": architecture,
+                    "description": description,
+                    "zone": {"name": zone.name},
+                    "power_type": "manual",
+                    "power_parameters": {},
+                }
+            )
         self.assertEqual(created_node["hostname"], hostname)
         self.assertEqual(created_node["pxe_mac"], mac)
         self.assertEqual(created_node["extra_macs"], [])
@@ -2448,16 +2449,17 @@ class TestMachineHandler(MAASServerTestCase):
             node_model, "start_commissioning"
         )
 
-        handler.create(
-            {
-                "hostname": hostname,
-                "pxe_mac": mac,
-                "architecture": architecture,
-                "zone": {"name": zone.name},
-                "power_type": "manual",
-                "power_parameters": {},
-            }
-        )
+        with post_commit_hooks:
+            handler.create(
+                {
+                    "hostname": hostname,
+                    "pxe_mac": mac,
+                    "architecture": architecture,
+                    "zone": {"name": zone.name},
+                    "power_type": "manual",
+                    "power_parameters": {},
+                }
+            )
         mock_start_commissioning.assert_called_once_with(user)
 
     def test_create_creates_deployed_node(self):
@@ -2471,14 +2473,15 @@ class TestMachineHandler(MAASServerTestCase):
             node_model, "start_commissioning"
         )
 
-        created_node = handler.create(
-            {
-                "hostname": hostname,
-                "description": description,
-                "zone": {"name": zone.name},
-                "deployed": True,
-            }
-        )
+        with post_commit_hooks:
+            created_node = handler.create(
+                {
+                    "hostname": hostname,
+                    "description": description,
+                    "zone": {"name": zone.name},
+                    "deployed": True,
+                }
+            )
         # the commissioning process is not started
         mock_start_commissioning.assert_not_called()
         self.assertEqual(created_node["status"], "Deployed")
@@ -2595,7 +2598,10 @@ class TestMachineHandler(MAASServerTestCase):
             "power_pass": power_pass,
             "power_address": power_address,
         }
-        updated_node = handler.update(node_data)
+
+        with post_commit_hooks:
+            updated_node = handler.update(node_data)
+
         self.assertEqual(updated_node["hostname"], new_hostname)
         self.assertEqual(updated_node["architecture"], new_architecture)
         self.assertEqual(updated_node["description"], new_description)
@@ -2633,7 +2639,10 @@ class TestMachineHandler(MAASServerTestCase):
             "power_pass": power_pass,
             "power_address": power_address,
         }
-        updated_node = handler.update(node_data)
+
+        with post_commit_hooks:
+            updated_node = handler.update(node_data)
+
         self.assertEqual(updated_node["pool"]["id"], node.pool.id)
 
     def test_update_adds_tags_to_node(self):
@@ -4007,14 +4016,15 @@ class TestMachineHandler(MAASServerTestCase):
         name = factory.make_name("eth")
         mac_address = factory.make_mac_address()
         vlan = factory.make_VLAN()
-        handler.create_physical(
-            {
-                "system_id": node.system_id,
-                "name": name,
-                "mac_address": mac_address,
-                "vlan": vlan.id,
-            }
-        )
+        with post_commit_hooks:
+            handler.create_physical(
+                {
+                    "system_id": node.system_id,
+                    "name": name,
+                    "mac_address": mac_address,
+                    "vlan": vlan.id,
+                }
+            )
         self.assertEqual(
             1,
             node.current_config.interface_set.count(),
@@ -4029,16 +4039,19 @@ class TestMachineHandler(MAASServerTestCase):
         mac_address = factory.make_mac_address()
         vlan = factory.make_VLAN()
         subnet = factory.make_Subnet(vlan=vlan)
-        handler.create_physical(
-            {
-                "system_id": node.system_id,
-                "name": name,
-                "mac_address": mac_address,
-                "vlan": vlan.id,
-                "mode": INTERFACE_LINK_TYPE.AUTO,
-                "subnet": subnet.id,
-            }
-        )
+
+        with post_commit_hooks:
+            handler.create_physical(
+                {
+                    "system_id": node.system_id,
+                    "name": name,
+                    "mac_address": mac_address,
+                    "vlan": vlan.id,
+                    "mode": INTERFACE_LINK_TYPE.AUTO,
+                    "subnet": subnet.id,
+                }
+            )
+
         new_interface = node.current_config.interface_set.first()
         self.assertIsNotNone(new_interface)
         auto_ip = new_interface.ip_addresses.filter(
@@ -4053,15 +4066,16 @@ class TestMachineHandler(MAASServerTestCase):
         name = factory.make_name("eth")
         mac_address = factory.make_mac_address()
         vlan = factory.make_VLAN()
-        handler.create_physical(
-            {
-                "system_id": node.system_id,
-                "name": name,
-                "mac_address": mac_address,
-                "vlan": vlan.id,
-                "mode": INTERFACE_LINK_TYPE.LINK_UP,
-            }
-        )
+        with post_commit_hooks:
+            handler.create_physical(
+                {
+                    "system_id": node.system_id,
+                    "name": name,
+                    "mac_address": mac_address,
+                    "vlan": vlan.id,
+                    "mode": INTERFACE_LINK_TYPE.LINK_UP,
+                }
+            )
         new_interface = node.current_config.interface_set.first()
         self.assertIsNotNone(new_interface)
         link_up_ip = new_interface.ip_addresses.filter(
@@ -4077,16 +4091,18 @@ class TestMachineHandler(MAASServerTestCase):
         mac_address = factory.make_mac_address()
         vlan = factory.make_VLAN()
         subnet = factory.make_Subnet(vlan=vlan)
-        handler.create_physical(
-            {
-                "system_id": node.system_id,
-                "name": name,
-                "mac_address": mac_address,
-                "vlan": vlan.id,
-                "mode": INTERFACE_LINK_TYPE.LINK_UP,
-                "subnet": subnet.id,
-            }
-        )
+
+        with post_commit_hooks:
+            handler.create_physical(
+                {
+                    "system_id": node.system_id,
+                    "name": name,
+                    "mac_address": mac_address,
+                    "vlan": vlan.id,
+                    "mode": INTERFACE_LINK_TYPE.LINK_UP,
+                    "subnet": subnet.id,
+                }
+            )
         new_interface = node.current_config.interface_set.first()
         self.assertIsNotNone(new_interface)
         link_up_ip = new_interface.ip_addresses.filter(
@@ -4102,13 +4118,15 @@ class TestMachineHandler(MAASServerTestCase):
         interface = factory.make_Interface(
             INTERFACE_TYPE.PHYSICAL, node=node, vlan=vlan
         )
-        handler.create_vlan(
-            {
-                "system_id": node.system_id,
-                "parent": interface.id,
-                "vlan": vlan.id,
-            }
-        )
+
+        with post_commit_hooks:
+            handler.create_vlan(
+                {
+                    "system_id": node.system_id,
+                    "parent": interface.id,
+                    "vlan": vlan.id,
+                }
+            )
         vlan_interface = get_one(
             Interface.objects.filter(
                 node_config=node.current_config,
@@ -4142,15 +4160,18 @@ class TestMachineHandler(MAASServerTestCase):
             INTERFACE_TYPE.PHYSICAL, node=node, vlan=vlan
         )
         new_subnet = factory.make_Subnet(vlan=vlan)
-        handler.create_vlan(
-            {
-                "system_id": node.system_id,
-                "parent": interface.id,
-                "vlan": vlan.id,
-                "mode": INTERFACE_LINK_TYPE.AUTO,
-                "subnet": new_subnet.id,
-            }
-        )
+
+        with post_commit_hooks:
+            handler.create_vlan(
+                {
+                    "system_id": node.system_id,
+                    "parent": interface.id,
+                    "vlan": vlan.id,
+                    "mode": INTERFACE_LINK_TYPE.AUTO,
+                    "subnet": new_subnet.id,
+                }
+            )
+
         vlan_interface = get_one(
             Interface.objects.filter(
                 node_config=node.current_config,
@@ -4172,14 +4193,16 @@ class TestMachineHandler(MAASServerTestCase):
         interface = factory.make_Interface(
             INTERFACE_TYPE.PHYSICAL, node=node, vlan=vlan
         )
-        handler.create_vlan(
-            {
-                "system_id": node.system_id,
-                "parent": interface.id,
-                "vlan": vlan.id,
-                "mode": INTERFACE_LINK_TYPE.LINK_UP,
-            }
-        )
+
+        with post_commit_hooks:
+            handler.create_vlan(
+                {
+                    "system_id": node.system_id,
+                    "parent": interface.id,
+                    "vlan": vlan.id,
+                    "mode": INTERFACE_LINK_TYPE.LINK_UP,
+                }
+            )
         vlan_interface = get_one(
             Interface.objects.filter(
                 node_config=node.current_config,
@@ -4254,16 +4277,18 @@ class TestMachineHandler(MAASServerTestCase):
         )
         bond_mode = factory.pick_enum(BOND_MODE)
         name = factory.make_name("bond")
-        handler.create_bond(
-            {
-                "system_id": node.system_id,
-                "name": name,
-                "parents": [nic1.id, nic2.id],
-                "mac_address": "%s" % nic1.mac_address,
-                "vlan": nic1.vlan.id,
-                "bond_mode": bond_mode,
-            }
-        )
+
+        with post_commit_hooks:
+            handler.create_bond(
+                {
+                    "system_id": node.system_id,
+                    "name": name,
+                    "parents": [nic1.id, nic2.id],
+                    "mac_address": "%s" % nic1.mac_address,
+                    "vlan": nic1.vlan.id,
+                    "bond_mode": bond_mode,
+                }
+            )
         bond_interface = get_one(
             Interface.objects.filter(
                 node_config=node.current_config,
@@ -4317,18 +4342,20 @@ class TestMachineHandler(MAASServerTestCase):
         bridge_type = factory.pick_choice(BRIDGE_TYPE_CHOICES)
         bridge_stp = factory.pick_bool()
         bridge_fd = random.randint(0, 15)
-        handler.create_bridge(
-            {
-                "system_id": node.system_id,
-                "name": name,
-                "parents": [nic1.id],
-                "mac_address": "%s" % nic1.mac_address,
-                "vlan": nic1.vlan.id,
-                "bridge_type": bridge_type,
-                "bridge_stp": bridge_stp,
-                "bridge_fd": bridge_fd,
-            }
-        )
+
+        with post_commit_hooks:
+            handler.create_bridge(
+                {
+                    "system_id": node.system_id,
+                    "name": name,
+                    "parents": [nic1.id],
+                    "mac_address": "%s" % nic1.mac_address,
+                    "vlan": nic1.vlan.id,
+                    "bridge_type": bridge_type,
+                    "bridge_stp": bridge_stp,
+                    "bridge_fd": bridge_fd,
+                }
+            )
         bridge_interface = get_one(
             Interface.objects.filter(
                 node_config=node.current_config,
@@ -4384,17 +4411,19 @@ class TestMachineHandler(MAASServerTestCase):
         new_link_speed = random.randint(1000, new_interface_speed)
         handler._script_results = {}
         handler._cache_pks([node])
-        handler.update_interface(
-            {
-                "system_id": node.system_id,
-                "interface_id": interface.id,
-                "name": new_name,
-                "vlan": new_vlan.id,
-                "interface_speed": new_interface_speed,
-                "link_connected": new_link_connected,
-                "link_speed": new_link_speed,
-            }
-        )
+
+        with post_commit_hooks:
+            handler.update_interface(
+                {
+                    "system_id": node.system_id,
+                    "interface_id": interface.id,
+                    "name": new_name,
+                    "vlan": new_vlan.id,
+                    "interface_speed": new_interface_speed,
+                    "link_connected": new_link_connected,
+                    "link_speed": new_link_speed,
+                }
+            )
         interface = reload_object(interface)
         self.assertEqual(new_name, interface.name)
         self.assertEqual(new_vlan, interface.vlan)
@@ -4413,16 +4442,17 @@ class TestMachineHandler(MAASServerTestCase):
         new_link_speed = random.randint(1000, new_interface_speed)
         handler._script_results = {}
         handler._cache_pks([node])
-        handler.update_interface(
-            {
-                "system_id": node.system_id,
-                "interface_id": interface.id,
-                "name": new_name,
-                "interface_speed": new_interface_speed,
-                "link_connected": new_link_connected,
-                "link_speed": new_link_speed,
-            }
-        )
+        with post_commit_hooks:
+            handler.update_interface(
+                {
+                    "system_id": node.system_id,
+                    "interface_id": interface.id,
+                    "name": new_name,
+                    "interface_speed": new_interface_speed,
+                    "link_connected": new_link_connected,
+                    "link_speed": new_link_speed,
+                }
+            )
         interface = reload_object(interface)
         self.assertEqual(new_name, interface.name)
         self.assertEqual(new_interface_speed, interface.interface_speed)
@@ -4495,16 +4525,19 @@ class TestMachineHandler(MAASServerTestCase):
         mode = factory.pick_enum(INTERFACE_LINK_TYPE)
         ip_address = factory.make_ip_address()
         self.patch_autospec(Interface, "update_link_by_id")
-        handler.link_subnet(
-            {
-                "system_id": node.system_id,
-                "interface_id": interface.id,
-                "link_id": link_id,
-                "subnet": subnet.id,
-                "mode": mode,
-                "ip_address": ip_address,
-            }
-        )
+
+        with post_commit_hooks:
+            handler.link_subnet(
+                {
+                    "system_id": node.system_id,
+                    "interface_id": interface.id,
+                    "link_id": link_id,
+                    "subnet": subnet.id,
+                    "mode": mode,
+                    "ip_address": ip_address,
+                }
+            )
+
         Interface.update_link_by_id.assert_called_once_with(
             ANY, link_id, mode, subnet, ip_address=ip_address
         )
@@ -4517,20 +4550,26 @@ class TestMachineHandler(MAASServerTestCase):
         subnet = factory.make_Subnet()
         sip = factory.make_StaticIPAddress(interface=interface)
         link_id = sip.id
-        sip.delete()
+
+        with post_commit_hooks:
+            sip.delete()
+
         mode = factory.pick_enum(INTERFACE_LINK_TYPE)
         ip_address = factory.make_ip_address()
         self.patch_autospec(Interface, "update_link_by_id")
-        handler.link_subnet(
-            {
-                "system_id": node.system_id,
-                "interface_id": interface.id,
-                "link_id": link_id,
-                "subnet": subnet.id,
-                "mode": mode,
-                "ip_address": ip_address,
-            }
-        )
+
+        with post_commit_hooks:
+            handler.link_subnet(
+                {
+                    "system_id": node.system_id,
+                    "interface_id": interface.id,
+                    "link_id": link_id,
+                    "subnet": subnet.id,
+                    "mode": mode,
+                    "ip_address": ip_address,
+                }
+            )
+
         Interface.update_link_by_id.assert_not_called()
 
     def test_link_subnet_calls_link_subnet_if_not_link_id(self):
@@ -4542,15 +4581,18 @@ class TestMachineHandler(MAASServerTestCase):
         mode = factory.pick_enum(INTERFACE_LINK_TYPE)
         ip_address = factory.make_ip_address()
         self.patch_autospec(Interface, "link_subnet")
-        handler.link_subnet(
-            {
-                "system_id": node.system_id,
-                "interface_id": interface.id,
-                "subnet": subnet.id,
-                "mode": mode,
-                "ip_address": ip_address,
-            }
-        )
+
+        with post_commit_hooks:
+            handler.link_subnet(
+                {
+                    "system_id": node.system_id,
+                    "interface_id": interface.id,
+                    "subnet": subnet.id,
+                    "mode": mode,
+                    "ip_address": ip_address,
+                }
+            )
+
         Interface.link_subnet.assert_called_once_with(
             ANY, mode, subnet, ip_address=ip_address
         )
@@ -4579,13 +4621,15 @@ class TestMachineHandler(MAASServerTestCase):
         link_ip = factory.make_StaticIPAddress(
             alloc_type=IPADDRESS_TYPE.AUTO, ip="", interface=interface
         )
-        handler.unlink_subnet(
-            {
-                "system_id": node.system_id,
-                "interface_id": interface.id,
-                "link_id": link_ip.id,
-            }
-        )
+
+        with post_commit_hooks:
+            handler.unlink_subnet(
+                {
+                    "system_id": node.system_id,
+                    "interface_id": interface.id,
+                    "link_id": link_ip.id,
+                }
+            )
         self.assertIsNone(reload_object(link_ip))
 
     def test_unlink_subnet_locked_raises_permission_error(self):

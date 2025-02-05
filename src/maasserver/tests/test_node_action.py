@@ -1233,15 +1233,16 @@ class TestDeployActionTransactional(MAASTransactionServerTestCase):
 
         # Pre-claim the only addresses.
         with transaction.atomic():
-            StaticIPAddress.objects.allocate_new(
-                subnet, requested_address="10.0.0.1"
-            )
-            StaticIPAddress.objects.allocate_new(
-                subnet, requested_address="10.0.0.2"
-            )
-            StaticIPAddress.objects.allocate_new(
-                subnet, requested_address="10.0.0.3"
-            )
+            with post_commit_hooks:
+                StaticIPAddress.objects.allocate_new(
+                    subnet, requested_address="10.0.0.1"
+                )
+                StaticIPAddress.objects.allocate_new(
+                    subnet, requested_address="10.0.0.2"
+                )
+                StaticIPAddress.objects.allocate_new(
+                    subnet, requested_address="10.0.0.3"
+                )
 
         e = self.assertRaises(
             NodeActionError, Deploy(node, user, request).execute
@@ -2129,11 +2130,13 @@ class TestCloneAction(MAASServerTestCase):
         factory.make_Interface(node=destination2, name="eth0")
 
         action = Clone(source, user, request)
-        action.execute(
-            destinations=[destination1.system_id, destination2.system_id],
-            storage=True,
-            interfaces=True,
-        )
+
+        with post_commit_hooks:
+            action.execute(
+                destinations=[destination1.system_id, destination2.system_id],
+                storage=True,
+                interfaces=True,
+            )
         audit_event = Event.objects.get(type__level=AUDIT)
         self.assertEqual(
             audit_event.description, f"Cloning from '{source.hostname}'."

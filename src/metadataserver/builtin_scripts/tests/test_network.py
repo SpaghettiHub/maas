@@ -72,9 +72,8 @@ class UpdateInterfacesMixin:
         # if it's called once or twice.
         if passes is None:
             passes = random.randint(1, 2)
-
-        with post_commit_hooks:
-            for _ in range(passes):
+        for _ in range(passes):
+            with post_commit_hooks:
                 hooks.process_lxd_results(node, json.dumps(data).encode(), 0)
         return passes
 
@@ -1841,9 +1840,11 @@ class TestUpdateInterfaces(MAASServerTestCase, UpdateInterfacesMixin):
             )
         )
         lxd_script_output = data.render(include_extra=True)
-        lxd_script.store_result(
-            0, stdout=json.dumps(lxd_script_output).encode("utf-8")
-        )
+
+        with post_commit_hooks:
+            lxd_script.store_result(
+                0, stdout=json.dumps(lxd_script_output).encode("utf-8")
+            )
 
         self.update_interfaces(controller, data)
 
