@@ -14,7 +14,7 @@ class ZoneHandler(Handler):
     @handler(path="/zones", methods=["GET"], include_in_schema=False)
     async def list(
         self,
-        services: ServiceCollectionV2 = Depends(services),
-        user: User = Depends(authenticated_user),
+        services: ServiceCollectionV2 = Depends(services),  # noqa: B008
+        user: User = Depends(authenticated_user),  # noqa: B008
     ) -> list[Zone]:
         return await services.zones.list()

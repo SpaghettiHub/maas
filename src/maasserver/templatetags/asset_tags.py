@@ -16,6 +16,6 @@ def get_index_css_path() -> str:
         manifest = json.load(f)
 
     try:
-        return f"/MAAS/r/{manifest["index.html"]["css"][0]}"
+        return f"/MAAS/r/{manifest['index.html']['css'][0]}"
     except KeyError:
         return ""

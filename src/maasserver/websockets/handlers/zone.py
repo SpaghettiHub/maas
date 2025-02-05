@@ -3,7 +3,6 @@
 
 """The zone handler for the WebSocket connection."""
 
-
 from collections import defaultdict
 
 from django.db.models import Count

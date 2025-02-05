@@ -36,7 +36,7 @@ class DHCPSnippetQueriesMixin(MAASQueriesMixin):
             specifiers,
             specifier_types=specifier_types,
             separator=separator,
-            **kwargs
+            **kwargs,
         )
 
 
@@ -113,5 +113,5 @@ class DHCPSnippet(CleanSave, TimestampedModel):
             and self.iprange.subnet_id != self.subnet.id
         ):
             raise ValidationError(
-                "A DHCP snippet's IP Range must be within the" "parent subnet"
+                "A DHCP snippet's IP Range must be within theparent subnet"
             )

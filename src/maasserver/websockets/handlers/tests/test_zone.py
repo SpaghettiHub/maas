@@ -3,7 +3,6 @@
 
 """Tests for `maasserver.websockets.handlers.zone`"""
 
-
 from collections import defaultdict
 
 from django.core.exceptions import ValidationError

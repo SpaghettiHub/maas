@@ -3,7 +3,7 @@
 
 from typing import Any, Type
 
-from sqlalchemy import and_, desc, select, Select, Table
+from sqlalchemy import and_, desc, Select, select, Table
 from sqlalchemy.sql.expression import func, join
 from sqlalchemy.sql.functions import count
 from sqlalchemy.sql.operators import eq
@@ -46,7 +46,6 @@ class MachineClauseFactory(ClauseFactory):
 
 
 class MachinesRepository(AbstractNodesRepository[Machine]):
-
     def get_repository_table(self) -> Table:
         return NodeTable
 

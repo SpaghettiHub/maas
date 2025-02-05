@@ -3,7 +3,6 @@
 
 """Access middleware."""
 
-
 from dataclasses import dataclass
 import http.client
 import json

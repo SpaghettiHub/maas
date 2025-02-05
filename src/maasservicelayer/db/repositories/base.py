@@ -12,8 +12,8 @@ from sqlalchemy import (
     desc,
     insert,
     Row,
-    select,
     Select,
+    select,
     Table,
     update,
 )
@@ -142,7 +142,6 @@ class BaseRepository(ABC, Generic[T]):
     async def list(
         self, page: int, size: int, query: QuerySpec | None = None
     ) -> ListResult[T]:
-
         total_stmt = select(count()).select_from(self.get_repository_table())
         if query:
             total_stmt = query.enrich_stmt(total_stmt)
