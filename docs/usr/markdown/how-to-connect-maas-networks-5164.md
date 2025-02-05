@@ -69,7 +69,7 @@ Netplan configurations can be used to set up bridges outside of MAAS.
                addresses:
                - 10.0.0.101/24
                gateway4: 10.0.0.1
-               interfaces:
+              interfaces:
                - enp1s0
                macaddress: 52:54:00:39:9d:f9
    ```
@@ -380,7 +380,7 @@ To create an IP range:
 
 4. Select *Reserve range* and choose either *Reserve range* or *Reserve dynamic range*. Note that if you choose a dynamic range, MAAS will automatically provide DHCP for enlistment and commissioning provided that the associated VLAN has DHCP enabled. 
 
-5. A window will appear, allowing you to enter a *Start IP address* and *End IP address
+5. A window will appear, allowing you to enter a *Start IP address* and *End IP address*.
 
 6. If you didn't select a dynamic range, you may optionally enter a *Purpose* for the range.
 
