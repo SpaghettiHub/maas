@@ -28,6 +28,7 @@ class TestEventsService:
     @pytest.fixture(scope="function")
     def node(self):
         node = Mock(Node)
+        type(node).id = PropertyMock(return_value=100)
         type(node).system_id = PropertyMock(return_value="system_id")
         type(node).hostname = PropertyMock(return_value="hostname")
         return node
@@ -55,7 +56,9 @@ class TestEventsService:
     async def test_record_event(
         self, events_repository, eventtypes_repository, node
     ):
-        event_type = Mock(EventType)
+        event_type = EventType(
+            id=1, name=EventTypeEnum.DEPLOYING, description="desc", level=0
+        )
         eventtypes_repository.ensure.return_value = event_type
         event = Mock(Event)
         events_repository.create.return_value = event
@@ -67,14 +70,17 @@ class TestEventsService:
 
         ev = await events_service.record_event(
             node=node,
-            event_type=event_type,
+            event_type=EventTypeEnum.DEPLOYING,
             event_action="action",
             event_description="description",
         )
         assert ev == event
-        eventtypes_repository.ensure.assert_called_with(event_type, ANY)
+        eventtypes_repository.ensure.assert_called_with(
+            EventTypeEnum.DEPLOYING, ANY
+        )
         events_repository.create.assert_called_once()
         builder = events_repository.create.call_args.args[0]
+        assert builder.type == event_type
         assert builder.node_system_id == node.system_id
         assert builder.node_hostname == node.hostname
         assert builder.description == "description"
