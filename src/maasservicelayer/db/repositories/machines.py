@@ -74,6 +74,7 @@ class MachinesRepository(AbstractNodesRepository[Machine]):
                 NodeTable.c.hostname,
                 NodeTable.c.power_state,
                 NodeTable.c.owner_id,
+                NodeTable.c.error_description,
                 NodeTable.c.current_commissioning_script_set_id,
                 NodeTable.c.current_testing_script_set_id,
                 NodeTable.c.current_installation_script_set_id,
@@ -111,7 +112,7 @@ class MachinesRepository(AbstractNodesRepository[Machine]):
         )
         if query:
             total_stmt = query.enrich_stmt(total_stmt)
-        total = (await self.connection.execute(total_stmt)).scalar()
+        total = (await self.execute_stmt(total_stmt)).scalar()
 
         stmt = (
             self.select_all_statement()
@@ -132,12 +133,12 @@ class MachinesRepository(AbstractNodesRepository[Machine]):
     async def list_machine_usb_devices(
         self, system_id: str, page: int, size: int
     ) -> ListResult[UsbDevice]:
-        total_stmt = (
-            select(count())
-            .select_from(NodeDeviceTable)
+        total_stmt = select(count()).select_from(
+            self._list_devices_statement(system_id)
             .where(eq(NodeDeviceTable.c.bus, NodeDeviceBus.USB))
+            .subquery()
         )
-        total = (await self.connection.execute(total_stmt)).scalar()
+        total = (await self.execute_stmt(total_stmt)).scalar()
 
         stmt = (
             self._list_devices_statement(system_id)
@@ -147,7 +148,7 @@ class MachinesRepository(AbstractNodesRepository[Machine]):
             .limit(size)
         )
 
-        result = (await self.connection.execute(stmt)).all()
+        result = (await self.execute_stmt(stmt)).all()
 
         return ListResult[UsbDevice](
             items=[UsbDevice(**row._asdict()) for row in result],
@@ -157,12 +158,13 @@ class MachinesRepository(AbstractNodesRepository[Machine]):
     async def list_machine_pci_devices(
         self, system_id: str, page: int, size: int
     ) -> ListResult[PciDevice]:
-        total_stmt = (
-            select(count())
-            .select_from(NodeDeviceTable)
+
+        total_stmt = select(count()).select_from(
+            self._list_devices_statement(system_id)
             .where(eq(NodeDeviceTable.c.bus, NodeDeviceBus.PCIE))
+            .subquery()
         )
-        total = (await self.connection.execute(total_stmt)).scalar()
+        total = (await self.execute_stmt(total_stmt)).scalar()
 
         stmt = (
             self._list_devices_statement(system_id)
@@ -172,7 +174,7 @@ class MachinesRepository(AbstractNodesRepository[Machine]):
             .limit(size)
         )
 
-        result = (await self.connection.execute(stmt)).all()
+        result = (await self.execute_stmt(stmt)).all()
 
         return ListResult[PciDevice](
             items=[PciDevice(**row._asdict()) for row in result],
@@ -186,7 +188,7 @@ class MachinesRepository(AbstractNodesRepository[Machine]):
             .where(eq(NodeTable.c.node_type, NodeTypeEnum.MACHINE))
             .group_by(NodeTable.c.status)
         )
-        result = (await self.connection.execute(stmt)).all()
+        result = (await self.execute_stmt(stmt)).all()
         machines_count = MachinesCountByStatus()
         for row in result:
             match row.status:
