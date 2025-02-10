@@ -3,7 +3,6 @@
 
 """:class:`SSHKey` and friends."""
 
-
 from html import escape
 from typing import List
 
@@ -15,7 +14,7 @@ from django.utils.safestring import mark_safe
 from maasserver.enum import KEYS_PROTOCOL_TYPE_CHOICES
 from maasserver.models.cleansave import CleanSave
 from maasserver.models.timestampedmodel import TimestampedModel
-from maasserver.sqlalchemy import exec_async, servicelayer
+from maasserver.sqlalchemy import ServiceLayerAdapter
 from maasservicelayer.exceptions.catalog import ValidationException
 from maasservicelayer.models.sshkeys import SshKey
 
@@ -46,10 +45,10 @@ class SSHKeyManager(Manager):
         :return: List of imported `SSHKey`s.
         """
 
-        with servicelayer() as services:
+        with ServiceLayerAdapter.build() as servicelayer:
             try:
-                return exec_async(
-                    services.sshkeys.import_keys(protocol, auth_id, user.id)
+                return servicelayer.services.sshkeys.import_keys(
+                    protocol, auth_id, user.id
                 )
             except ValidationException as e:
                 # The new service layer uses different exceptions. So the following logic ensure backwards compatibility with
@@ -57,20 +56,20 @@ class SSHKeyManager(Manager):
                 if len(e.details) > 0:
                     detail = e.details[0]
                     if detail.field == "key":
-                        raise OpenSSHKeyError(detail.message)
+                        raise OpenSSHKeyError(detail.message)  # noqa: B904
                     elif detail.field == "auth_id":
-                        raise ImportSSHKeysError(detail.message)
+                        raise ImportSSHKeysError(detail.message)  # noqa: B904
 
 
 def validate_ssh_public_key(value):
     """Validate that the given value contains a valid SSH public key."""
     try:
-        with servicelayer() as services:
-            return exec_async(
-                services.sshkeys.normalize_openssh_public_key(key=value)
+        with ServiceLayerAdapter.build() as servicelayer:
+            return servicelayer.services.sshkeys.normalize_openssh_public_key(
+                key=value
             )
     except Exception as error:
-        raise ValidationError("Invalid SSH public key: " + str(error))
+        raise ValidationError("Invalid SSH public key: " + str(error))  # noqa: B904
 
 
 HELLIPSIS = "&hellip;"

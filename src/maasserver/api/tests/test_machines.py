@@ -18,9 +18,8 @@ from maasserver.api.machines import AllocationOptions, get_allocation_options
 from maasserver.enum import BMC_TYPE, BRIDGE_TYPE, INTERFACE_TYPE, NODE_STATUS
 import maasserver.forms as forms_module
 from maasserver.forms.pods import ComposeMachineForm, ComposeMachineForPodsForm
-from maasserver.models import Config, Domain, Machine, Node
+from maasserver.models import Config, Domain, Machine, Node, ScriptSet
 from maasserver.models import node as node_module
-from maasserver.models import ScriptSet
 from maasserver.models.node import RELEASABLE_STATUSES
 from maasserver.node_constraint_filter_forms import AcquireNodeForm
 from maasserver.testing.api import APITestCase, APITransactionTestCase
@@ -535,7 +534,8 @@ class TestMachinesAPI(APITestCase.ForUser):
 
         expected_counts = [1, 2, 3]
         self.assertEqual(machines_count, expected_counts)
-        base_count = 94
+        # TODO: this should be 94. Update this when we will be able to count also the queries made by the service layer.
+        base_count = 93
         for idx, machine_count in enumerate(machines_count):
             self.assertEqual(
                 queries_count[idx], base_count + (machine_count * 7)
