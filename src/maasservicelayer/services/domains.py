@@ -7,6 +7,7 @@ from maasservicelayer.builders.domains import DomainBuilder
 from maasservicelayer.context import Context
 from maasservicelayer.db.repositories.domains import DomainsRepository
 from maasservicelayer.models.domains import Domain
+from maasservicelayer.models.forwarddnsserver import ForwardDNSServer
 from maasservicelayer.services.base import BaseService
 from maasservicelayer.services.dnspublications import DNSPublicationsService
 
@@ -66,3 +67,8 @@ class DomainsService(BaseService[Domain, DomainsRepository, DomainBuilder]):
 
     async def get_default_domain(self) -> Domain:
         return await self.repository.get_default_domain()
+
+    async def get_forwarded_domains(
+        self,
+    ) -> List[tuple[Domain, ForwardDNSServer]]:
+        return await self.repository.get_forwarded_domains()

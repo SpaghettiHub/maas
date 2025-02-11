@@ -3,13 +3,19 @@
 
 from typing import Type
 
-from sqlalchemy import select, Table
+from sqlalchemy import and_, select, Table
 from sqlalchemy.sql.operators import eq
 
 from maasservicelayer.db.filters import Clause, ClauseFactory
 from maasservicelayer.db.repositories.base import BaseRepository
-from maasservicelayer.db.tables import DomainTable, GlobalDefaultTable
+from maasservicelayer.db.tables import (
+    DomainTable,
+    ForwardDNSServerDomainsTable,
+    ForwardDNSServerTable,
+    GlobalDefaultTable,
+)
 from maasservicelayer.models.domains import Domain
+from maasservicelayer.models.forwarddnsserver import ForwardDNSServer
 
 
 class DomainsClauseFactory(ClauseFactory):
@@ -50,3 +56,33 @@ class DomainsRepository(BaseRepository[Domain]):
         default_domain = (await self.execute_stmt(stmt)).one()
 
         return Domain(**default_domain._asdict())
+
+    async def get_forwarded_domains(
+        self,
+    ) -> list[tuple[Domain, ForwardDNSServer]]:
+        stmt = (
+            select(DomainTable, ForwardDNSServerTable)
+            .select_from(DomainTable)
+            .join(
+                ForwardDNSServerDomainsTable,
+                ForwardDNSServerDomainsTable.c.domain_id == DomainTable.c.id,
+            )
+            .join(
+                ForwardDNSServerTable,
+                ForwardDNSServerTable.c.id
+                == ForwardDNSServerDomainsTable.c.forwarddnsserver_id,
+            )
+            .filter(
+                and_(
+                    eq(DomainTable.c.authoritative, False),
+                    ForwardDNSServerTable.c.id is not None,
+                )
+            )
+        )
+
+        result = (await self.execute_stmt(stmt)).all()
+
+        return [
+            (Domain(**row._asdict()), ForwardDNSServer(**row._asdict()))
+            for row in result
+        ]
