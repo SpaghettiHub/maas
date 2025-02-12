@@ -249,14 +249,14 @@ CORE_REGIONRACKRPCONNECTION_DELETE = dedent(
         maasserver_regioncontrollerprocessendpoint AS endpoint
       WHERE process.id = endpoint.process_id
         AND endpoint.id = OLD.endpoint_id;
-
+  
       -- Only perform an action if processes equal.
       IF rack_controller.managing_process_id = region_process.id THEN
         -- Region process was managing this rack controller. Tell it to stop
         -- watching the rack controller.
         PERFORM pg_notify(
-          CONCAT('sys_core_', region_process.id),
-          CONCAT('unwatch_', CAST(rack_controller.id AS text)));
+            CONCAT('sys_core_', region_process.id),
+            CONCAT('unwatch_', CAST(rack_controller.id AS text)));
 
         -- Pick a new region process for this rack controller.
         region_process = sys_core_pick_new_region(rack_controller);
@@ -267,9 +267,9 @@ CORE_REGIONRACKRPCONNECTION_DELETE = dedent(
         WHERE maasserver_node.id = rack_controller.id;
         IF region_process.id IS NOT NULL THEN
           PERFORM pg_notify(
-            CONCAT('sys_core_', region_process.id),
-            CONCAT('watch_', CAST(rack_controller.id AS text)));
-        END IF;
+              CONCAT('sys_core_', region_process.id),
+              CONCAT('watch_', CAST(rack_controller.id AS text)));
+        END eF;
       END IF;
 
       -- No connections of the rack controller requires the DNS to be
@@ -484,39 +484,6 @@ CORE_RELOAD_DNS_NOTIFICATION_FORMAT = dedent(
     BEGIN
         result := gen_random_prefix() || ' RELOAD';
         RETURN result;
-    END;
-    $$ LANGUAGE plpgsql;
-    """
-)
-
-# Helper that alerts the primary and secondary rack controller for a VLAN.
-DHCP_ALERT = dedent(
-    """\
-    CREATE OR REPLACE FUNCTION sys_dhcp_alert(vlan maasserver_vlan)
-    RETURNS void AS $$
-    DECLARE
-      relay_vlan maasserver_vlan;
-    BEGIN
-      IF vlan.dhcp_on THEN
-        PERFORM pg_notify(CONCAT('sys_dhcp_', vlan.primary_rack_id), '');
-        IF vlan.secondary_rack_id IS NOT NULL THEN
-          PERFORM pg_notify(CONCAT('sys_dhcp_', vlan.secondary_rack_id), '');
-        END IF;
-      END IF;
-      IF vlan.relay_vlan_id IS NOT NULL THEN
-        SELECT maasserver_vlan.* INTO relay_vlan
-        FROM maasserver_vlan
-        WHERE maasserver_vlan.id = vlan.relay_vlan_id;
-        IF relay_vlan.dhcp_on THEN
-          PERFORM pg_notify(CONCAT(
-            'sys_dhcp_', relay_vlan.primary_rack_id), '');
-          IF relay_vlan.secondary_rack_id IS NOT NULL THEN
-            PERFORM pg_notify(CONCAT(
-              'sys_dhcp_', relay_vlan.secondary_rack_id), '');
-          END IF;
-        END IF;
-      END IF;
-      RETURN;
     END;
     $$ LANGUAGE plpgsql;
     """
@@ -1884,9 +1851,6 @@ def register_system_triggers():
     register_trigger(
         "maasserver_regionrackrpcconnection", "sys_core_rpc_delete", "delete"
     )
-
-    # DHCP
-    register_procedure(DHCP_ALERT)
 
     # DNS
     # The zone serial is used in the 'sys_dns' triggers. Ensure that it exists
