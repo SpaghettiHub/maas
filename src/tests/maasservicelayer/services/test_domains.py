@@ -1,7 +1,7 @@
 #  Copyright 2024-2025 Canonical Ltd.  This software is licensed under the
 #  GNU Affero General Public License version 3 (see the file LICENSE).
 
-from unittest.mock import Mock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 
@@ -12,6 +12,7 @@ from maasservicelayer.db.repositories.domains import DomainsRepository
 from maasservicelayer.models.base import MaasBaseModel
 from maasservicelayer.models.domains import Domain
 from maasservicelayer.services.base import BaseService
+from maasservicelayer.services.configurations import ConfigurationsService
 from maasservicelayer.services.dnspublications import DNSPublicationsService
 from maasservicelayer.services.domains import DomainsService
 from maasservicelayer.utils.date import utcnow
@@ -24,6 +25,7 @@ class TestCommonDomainsService(ServiceCommonTests):
     def service_instance(self) -> BaseService:
         return DomainsService(
             context=Context(),
+            configurations_service=Mock(ConfigurationsService),
             dnspublications_service=Mock(DNSPublicationsService),
             domains_repository=Mock(DomainsRepository),
         )
@@ -39,6 +41,11 @@ class TestCommonDomainsService(ServiceCommonTests):
             created=now,
             updated=now,
         )
+
+    async def test_create(self, service_instance, test_instance):
+        # pre_create_hook tested in the next tests
+        service_instance.pre_create_hook = AsyncMock()
+        return await super().test_create(service_instance, test_instance)
 
     async def test_update_many(
         self, service_instance, test_instance: MaasBaseModel
@@ -74,6 +81,7 @@ class TestDomainsService:
 
         service = DomainsService(
             context=Context(),
+            configurations_service=Mock(ConfigurationsService),
             dnspublications_service=dnspublications_service,
             domains_repository=domains_repository,
         )
@@ -91,6 +99,48 @@ class TestDomainsService:
             source="added zone example.com",
             action=DnsUpdateAction.RELOAD,
         )
+
+    @pytest.mark.parametrize(
+        "name, valid",
+        [
+            ("domain.com", True),
+            ("a" * 256, False),
+            ("-b", False),
+            ("c-", False),
+            ("domain$name", False),
+        ],
+    )
+    async def test_create_invalid_name(self, name: str, valid: bool) -> None:
+        domains_repository = Mock(DomainsRepository)
+        dnspublications_service = Mock(DNSPublicationsService)
+        service = DomainsService(
+            context=Context(),
+            configurations_service=Mock(ConfigurationsService),
+            dnspublications_service=dnspublications_service,
+            domains_repository=domains_repository,
+        )
+        if not valid:
+            with pytest.raises(ValueError):
+                builder = DomainBuilder(name=name)
+                await service.create(builder)
+        else:
+            builder = DomainBuilder(name=name)
+            await service.create(builder)
+
+    async def test_create_duplicate_internaldomain_error(self) -> None:
+        domains_repository = Mock(DomainsRepository)
+        dnspublications_service = Mock(DNSPublicationsService)
+        configurations_service = Mock(ConfigurationsService)
+        configurations_service.get.return_value = "maas_internal_domain"
+        service = DomainsService(
+            context=Context(),
+            configurations_service=configurations_service,
+            dnspublications_service=dnspublications_service,
+            domains_repository=domains_repository,
+        )
+        with pytest.raises(ValueError):
+            builder = DomainBuilder(name="maas_internal_domain")
+            await service.create(builder)
 
     async def test_update_authoritative(self):
         domains_repository = Mock(DomainsRepository)
@@ -120,6 +170,7 @@ class TestDomainsService:
 
         service = DomainsService(
             context=Context(),
+            configurations_service=Mock(ConfigurationsService),
             dnspublications_service=dnspublications_service,
             domains_repository=domains_repository,
         )
@@ -168,6 +219,7 @@ class TestDomainsService:
 
         service = DomainsService(
             context=Context(),
+            configurations_service=Mock(ConfigurationsService),
             dnspublications_service=dnspublications_service,
             domains_repository=domains_repository,
         )
@@ -216,6 +268,7 @@ class TestDomainsService:
 
         service = DomainsService(
             context=Context(),
+            configurations_service=Mock(ConfigurationsService),
             dnspublications_service=dnspublications_service,
             domains_repository=domains_repository,
         )
@@ -264,6 +317,7 @@ class TestDomainsService:
 
         service = DomainsService(
             context=Context(),
+            configurations_service=Mock(ConfigurationsService),
             dnspublications_service=dnspublications_service,
             domains_repository=domains_repository,
         )
@@ -304,6 +358,7 @@ class TestDomainsService:
 
         service = DomainsService(
             context=Context(),
+            configurations_service=Mock(ConfigurationsService),
             dnspublications_service=dnspublications_service,
             domains_repository=domains_repository,
         )
