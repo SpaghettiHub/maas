@@ -5,9 +5,8 @@ from math import pow
 
 from django.core.exceptions import ValidationError
 
+from maascommon.dns import get_iface_name_based_hostname, get_ip_based_hostname
 from maasserver.utils.dns import (
-    get_iface_name_based_hostname,
-    get_ip_based_hostname,
     validate_domain_name,
     validate_hostname,
     validate_url,
