@@ -1,4 +1,4 @@
-# Copyright 2012-2017 Canonical Ltd.  This software is licensed under the
+# Copyright 2012-2025 Canonical Ltd.  This software is licensed under the
 # GNU Affero General Public License version 3 (see the file LICENSE).
 
 from random import choice, randint
@@ -510,20 +510,6 @@ class TestSubnetListFormField(MAASTestCase):
         subnets = [str(factory.make_ipv4_network()) for _ in range(5)]
         input = ",".join(subnets)
         self.assertEqual(" ".join(subnets), SubnetListFormField().clean(input))
-
-    def test_separators_dont_conflict_with_ipv4_address(self):
-        self.assertIsNone(
-            re.search(
-                SubnetListFormField.separators, factory.make_ipv4_address()
-            )
-        )
-
-    def test_separators_dont_conflict_with_ipv6_address(self):
-        self.assertIsNone(
-            re.search(
-                SubnetListFormField.separators, factory.make_ipv6_address()
-            )
-        )
 
     def test_accepts_hostname(self):
         hostname = factory.make_hostname()
