@@ -52,7 +52,7 @@ class ADnsRecord(DnsRecord):
 
     @classmethod
     def from_text(cls, rrdata: str) -> Self:
-        return cls(address=IPv4Address(rrdata.strip()))
+        return cls(address=IPv4Address(rrdata))
 
     def to_text(self) -> str:
         return str(self.address)
@@ -63,7 +63,7 @@ class AaaaDnsRecord(DnsRecord):
 
     @classmethod
     def from_text(cls, rrdata: str) -> Self:
-        return cls(address=IPv6Address(rrdata.strip()))
+        return cls(address=IPv6Address(rrdata))
 
     def to_text(self) -> str:
         return str(self.address)
@@ -262,3 +262,95 @@ class DnsResourceRecordSet(BaseModel):
                 "The DnsResourceRecordSet doesn't contain records of the specified type."
             )
         return values
+
+    @classmethod
+    def from_rrtype(
+        cls,
+        name: str,
+        node_id: int | None,
+        ttl: int | None,
+        rrtype: DnsResourceTypeEnum,
+        rrdatas: list[str],
+    ) -> Self:
+        match rrtype:
+            case DnsResourceTypeEnum.A:
+                rrset = cls(
+                    name=name,
+                    node_id=node_id,
+                    ttl=ttl,
+                    rrtype=rrtype,
+                    a_records=[
+                        ADnsRecord.from_text(rrdata) for rrdata in rrdatas
+                    ],
+                )
+            case DnsResourceTypeEnum.AAAA:
+                rrset = cls(
+                    name=name,
+                    node_id=node_id,
+                    ttl=ttl,
+                    rrtype=rrtype,
+                    aaaa_records=[
+                        AaaaDnsRecord.from_text(rrdata) for rrdata in rrdatas
+                    ],
+                )
+            case DnsResourceTypeEnum.CNAME:
+                rrset = cls(
+                    name=name,
+                    node_id=node_id,
+                    ttl=ttl,
+                    rrtype=rrtype,
+                    cname_records=[
+                        CnameDnsRecord.from_text(rrdata) for rrdata in rrdatas
+                    ],
+                )
+            case DnsResourceTypeEnum.MX:
+                rrset = cls(
+                    name=name,
+                    node_id=node_id,
+                    ttl=ttl,
+                    rrtype=rrtype,
+                    mx_records=[
+                        MxDnsRecord.from_text(rrdata) for rrdata in rrdatas
+                    ],
+                )
+            case DnsResourceTypeEnum.NS:
+                rrset = cls(
+                    name=name,
+                    node_id=node_id,
+                    ttl=ttl,
+                    rrtype=rrtype,
+                    ns_records=[
+                        NsDnsRecord.from_text(rrdata) for rrdata in rrdatas
+                    ],
+                )
+            case DnsResourceTypeEnum.SRV:
+                rrset = cls(
+                    name=name,
+                    node_id=node_id,
+                    ttl=ttl,
+                    rrtype=rrtype,
+                    srv_records=[
+                        SrvDnsRecord.from_text(rrdata) for rrdata in rrdatas
+                    ],
+                )
+            case DnsResourceTypeEnum.SSHFP:
+                rrset = cls(
+                    name=name,
+                    node_id=node_id,
+                    ttl=ttl,
+                    rrtype=rrtype,
+                    sshfp_records=[
+                        SshfpDnsRecord.from_text(rrdata) for rrdata in rrdatas
+                    ],
+                )
+            case DnsResourceTypeEnum.TXT:
+                rrset = cls(
+                    name=name,
+                    node_id=node_id,
+                    ttl=ttl,
+                    rrtype=rrtype,
+                    txt_records=[
+                        TxtDnsRecord.from_text(rrdata) for rrdata in rrdatas
+                    ],
+                )
+        return rrset
