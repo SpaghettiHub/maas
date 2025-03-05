@@ -31,6 +31,7 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
+	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/activity"
 	tworkflow "go.temporal.io/sdk/workflow"
 	"maas.io/core/src/maasagent/internal/apiclient"
@@ -198,7 +199,7 @@ func queueFlush(c *apiclient.APIClient, interval time.Duration) func(context.Con
 		}
 
 		return backoff.Retry(func() error {
-			resp, err := c.Request(ctx, http.MethodPost, "/v3internal/leases", body)
+			resp, err := c.Request(ctx, http.MethodPost, "/leases", body)
 			if err != nil {
 				return err
 			}
@@ -249,7 +250,7 @@ func (s *DHCPService) configure(ctx tworkflow.Context, config DHCPServiceConfigP
 			return s.stop(ctx)
 		}
 
-		if err := s.start(ctx); err != nil {
+		if err := s.start(); err != nil {
 			return err
 		}
 
@@ -261,8 +262,9 @@ func (s *DHCPService) configure(ctx tworkflow.Context, config DHCPServiceConfigP
 	}
 
 	childCtx := tworkflow.WithChildOptions(ctx, tworkflow.ChildWorkflowOptions{
-		WorkflowID: fmt.Sprintf("configure-dhcp:%s", s.systemID),
-		TaskQueue:  "region",
+		WorkflowID:            fmt.Sprintf("configure-dhcp:%s", s.systemID),
+		WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_TERMINATE_IF_RUNNING,
+		TaskQueue:             "region",
 	})
 
 	return tworkflow.ExecuteChildWorkflow(childCtx, "configure-dhcp-for-agent", ConfigureDHCPForAgentParam{
@@ -276,7 +278,7 @@ func (s *DHCPService) configure(ctx tworkflow.Context, config DHCPServiceConfigP
 	}).Get(ctx, nil)
 }
 
-func (s *DHCPService) start(ctx context.Context) error {
+func (s *DHCPService) start() error {
 	sockPath := s.dataPathFactory(dhcpdNotificationSocketName)
 
 	if err := syscall.Unlink(sockPath); err != nil {
@@ -295,10 +297,17 @@ func (s *DHCPService) start(ctx context.Context) error {
 		return err
 	}
 
+	// The dhcpd socket must be world readable/writable
+	if err := os.Chmod(sockPath, 0666); err != nil { //nolint:gosec // ignore G302
+		return err
+	}
+
 	notificationListener := dhcpd.NewNotificationListener(s.notificationSock,
 		queueFlush(s.client, flushInterval), dhcpd.WithInterval(flushInterval))
 
-	ctx, s.notificationCancel = context.WithCancel(ctx)
+	var ctx context.Context
+
+	ctx, s.notificationCancel = context.WithCancel(context.Background())
 
 	go notificationListener.Listen(ctx)
 

@@ -1,14 +1,17 @@
 # Copyright 2024-2025 Canonical Ltd.  This software is licensed under the
 # GNU Affero General Public License version 3 (see the file LICENSE).
 
-from fastapi import Depends, Response
+from typing import Union
+
+from fastapi import Depends, Header, Response
+from starlette import status
 
 from maasapiserver.common.api.base import Handler, handler
 from maasapiserver.common.api.models.responses.errors import (
+    BadRequestBodyResponse,
     ConflictBodyResponse,
     NotFoundBodyResponse,
     NotFoundResponse,
-    ValidationErrorBodyResponse,
 )
 from maasapiserver.v3.api import services
 from maasapiserver.v3.api.public.models.requests.query import PaginationParams
@@ -56,7 +59,6 @@ class ResourcePoolHandler(Handler):
             200: {
                 "model": ResourcePoolsListResponse,
             },
-            422: {"model": ValidationErrorBodyResponse},
         },
         status_code=200,
         response_model_exclude_none=True,
@@ -122,7 +124,6 @@ class ResourcePoolHandler(Handler):
                 "headers": {"ETag": OPENAPI_ETAG_HEADER},
             },
             409: {"model": ConflictBodyResponse},
-            422: {"model": ValidationErrorBodyResponse},
         },
         status_code=201,
         response_model_exclude_none=True,
@@ -175,7 +176,6 @@ class ResourcePoolHandler(Handler):
                 "headers": {"ETag": OPENAPI_ETAG_HEADER},
             },
             404: {"model": NotFoundBodyResponse},
-            422: {"model": ValidationErrorBodyResponse},
         },
         status_code=200,
         response_model_exclude_none=True,
@@ -230,7 +230,6 @@ class ResourcePoolHandler(Handler):
                 "headers": {"ETag": OPENAPI_ETAG_HEADER},
             },
             404: {"model": NotFoundBodyResponse},
-            422: {"model": ValidationErrorBodyResponse},
         },
         status_code=200,
         response_model_exclude_none=True,
@@ -274,3 +273,49 @@ class ResourcePoolHandler(Handler):
             resource_pool=resource_pool,
             self_base_hyperlink=f"{V3_API_PREFIX}/resource_pools",
         )
+
+    @handler(
+        path="/resource_pools/{resource_pool_id}",
+        methods=["DELETE"],
+        tags=TAGS,
+        responses={
+            204: {},
+            400: {"model": BadRequestBodyResponse},
+            404: {"model": NotFoundBodyResponse},
+        },
+        status_code=204,
+        dependencies=[
+            Depends(
+                check_permissions(
+                    required_roles={UserRole.ADMIN},
+                    rbac_permissions={RbacPermission.EDIT},
+                )
+            )
+        ],
+    )
+    async def delete_resource_pool(
+        self,
+        resource_pool_id: int,
+        etag_if_match: Union[str, None] = Header(
+            alias="if-match", default=None
+        ),
+        authenticated_user=Depends(get_authenticated_user),  # noqa: B008
+        services: ServiceCollectionV3 = Depends(services),  # noqa: B008
+    ) -> Response:
+        if (
+            authenticated_user.rbac_permissions
+            and resource_pool_id
+            not in authenticated_user.rbac_permissions.edit_pools
+        ):
+            raise ForbiddenException(
+                details=[
+                    BaseExceptionDetail(
+                        type=MISSING_PERMISSIONS_VIOLATION_TYPE,
+                        message="The user does not have the permissions to edit this resource pool.",
+                    )
+                ]
+            )
+        await services.resource_pools.delete_by_id(
+            resource_pool_id, etag_if_match
+        )
+        return Response(status_code=status.HTTP_204_NO_CONTENT)

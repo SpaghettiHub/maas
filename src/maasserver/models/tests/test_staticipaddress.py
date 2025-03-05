@@ -1,4 +1,4 @@
-# Copyright 2014-2016 Canonical Ltd.  This software is licensed under the
+# Copyright 2014-2025 Canonical Ltd.  This software is licensed under the
 # GNU Affero General Public License version 3 (see the file LICENSE).
 
 from datetime import datetime
@@ -27,7 +27,6 @@ from maasserver import locks
 from maasserver.enum import (
     INTERFACE_LINK_TYPE,
     INTERFACE_TYPE,
-    IPADDRESS_FAMILY,
     IPADDRESS_TYPE,
     IPADDRESS_TYPE_CHOICES_DICT,
     IPRANGE_TYPE,
@@ -57,42 +56,6 @@ from maasserver.websockets.base import dehydrate_datetime
 
 
 class TestStaticIPAddressManager(MAASServerTestCase):
-    def test_filter_by_ip_family_ipv4(self):
-        network_v4 = factory.make_ipv4_network()
-        subnet_v4 = factory.make_Subnet(cidr=str(network_v4.cidr))
-        ip_v4 = factory.pick_ip_in_network(network_v4)
-        ip_v4 = factory.make_StaticIPAddress(
-            alloc_type=IPADDRESS_TYPE.STICKY, ip=ip_v4, subnet=subnet_v4
-        )
-        network_v6 = factory.make_ipv6_network()
-        subnet_v6 = factory.make_Subnet(cidr=str(network_v6.cidr))
-        ip_v6 = factory.pick_ip_in_network(network_v6)
-        ip_v6 = factory.make_StaticIPAddress(
-            alloc_type=IPADDRESS_TYPE.STICKY, ip=ip_v6, subnet=subnet_v6
-        )
-        self.assertCountEqual(
-            [ip_v4],
-            StaticIPAddress.objects.filter_by_ip_family(IPADDRESS_FAMILY.IPv4),
-        )
-
-    def test_filter_by_ip_family_ipv6(self):
-        network_v4 = factory.make_ipv4_network()
-        subnet_v4 = factory.make_Subnet(cidr=str(network_v4.cidr))
-        ip_v4 = factory.pick_ip_in_network(network_v4)
-        ip_v4 = factory.make_StaticIPAddress(
-            alloc_type=IPADDRESS_TYPE.STICKY, ip=ip_v4, subnet=subnet_v4
-        )
-        network_v6 = factory.make_ipv6_network()
-        subnet_v6 = factory.make_Subnet(cidr=str(network_v6.cidr))
-        ip_v6 = factory.pick_ip_in_network(network_v6)
-        ip_v6 = factory.make_StaticIPAddress(
-            alloc_type=IPADDRESS_TYPE.STICKY, ip=ip_v6, subnet=subnet_v6
-        )
-        self.assertCountEqual(
-            [ip_v6],
-            StaticIPAddress.objects.filter_by_ip_family(IPADDRESS_FAMILY.IPv6),
-        )
-
     def test_allocate_new_returns_ip_in_correct_range(self):
         subnet = factory.make_managed_Subnet()
         with post_commit_hooks:
@@ -406,10 +369,8 @@ class TestStaticIPAddressManagerMapping(MAASServerTestCase):
             expected_mapping[full_hostname] = HostnameIPMapping(
                 node.system_id, 30, {staticip.ip}, node.node_type
             )
-        mapping = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                domain.id
-            )
+        mapping = service_layer.services.domains.get_hostname_ip_mapping(
+            domain.id
         )
         self.assertEqual(expected_mapping, mapping)
 
@@ -429,10 +390,8 @@ class TestStaticIPAddressManagerMapping(MAASServerTestCase):
             interface=boot_interface,
             user=user,
         )
-        mapping = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                domain.id
-            )
+        mapping = service_layer.services.domains.get_hostname_ip_mapping(
+            domain.id
         )
         fqdn = f"{node.hostname}.{domain.name}"
         self.assertEqual(mapping[fqdn].user_id, user.id)
@@ -457,9 +416,7 @@ class TestStaticIPAddressManagerMapping(MAASServerTestCase):
         # See also LP#1600259.  It doesn't matter what subnet is passed in, you
         # get all of them.
         # We don't pass subnets anymore.
-        mapping = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping()
-        )
+        mapping = service_layer.services.domains.get_hostname_ip_mapping()
         self.assertEqual(expected_mapping, mapping)
 
     def test_get_hostname_ip_mapping_only_node_current_interfaces(self):
@@ -484,9 +441,7 @@ class TestStaticIPAddressManagerMapping(MAASServerTestCase):
             interface=interface2,
         )
         self.assertEqual(
-            dict(
-                service_layer.services.staticipaddress.get_hostname_ip_mapping()
-            ),
+            dict(service_layer.services.domains.get_hostname_ip_mapping()),
             {
                 f"{node.hostname}.{domain.name}": HostnameIPMapping(
                     node.system_id, 30, {staticip1.ip}, node.node_type
@@ -512,9 +467,7 @@ class TestStaticIPAddressManagerMapping(MAASServerTestCase):
             interface=interface1,
         )
         self.assertEqual(
-            dict(
-                service_layer.services.staticipaddress.get_hostname_ip_mapping()
-            ),
+            dict(service_layer.services.domains.get_hostname_ip_mapping()),
             {
                 f"{node.hostname}.{domain.name}": HostnameIPMapping(
                     node.system_id, 30, {staticip1.ip}, node.node_type
@@ -553,9 +506,7 @@ class TestStaticIPAddressManagerMapping(MAASServerTestCase):
             subnet=subnet,
             interface=iface2,
         )
-        mapping = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping()
-        )
+        mapping = service_layer.services.domains.get_hostname_ip_mapping()
         expected = {
             full_hostname: HostnameIPMapping(
                 node.system_id, 30, {staticip.ip}, node.node_type
@@ -594,9 +545,7 @@ class TestStaticIPAddressManagerMapping(MAASServerTestCase):
             subnet=subnet,
             interface=iface2,
         )
-        mapping = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping()
-        )
+        mapping = service_layer.services.domains.get_hostname_ip_mapping()
         sanitized_if2name = get_iface_name_based_hostname(iface2.name)
         expected = {
             full_hostname: HostnameIPMapping(
@@ -652,10 +601,8 @@ class TestStaticIPAddressManagerMapping(MAASServerTestCase):
             expected_mapping = {}
             for node in dom.node_set.all():
                 expected_mapping.update(self.make_mapping(node))
-            actual = (
-                service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                    dom.id
-                )
+            actual = service_layer.services.domains.get_hostname_ip_mapping(
+                dom.id
             )
             self.assertEqual(expected_mapping, actual)
 
@@ -691,10 +638,8 @@ class TestStaticIPAddressManagerMapping(MAASServerTestCase):
             expected_mapping = {}
             for node in dom.node_set.all():
                 expected_mapping.update(self.make_mapping(node, raw_ttl=True))
-            actual = (
-                service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                    dom.id, raw_ttl=True
-                )
+            actual = service_layer.services.domains.get_hostname_ip_mapping(
+                dom.id, raw_ttl=True
             )
             self.assertEqual(expected_mapping, actual)
 
@@ -710,10 +655,8 @@ class TestStaticIPAddressManagerMapping(MAASServerTestCase):
         staticip = factory.make_StaticIPAddress(
             alloc_type=IPADDRESS_TYPE.AUTO, interface=nic2, subnet=subnet
         )
-        mapping = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                node.domain.id
-            )
+        mapping = service_layer.services.domains.get_hostname_ip_mapping(
+            node.domain.id
         )
         self.assertEqual(
             {
@@ -727,10 +670,8 @@ class TestStaticIPAddressManagerMapping(MAASServerTestCase):
     def test_get_hostname_ip_mapping_considers_given_domain(self):
         domain = factory.make_Domain()
         factory.make_Node_with_Interface_on_Subnet(domain=domain)
-        mapping = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                factory.make_Domain().id
-            )
+        mapping = service_layer.services.domains.get_hostname_ip_mapping(
+            factory.make_Domain().id
         )
         self.assertEqual({}, mapping)
 
@@ -753,10 +694,8 @@ class TestStaticIPAddressManagerMapping(MAASServerTestCase):
             subnet=subnet,
             interface=newer_nic,
         )
-        mapping = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                node.domain.id
-            )
+        mapping = service_layer.services.domains.get_hostname_ip_mapping(
+            node.domain.id
         )
         expected_mapping = {
             node.fqdn: HostnameIPMapping(
@@ -785,10 +724,8 @@ class TestStaticIPAddressManagerMapping(MAASServerTestCase):
         auto_ip = factory.make_StaticIPAddress(
             alloc_type=IPADDRESS_TYPE.AUTO, subnet=subnet, interface=nic
         )
-        mapping = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                node.domain.id
-            )
+        mapping = service_layer.services.domains.get_hostname_ip_mapping(
+            node.domain.id
         )
         expected_mapping = {
             node.fqdn: HostnameIPMapping(
@@ -817,10 +754,8 @@ class TestStaticIPAddressManagerMapping(MAASServerTestCase):
             ip=factory.pick_ip_in_network(ipv6_network),
             subnet=ipv6_subnet,
         )
-        mapping = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                node.domain.id
-            )
+        mapping = service_layer.services.domains.get_hostname_ip_mapping(
+            node.domain.id
         )
         self.assertEqual(
             {
@@ -858,10 +793,8 @@ class TestStaticIPAddressManagerMapping(MAASServerTestCase):
             ip=factory.pick_ip_in_network(ipv6_network),
             subnet=ipv6_subnet,
         )
-        mapping = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                node.domain.id
-            )
+        mapping = service_layer.services.domains.get_hostname_ip_mapping(
+            node.domain.id
         )
         self.assertEqual(
             {
@@ -891,10 +824,8 @@ class TestStaticIPAddressManagerMapping(MAASServerTestCase):
             interface=iface,
             subnet=subnet,
         )
-        mapping = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                node.domain.id
-            )
+        mapping = service_layer.services.domains.get_hostname_ip_mapping(
+            node.domain.id
         )
         expected_mapping = {
             node.fqdn: HostnameIPMapping(
@@ -922,10 +853,8 @@ class TestStaticIPAddressManagerMapping(MAASServerTestCase):
             interface=iface,
             subnet=subnet,
         )
-        mapping = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                node.domain.id
-            )
+        mapping = service_layer.services.domains.get_hostname_ip_mapping(
+            node.domain.id
         )
         expected_mapping = {
             node.fqdn: HostnameIPMapping(
@@ -949,10 +878,8 @@ class TestStaticIPAddressManagerMapping(MAASServerTestCase):
         ula_ip = factory.make_StaticIPAddress(
             alloc_type=IPADDRESS_TYPE.AUTO, interface=iface, subnet=ula_subnet
         )
-        mapping = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                node.domain.id
-            )
+        mapping = service_layer.services.domains.get_hostname_ip_mapping(
+            node.domain.id
         )
         expected_mapping = {
             node.fqdn: HostnameIPMapping(
@@ -993,10 +920,8 @@ class TestStaticIPAddressManagerMapping(MAASServerTestCase):
         bond_staticip = factory.make_StaticIPAddress(
             alloc_type=IPADDRESS_TYPE.STICKY, interface=bondif, subnet=subnet
         )
-        mapping = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                node.domain.id
-            )
+        mapping = service_layer.services.domains.get_hostname_ip_mapping(
+            node.domain.id
         )
         expected_mapping = {
             node.fqdn: HostnameIPMapping(
@@ -1029,10 +954,8 @@ class TestStaticIPAddressManagerMapping(MAASServerTestCase):
         bond_staticip = factory.make_StaticIPAddress(
             alloc_type=IPADDRESS_TYPE.STICKY, interface=bondif, subnet=subnet
         )
-        mapping = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                node.domain.id
-            )
+        mapping = service_layer.services.domains.get_hostname_ip_mapping(
+            node.domain.id
         )
         expected_mapping = {
             node.fqdn: HostnameIPMapping(
@@ -1066,10 +989,8 @@ class TestStaticIPAddressManagerMapping(MAASServerTestCase):
         bondip = factory.make_StaticIPAddress(
             alloc_type=IPADDRESS_TYPE.STICKY, interface=bondif, subnet=subnet
         )
-        mapping = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                node.domain.id
-            )
+        mapping = service_layer.services.domains.get_hostname_ip_mapping(
+            node.domain.id
         )
         expected_mapping = {
             node.fqdn: HostnameIPMapping(
@@ -1103,10 +1024,8 @@ class TestStaticIPAddressManagerMapping(MAASServerTestCase):
             interface=new_boot_interface,
             subnet=subnet,
         )
-        mapping = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                node.domain.id
-            )
+        mapping = service_layer.services.domains.get_hostname_ip_mapping(
+            node.domain.id
         )
         expected_mapping = {
             node.fqdn: HostnameIPMapping(
@@ -1140,10 +1059,8 @@ class TestStaticIPAddressManagerMapping(MAASServerTestCase):
             interface=new_boot_interface,
             subnet=subnet,
         )
-        mapping = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                node.domain.id
-            )
+        mapping = service_layer.services.domains.get_hostname_ip_mapping(
+            node.domain.id
         )
         expected_mapping = {
             node.fqdn: HostnameIPMapping(
@@ -1172,10 +1089,8 @@ class TestStaticIPAddressManagerMapping(MAASServerTestCase):
         vlanip = factory.make_StaticIPAddress(
             alloc_type=IPADDRESS_TYPE.STICKY, interface=vlanif, subnet=subnet
         )
-        mapping = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                node.domain.id
-            )
+        mapping = service_layer.services.domains.get_hostname_ip_mapping(
+            node.domain.id
         )
         expected_mapping = {
             node.fqdn: HostnameIPMapping(
@@ -1229,10 +1144,8 @@ class TestStaticIPAddressManagerMapping(MAASServerTestCase):
             subnet=subnet,
             ip="10.0.0.3",
         )
-        mapping = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                node.domain.id
-            )
+        mapping = service_layer.services.domains.get_hostname_ip_mapping(
+            node.domain.id
         )
         expected_mapping = {
             node.fqdn: HostnameIPMapping(
@@ -1288,10 +1201,8 @@ class TestStaticIPAddressManagerMapping(MAASServerTestCase):
             interface=br_bond0,
             subnet=subnet_v6,
         )
-        mapping = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                node.domain.id
-            )
+        mapping = service_layer.services.domains.get_hostname_ip_mapping(
+            node.domain.id
         )
         expected_mapping = {
             node.fqdn: HostnameIPMapping(
@@ -1319,10 +1230,8 @@ class TestStaticIPAddressManagerMapping(MAASServerTestCase):
         )
         sip1 = factory.make_StaticIPAddress(subnet=subnet)
         node.current_config.interface_set.first().ip_addresses.add(sip1)
-        mapping = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                parent.id
-            )
+        mapping = service_layer.services.domains.get_hostname_ip_mapping(
+            parent.id
         )
         self.assertEqual(
             {
@@ -1332,10 +1241,8 @@ class TestStaticIPAddressManagerMapping(MAASServerTestCase):
             },
             mapping,
         )
-        mapping = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                child.id
-            )
+        mapping = service_layer.services.domains.get_hostname_ip_mapping(
+            child.id
         )
         self.assertEqual(
             {
@@ -1379,10 +1286,8 @@ class TestStaticIPAddressManagerMapping(MAASServerTestCase):
         with post_commit_hooks:
             iface1.save()
         # The only mapping we should get is for the boot interface.
-        mapping = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                domain.id
-            )
+        mapping = service_layer.services.domains.get_hostname_ip_mapping(
+            domain.id
         )
         expected_mapping = {
             node.fqdn: HostnameIPMapping(
@@ -1438,10 +1343,8 @@ class TestStaticIPAddressManagerMapping(MAASServerTestCase):
             ip=bondip,
         )
         # The only mapping we should get is for the bond interface.
-        mapping = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                domain.id
-            )
+        mapping = service_layer.services.domains.get_hostname_ip_mapping(
+            domain.id
         )
         expected_mapping = {
             node.fqdn: HostnameIPMapping(
@@ -1497,10 +1400,8 @@ class TestStaticIPAddressManagerMapping(MAASServerTestCase):
         factory.make_DNSResource(
             name=dnsrrname, domain=domain, ip_addresses=[sip2, sip3]
         )
-        mapping = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                domain.id
-            )
+        mapping = service_layer.services.domains.get_hostname_ip_mapping(
+            domain.id
         )
         expected = {
             full_hostname: HostnameIPMapping(
@@ -1518,9 +1419,7 @@ class TestStaticIPAddressManagerMapping(MAASServerTestCase):
             ),
         }
         self.assertEqual(expected, mapping)
-        mapping = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping()
-        )
+        mapping = service_layer.services.domains.get_hostname_ip_mapping()
         expected = {
             full_hostname: HostnameIPMapping(
                 node.system_id, 30, {staticip.ip}, node.node_type
@@ -1759,16 +1658,12 @@ class TestUserReservedStaticIPAddress(MAASServerTestCase):
             )
             for ip in ips
         }
-        mappings = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                domain0.id
-            )
+        mappings = service_layer.services.domains.get_hostname_ip_mapping(
+            domain0.id
         )
         self.assertEqual(expected, mappings)
-        mappings = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                domain1.id
-            )
+        mappings = service_layer.services.domains.get_hostname_ip_mapping(
+            domain1.id
         )
         self.assertEqual(len(mappings), 0)
 
@@ -1810,10 +1705,8 @@ class TestUserReservedStaticIPAddress(MAASServerTestCase):
             )
             for ip in ips0
         }
-        mappings = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                domain0.id
-            )
+        mappings = service_layer.services.domains.get_hostname_ip_mapping(
+            domain0.id
         )
         self.assertEqual(expected, mappings)
         expected = {
@@ -1822,10 +1715,8 @@ class TestUserReservedStaticIPAddress(MAASServerTestCase):
             )
             for ip in ips1
         }
-        mappings = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                domain1.id
-            )
+        mappings = service_layer.services.domains.get_hostname_ip_mapping(
+            domain1.id
         )
         self.assertEqual(expected, mappings)
         expected = {
@@ -1834,10 +1725,8 @@ class TestUserReservedStaticIPAddress(MAASServerTestCase):
             )
             for ip in ips2
         }
-        mappings = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                domain2.id
-            )
+        mappings = service_layer.services.domains.get_hostname_ip_mapping(
+            domain2.id
         )
         self.assertEqual(expected, mappings)
 
@@ -1854,16 +1743,12 @@ class TestUserReservedStaticIPAddress(MAASServerTestCase):
         name2 = factory.make_name("label")
         factory.make_DNSResource(name=name1, ip_addresses=[ip], domain=domain1)
         factory.make_DNSResource(name=name2, ip_addresses=[ip], domain=domain2)
-        mappings = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                domain0.id
-            )
+        mappings = service_layer.services.domains.get_hostname_ip_mapping(
+            domain0.id
         )
         self.assertEqual(len(mappings), 0)
-        mappings = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                domain1.id
-            )
+        mappings = service_layer.services.domains.get_hostname_ip_mapping(
+            domain1.id
         )
         domain1_rr_id = ip.dnsresource_set.filter(domain=domain1.id).first().id
         domain2_rr_id = ip.dnsresource_set.filter(domain=domain2.id).first().id
@@ -1872,19 +1757,15 @@ class TestUserReservedStaticIPAddress(MAASServerTestCase):
             mappings.get(f"{name1}.{domain1.name}"),
             HostnameIPMapping(None, 30, {ip.ip}, None, domain1_rr_id),
         )
-        mappings = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                domain2.id
-            )
+        mappings = service_layer.services.domains.get_hostname_ip_mapping(
+            domain2.id
         )
         self.assertEqual(len(mappings), 1)
         self.assertEqual(
             mappings.get(f"{name2}.{domain2.name}"),
             HostnameIPMapping(None, 30, {ip.ip}, None, domain2_rr_id),
         )
-        mappings = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping()
-        )
+        mappings = service_layer.services.domains.get_hostname_ip_mapping()
         self.assertEqual(
             mappings,
             {
@@ -1944,27 +1825,19 @@ class TestUserReservedStaticIPAddress(MAASServerTestCase):
                 None, 30, {ip3.ip}, None, ip3.dnsresource_set.first().id
             ),
         }
-        mappings = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                domain0.id
-            )
+        mappings = service_layer.services.domains.get_hostname_ip_mapping(
+            domain0.id
         )
         self.assertEqual(expected0, mappings)
-        mappings = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                domain1.id
-            )
+        mappings = service_layer.services.domains.get_hostname_ip_mapping(
+            domain1.id
         )
         self.assertEqual(expected1, mappings)
-        mappings = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                domain2.id
-            )
+        mappings = service_layer.services.domains.get_hostname_ip_mapping(
+            domain2.id
         )
         self.assertEqual(expected2, mappings)
-        mappings = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping()
-        )
+        mappings = service_layer.services.domains.get_hostname_ip_mapping()
         self.assertEqual(expected_subnet, mappings)
 
     def test_node_glue_correctly_generated(self):
@@ -1981,35 +1854,27 @@ class TestUserReservedStaticIPAddress(MAASServerTestCase):
             interface=True, domain=parent, hostname=name, vlan=subnet.vlan
         )
         node.current_config.interface_set.first().ip_addresses.add(ip)
-        mappings = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                domain0.id
-            )
+        mappings = service_layer.services.domains.get_hostname_ip_mapping(
+            domain0.id
         )
         self.assertEqual(len(mappings), 0)
-        mappings = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                parent.id
-            )
+        mappings = service_layer.services.domains.get_hostname_ip_mapping(
+            parent.id
         )
         self.assertEqual(len(mappings), 1)
         self.assertEqual(
             HostnameIPMapping(node.system_id, 30, {ip.ip}, node.node_type),
             mappings.get(node.fqdn),
         )
-        mappings = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                domain.id
-            )
+        mappings = service_layer.services.domains.get_hostname_ip_mapping(
+            domain.id
         )
         self.assertEqual(len(mappings), 1)
         self.assertEqual(
             HostnameIPMapping(node.system_id, 30, {ip.ip}, node.node_type),
             mappings.get(node.fqdn),
         )
-        mappings = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping()
-        )
+        mappings = service_layer.services.domains.get_hostname_ip_mapping()
         self.assertEqual(
             {
                 node.fqdn: HostnameIPMapping(
@@ -2032,16 +1897,12 @@ class TestUserReservedStaticIPAddress(MAASServerTestCase):
         dnsrr = factory.make_DNSResource(
             domain=domain, name="@", ip_addresses=[ip]
         )
-        mappings = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                domain0.id
-            )
+        mappings = service_layer.services.domains.get_hostname_ip_mapping(
+            domain0.id
         )
         self.assertEqual(len(mappings), 0)
-        mappings = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                parent.id
-            )
+        mappings = service_layer.services.domains.get_hostname_ip_mapping(
+            parent.id
         )
         self.assertEqual(len(mappings), 1)
         self.assertEqual(
@@ -2050,10 +1911,8 @@ class TestUserReservedStaticIPAddress(MAASServerTestCase):
             ),
             mappings.get(dnsrr.fqdn),
         )
-        mappings = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping(
-                domain.id
-            )
+        mappings = service_layer.services.domains.get_hostname_ip_mapping(
+            domain.id
         )
         self.assertEqual(len(mappings), 1)
         self.assertEqual(
@@ -2062,9 +1921,7 @@ class TestUserReservedStaticIPAddress(MAASServerTestCase):
             ),
             mappings.get(dnsrr.fqdn),
         )
-        mappings = (
-            service_layer.services.staticipaddress.get_hostname_ip_mapping()
-        )
+        mappings = service_layer.services.domains.get_hostname_ip_mapping()
         self.assertEqual(
             {
                 dnsrr.fqdn: HostnameIPMapping(
