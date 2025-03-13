@@ -19,6 +19,7 @@ from django.utils import timezone
 from netaddr import IPAddress, IPNetwork
 import yaml
 
+from maascommon.enums.node import NodeTypeEnum
 from maascommon.osystem import OperatingSystemRegistry
 from maasserver.clusterrpc.driver_parameters import get_driver_types
 from maasserver.enum import (
@@ -402,6 +403,7 @@ class Factory(maastesting.factory.Factory):
         ephemeral_deploy=False,
         enable_hw_sync=False,
         enable_kernel_crash_dump=False,
+        is_dpu=False,
         parent=None,
         **kwargs,
     ):
@@ -456,6 +458,7 @@ class Factory(maastesting.factory.Factory):
             ephemeral_deploy=ephemeral_deploy,
             enable_hw_sync=enable_hw_sync,
             enable_kernel_crash_dump=enable_kernel_crash_dump,
+            is_dpu=is_dpu,
             cpu_speed=random.randint(1000, 5000),
             parent=parent,
             **kwargs,
@@ -512,6 +515,11 @@ class Factory(maastesting.factory.Factory):
             )
             node.boot_disk = root_partition.partition_table.block_device
 
+            with post_commit_hooks:
+                node.save()
+
+        if is_dpu:
+            node.node_type = NodeTypeEnum.MACHINE
             with post_commit_hooks:
                 node.save()
 
