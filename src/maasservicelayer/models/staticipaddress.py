@@ -15,6 +15,7 @@ from maasservicelayer.models.base import (
 
 @generate_builder()
 class StaticIPAddress(MaasTimestampedBaseModel):
+    id: int
     ip: Optional[IPvAnyAddress]
     alloc_type: IpAddressType
     lease_time: int

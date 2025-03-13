@@ -11,6 +11,7 @@ from maasservicelayer.models.base import (
 
 @generate_builder()
 class DNSData(MaasTimestampedBaseModel):
+    id: int
     dnsresource_id: int
     ttl: Optional[int]
     rrtype: str
