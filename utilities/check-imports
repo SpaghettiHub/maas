@@ -398,6 +398,7 @@ RegionControllerRule = Rule(
 RegionControllerWorker = files("src/maastemporalworker/**/*.py")
 
 RegionControllerWorkerRule = Rule(
+    Allow("aiodns|aiodns.**"),
     Allow("aiofiles|aiofiles.**"),
     Allow("aiohttp|aiohttp.**"),
     Allow("jose|jose.**"),
@@ -442,7 +443,7 @@ ServiceLayerRule = Rule(
     Allow("provisioningserver.drivers.**"),
     Allow("provisioningserver.security.**"),
     Allow("provisioningserver.utils.network.**"),
-    Allow("psycopg2"),
+    Allow("psycopg2|psycopg2.**"),
     Allow("pydantic|pydantic.**"),
     Allow("pymacaroons|pymacaroons.**"),
     Allow("pythonjsonlogger|pythonjsonlogger.**"),

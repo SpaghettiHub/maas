@@ -1,9 +1,9 @@
 #  Copyright 2024 Canonical Ltd.  This software is licensed under the
 #  GNU Affero General Public License version 3 (see the file LICENSE).
 
-from typing import Any, List
+from typing import Any, List, Type
 
-from sqlalchemy import desc, insert, Select, select
+from sqlalchemy import desc, insert, Select, select, Table
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.sql.expression import func
 from sqlalchemy.sql.functions import count
@@ -11,7 +11,7 @@ from sqlalchemy.sql.operators import eq
 
 from maascommon.enums.interface import InterfaceType
 from maascommon.enums.ipaddress import IpAddressType
-from maasservicelayer.db.repositories.base import Repository
+from maasservicelayer.db.repositories.base import BaseRepository
 from maasservicelayer.db.tables import (
     InterfaceIPAddressTable,
     InterfaceTable,
@@ -38,12 +38,18 @@ def build_interface_links(
         sorted_links = sorted(
             one_link_per_id.values(), key=lambda link: link.id, reverse=reverse
         )
-        interface["links"] = sorted_links
-    return interface
+        interface["links"] = sorted_links  # type: ignore
+    return interface  # type: ignore
 
 
-class InterfaceRepository(Repository):
-    async def list(
+class InterfaceRepository(BaseRepository):
+    def get_repository_table(self) -> Table:
+        return InterfaceTable
+
+    def get_model_factory(self) -> Type[Interface]:
+        return Interface
+
+    async def list_for_node(
         self, node_id: int, page: int, size: int
     ) -> ListResult[Interface]:
         total_stmt = (

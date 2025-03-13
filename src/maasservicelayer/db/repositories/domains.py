@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from ipaddress import IPv4Address, IPv6Address
 from typing import Type
 
-from sqlalchemy import select, Table, text
+from sqlalchemy import and_, select, Table, text
 from sqlalchemy.sql.operators import eq
 
 from maascommon.dns import (
@@ -19,8 +19,14 @@ from maascommon.enums.ipaddress import IpAddressType
 from maascommon.enums.node import NodeTypeEnum
 from maasservicelayer.db.filters import Clause, ClauseFactory
 from maasservicelayer.db.repositories.base import BaseRepository
-from maasservicelayer.db.tables import DomainTable, GlobalDefaultTable
+from maasservicelayer.db.tables import (
+    DomainTable,
+    ForwardDNSServerDomainsTable,
+    ForwardDNSServerTable,
+    GlobalDefaultTable,
+)
 from maasservicelayer.models.domains import Domain
+from maasservicelayer.models.forwarddnsserver import ForwardDNSServer
 
 
 @dataclass
@@ -111,6 +117,7 @@ class DomainsRepository(BaseRepository[Domain]):
         default_ttl: int,
         domain_id: int | None = None,
         raw_ttl: bool = False,
+        with_node_id: bool = False,
     ) -> dict[str, HostnameIPMapping]:
         """Get the special mappings, possibly limited to a single Domain.
 
@@ -302,11 +309,14 @@ class DomainsRepository(BaseRepository[Domain]):
             if result.system_id is not None:
                 entry.node_type = result.node_type
                 entry.system_id = result.system_id
+                if with_node_id:
+                    entry.node_id = result.node_id
             if result.ttl is not None:
                 entry.ttl = result.ttl
             if result.user_id is not None:
                 entry.user_id = result.user_id
-            entry.ips.add(result.ip)
+            if result.ip is not None:
+                entry.ips.add(result.ip)
             entry.dnsresource_id = result.dnsresource_id
         return mapping
 
@@ -315,6 +325,7 @@ class DomainsRepository(BaseRepository[Domain]):
         default_ttl: int,
         domain_id: int | None = None,
         raw_ttl: bool = False,
+        with_node_id: bool = False,
     ) -> dict[str, HostnameIPMapping]:
         """Return hostname mappings for `StaticIPAddress` entries.
 
@@ -547,13 +558,18 @@ class DomainsRepository(BaseRepository[Domain]):
             entry = mapping[result.fqdn]
             entry.node_type = result.node_type
             entry.system_id = result.system_id
+            if with_node_id:
+                entry.node_id = result.node_id
             if result.user_id is not None:
                 entry.user_id = result.user_id
             entry.ttl = result.ttl
             if result.is_boot:
                 iface_is_boot[result.fqdn] = True
             # If we have an IP on the right interface type, save it.
-            if result.is_boot == iface_is_boot[result.fqdn]:
+            if (
+                result.is_boot == iface_is_boot[result.fqdn]
+                and result.ip is not None
+            ):
                 entry.ips.add(result.ip)
         # Next, get all the addresses, on all the interfaces, and add the ones
         # that are not already present on the FQDN as $IFACE.$FQDN.  Exclude
@@ -573,14 +589,22 @@ class DomainsRepository(BaseRepository[Domain]):
                     entry = mapping[fqdn]
                     entry.node_type = result.node_type
                     entry.system_id = result.system_id
+                    if with_node_id:
+                        entry.node_id = result.node_id
                     if result.user_id is not None:
                         entry.user_id = result.user_id
                     entry.ttl = result.ttl
-                    entry.ips.add(result.ip)
+                    if result.ip is not None:
+                        entry.ips.add(result.ip)
         return mapping
 
     async def get_hostname_dnsdata_mapping(
-        self, domain_id: int, default_ttl: int, raw_ttl=False, with_ids=True
+        self,
+        domain_id: int,
+        default_ttl: int,
+        raw_ttl=False,
+        with_ids=True,
+        with_node_id=False,
     ) -> dict[str, HostnameRRsetMapping]:
         """Return hostname to RRset mapping for the specified domain.
 
@@ -680,7 +704,7 @@ class DomainsRepository(BaseRepository[Domain]):
         for row in results:
             row = DnsDataMappingQueryResult(**row._asdict())
             if row.name == "@" and row.d_name != domain.name:
-                row.name, row.d_name = row.d_name.split(".", 1)
+                row.name, row.d_name = row.d_name.split(".", 1)  # type: ignore
                 # Since we don't allow more than one label in dnsresource
                 # names, we should never ever be wrong in this assertion.
                 assert row.d_name == domain.name, (
@@ -690,6 +714,8 @@ class DomainsRepository(BaseRepository[Domain]):
             entry.node_type = row.node_type
             entry.system_id = row.system_id
             entry.user_id = row.user_id
+            if with_node_id:
+                entry.node_id = row.node_id
             if with_ids:
                 entry.dnsresource_id = row.dnsresource_id
                 rrtuple = (row.ttl, row.rrtype, row.rrdata, row.dnsdata_id)
@@ -697,3 +723,54 @@ class DomainsRepository(BaseRepository[Domain]):
                 rrtuple = (row.ttl, row.rrtype, row.rrdata)
             entry.rrset.add(rrtuple)
         return mapping
+
+    async def get_forwarded_domains(
+        self,
+    ) -> list[tuple[Domain, ForwardDNSServer]]:
+        stmt = (
+            select(
+                DomainTable,
+                ForwardDNSServerTable.c.id.label("fdns_id"),
+                ForwardDNSServerTable.c.created.label("fdns_created"),
+                ForwardDNSServerTable.c.updated.label("fdns_updated"),
+                ForwardDNSServerTable.c.ip_address.label("fdns_ip_address"),
+                ForwardDNSServerTable.c.port.label("fdns_port"),
+            )
+            .select_from(DomainTable)
+            .join(
+                ForwardDNSServerDomainsTable,
+                ForwardDNSServerDomainsTable.c.domain_id == DomainTable.c.id,
+            )
+            .join(
+                ForwardDNSServerTable,
+                ForwardDNSServerTable.c.id
+                == ForwardDNSServerDomainsTable.c.forwarddnsserver_id,
+            )
+            .filter(
+                and_(
+                    eq(DomainTable.c.authoritative, False),
+                    ForwardDNSServerTable.c.id is not None,
+                )
+            )
+        )
+
+        rows = (await self.execute_stmt(stmt)).all()
+
+        result = []
+
+        for row in rows:
+            row_dict = row._asdict()
+            result.append(
+                (
+                    Domain(**row_dict),
+                    ForwardDNSServer(
+                        id=row_dict["fdns_id"],
+                        created=row_dict["fdns_created"],
+                        updated=row_dict["fdns_updated"],
+                        ip_address=row_dict["fdns_ip_address"],
+                        port=row_dict["fdns_port"],
+                    ),
+                )
+            )
+
+        return result

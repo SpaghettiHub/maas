@@ -155,6 +155,24 @@ class StaticIPAddressRepository(BaseRepository):
 
         return [StaticIPAddress(**row._asdict()) for row in result]
 
+    async def get_for_interfaces(
+        self, interface_ids: list[int]
+    ) -> list[StaticIPAddress]:
+        stmt = (
+            select(StaticIPAddressTable)
+            .select_from(InterfaceIPAddressTable)
+            .join(
+                StaticIPAddressTable,
+                StaticIPAddressTable.c.id
+                == InterfaceIPAddressTable.c.staticipaddress_id,
+            )
+            .filter(InterfaceIPAddressTable.c.interface_id.in_(interface_ids))
+        )
+
+        result = (await self.execute_stmt(stmt)).all()
+
+        return [StaticIPAddress(**row._asdict()) for row in result]
+
     async def get_for_nodes(self, query: QuerySpec) -> list[StaticIPAddress]:
         stmt = (
             select(
@@ -182,8 +200,8 @@ class StaticIPAddressRepository(BaseRepository):
                 SubnetTable,
                 SubnetTable.c.id == StaticIPAddressTable.c.subnet_id,
             )
-            .where(query.where.condition)
         )
+        stmt = query.enrich_stmt(stmt)
         results = (await self.execute_stmt(stmt)).all()
         return [StaticIPAddress(**row._asdict()) for row in results]
 

@@ -78,7 +78,7 @@ all: build ui go-bins doc
 .PHONY: all
 
 
-$(BIN_DIR)/golangci-lint: GOLANGCI_VERSION=1.59.1
+$(BIN_DIR)/golangci-lint: GOLANGCI_VERSION=1.60.1
 $(BIN_DIR)/golangci-lint: utilities/get_golangci-lint | $(BIN_DIR)
 	GOBIN="$(realpath $(dir $@))"
 	utilities/get_golangci-lint "v$(GOLANGCI_VERSION)"
@@ -189,7 +189,7 @@ sec: sec-py
 sec-py:
 	@tox -e bandit
 
-lint: lint-py-builders lint-py lint-py-imports lint-py-linefeeds lint-go lint-shell
+lint: lint-py-builders lint-py check-types lint-py-imports lint-py-linefeeds lint-go lint-shell
 .PHONY: lint
 
 # Check if service layer builders must be re-generated

@@ -88,7 +88,10 @@ class StaticIPAddressService(
         )
 
     async def post_delete_hook(self, resource: StaticIPAddress) -> None:
-        if resource.alloc_type != IpAddressType.DISCOVERED:
+        if (
+            resource.alloc_type != IpAddressType.DISCOVERED
+            and resource.subnet_id is not None
+        ):
             self.temporal_service.register_or_update_workflow_call(
                 CONFIGURE_DHCP_WORKFLOW_NAME,
                 ConfigureDHCPParam(
@@ -113,6 +116,11 @@ class StaticIPAddressService(
                 interfaces, family=family
             )
         )
+
+    async def get_for_interfaces(
+        self, interface_ids: list[int]
+    ) -> list[StaticIPAddress]:
+        return await self.repository.get_for_interfaces(interface_ids)
 
     async def get_for_nodes(self, query: QuerySpec) -> list[StaticIPAddress]:
         return await self.repository.get_for_nodes(query=query)
