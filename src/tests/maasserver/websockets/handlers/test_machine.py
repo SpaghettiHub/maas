@@ -950,8 +950,8 @@ class TestMachineHandlerNewSchema:
 
 
 @pytest.mark.allow_transactions
-@pytest.mark.usefixtures("maasapiserver")
-class TestMachineHandlerWithMaasApiServer:
+@pytest.mark.usefixtures("maasdb")
+class TestMachineHandlerWithServiceLayer:
     def test_list_no_power_params_certificate(self):
         user, session = factory.make_User_with_session()
         sample_cert = get_sample_cert()
