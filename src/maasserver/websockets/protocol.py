@@ -7,6 +7,7 @@ from collections import deque
 from contextlib import ExitStack
 from functools import partial
 from http.cookies import SimpleCookie
+import ipaddress
 import json
 from typing import Optional
 from urllib.parse import parse_qs, urlparse
@@ -304,11 +305,21 @@ class WebSocketProtocol(Protocol):
         return d
 
     def _json_encode(self, obj):
-        """Allow byte strings embedded in the 'result' object passed to
-        `sendResult` to be seamlessly decoded.
+        """
+        Encodes specific object types into JSON-compatible formats.
+
+        This method ensures seamless encoding of:
+        - Byte strings (`bytes`): Decoded into UTF-8 strings with error handling.
+        - IP addresses (`ipaddress.IPv4Address` and `ipaddress.IPv6Address`): Converted to their string representation.
+
+        If the object type is unsupported, a `TypeError` is raised.
         """
         if isinstance(obj, bytes):
             return obj.decode(encoding="utf-8", errors="ignore")
+        elif isinstance(obj, ipaddress.IPv4Address) or isinstance(
+            obj, ipaddress.IPv6Address
+        ):
+            return str(obj)
         else:
             raise TypeError("Could not convert object to JSON: %r" % obj)
 
@@ -370,10 +381,7 @@ class WebSocketProtocol(Protocol):
         """Return an initialised instance of `handler_class`."""
         handler_name = handler_class._meta.handler_name
         handler_cache = self.cache.setdefault(handler_name, {})
-        session_id = self.session.session_key
-        return handler_class(
-            self.user, handler_cache, self.request, session_id
-        )
+        return handler_class(self.user, handler_cache, self.request)
 
 
 class WebSocketFactory(Factory):
