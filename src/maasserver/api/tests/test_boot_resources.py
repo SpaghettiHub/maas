@@ -105,6 +105,7 @@ class TestHelpers(APITestCase.ForUser):
             resource.get_last_deploy(), dict_representation["last_deployed"]
         )
         self.assertFalse("sets" in dict_representation)
+        self.assertIsNone(dict_representation["last_deployed"])
 
     def test_boot_resource_to_dict_with_sets(self):
         resource = factory.make_BootResource()
