@@ -11,36 +11,22 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v3
-      with:
-        ref: "refs/pull/${{ github.event.number }}/merge"
-        fetch-depth: 0
-    - name: create lxd container
-      run: lxc launch ubuntu:22.04 maas-db-tester-${{ github.sha }}
-    - name: Sleep 10 seconds and wait for container to get up
-      run: sleep 10 
-    - name: Copy repository to lxd container
-      run: |
-        lxc file push -r ./ maas-db-tester-${{ github.sha }}/home/ubuntu > /dev/null
-        lxc exec maas-db-tester-${{ github.sha }} --cwd /home/ubuntu --user 0 -- chown -R ubuntu:ubuntu maas
     - name: Install make
-      run: lxc exec maas-db-tester-${{ github.sha }} --user 0 -- sh -c "apt-get update && apt-get install make" 
-    - name: Configure git repo
-      run: lxc exec maas-db-tester-${{ github.sha }} --user 0 -- git config --global --add safe.directory /home/ubuntu/maas
+      run: sudo apt-get update && sudo apt-get install make
     - name: Install deps
-      run: lxc exec maas-db-tester-${{ github.sha }} --user 0 --cwd /home/ubuntu/maas/ -- make install-dependencies
+      run: make install-dependencies
     - name: Build
-      run: lxc exec maas-db-tester-${{ github.sha }} --user 1000 --cwd /home/ubuntu/maas/ -- make build
+      run: make build
     - name: Create env
       run: |
         echo "TMPDIR=$(mktemp -d)" >> $GITHUB_ENV
     - name: Check diff 
       run: |
-          lxc exec maas-db-tester-${{ github.sha }} --user 1000 --cwd /home/ubuntu/maas/ -- make update-initial-sql
-          lxc exec maas-db-tester-${{ github.sha }} --user 1000 --cwd /home/ubuntu/maas/ -- git diff --color > /tmp/db.diff
-          if lxc exec maas-db-tester-${{ github.sha }} -- test -s /tmp/db.diff; then
+          make update-initial-sql
+          git diff --color > /tmp/db.diff
+          if test -s /tmp/db.diff; then
               # Pull the db.diff file from the container to the host
-              lxc file pull -r maas-db-tester-${{ github.sha }}/tmp/db.diff $TMPDIR
-              printf '%s\n%s\n%s' "```diff" "$(cat $TMPDIR/db.diff)" "```" > $TMPDIR/db.diff
+              printf '%s\n%s\n%s' "```diff" "$(cat /tmp/db.diff)" "```" > /tmp/db.diff
               echo "diff_exists=true" >> $GITHUB_ENV
           else
               echo "diff_exists=false" >> $GITHUB_ENV
@@ -50,9 +36,5 @@ jobs:
       uses: peter-evans/create-or-update-comment@v4
       with:
         issue-number: ${{ github.event.pull_request.number }}
-        body-path: '$TMPDIR/db.diff'
+        body-path: '/tmp/db.diff'
         reactions: rocket 
-    - name: cleanup
-      if: always()
-      run: |
-        lxc delete -f maas-db-tester-${{ github.sha }}

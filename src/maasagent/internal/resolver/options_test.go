@@ -13,22 +13,34 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package workflow
+package resolver
 
 import (
-	"time"
+	"testing"
 
-	tworkflow "go.temporal.io/sdk/workflow"
+	"github.com/stretchr/testify/assert"
 )
 
-// RunAsLocalActivity is a wrapper to run function as a Local Activity
-// without registering it explicitly.
-func RunAsLocalActivity(ctx tworkflow.Context, fn any, args ...any) error {
-	options := tworkflow.LocalActivityOptions{
-		StartToCloseTimeout: 60 * time.Second,
+func TestWithConnPoolSize(t *testing.T) {
+	testcases := map[string]struct {
+		in  int
+		out int
+	}{
+		"value provided": {
+			in:  100,
+			out: 100,
+		},
+		"zero uses default value": {
+			in:  0,
+			out: defaultConnPoolSize,
+		},
 	}
 
-	return tworkflow.ExecuteLocalActivity(
-		tworkflow.WithLocalActivityOptions(ctx, options),
-		fn, args...).Get(ctx, nil)
+	for name, tc := range testcases {
+		t.Run(name, func(t *testing.T) {
+			handler := NewRecursiveHandler(noopCache{}, WithConnPoolSize(tc.in))
+
+			assert.Equal(t, tc.out, handler.connPoolSize)
+		})
+	}
 }

@@ -14,62 +14,28 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-    - name: Create container ID with commit SHA
-      if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-      run: echo "CONTAINER_ID=${{ github.sha }}" >> $GITHUB_ENV
     - name: Checkout
       if: github.event.label.name == 'coverage'
       uses: actions/checkout@v3
-      with:
-        ref: "refs/pull/${{ github.event.number }}/merge"
-        fetch-depth: 0
-    - name: Create container ID with PR ID
-      if: github.event.label.name == 'coverage'
-      run: echo "CONTAINER_ID=${{ github.event.number }}" >> $GITHUB_ENV
-    - name: Prepare env
-      run: |
-        echo "TMPDIR=$(mktemp -d)" >> $GITHUB_ENV
-    - name: create lxd container
-      run: lxc launch ubuntu:22.04 maas-coverage-tester-$CONTAINER_ID
-    - name: Sleep 10 seconds and wait for container to get up
-      run: sleep 10 
-    - name: Set proxy
-      run: lxc exec maas-coverage-tester-$CONTAINER_ID --user 0 -- sh -c "echo 'Acquire::http::Proxy \"http://172.0.2.15:3129\";' | sudo tee /etc/apt/apt.conf.d/99proxy"
-    - name: Copy repository to lxd container
-      run: |
-        lxc file push -r ./ maas-coverage-tester-$CONTAINER_ID/home/ubuntu > /dev/null
-        lxc exec maas-coverage-tester-$CONTAINER_ID --cwd /home/ubuntu --user 0 -- chown -R ubuntu:ubuntu maas
     - name: Install make
-      run: lxc exec maas-coverage-tester-$CONTAINER_ID --user 0 -- sh -c "apt-get update && apt-get install make" 
-    - name: Configure git repo
-      run: lxc exec maas-coverage-tester-$CONTAINER_ID --user 0 -- git config --global --add safe.directory /home/ubuntu/maas
+      run: sudo apt-get update && sudo apt-get install make 
     - name: Install deps
       run: |
-        lxc exec maas-coverage-tester-$CONTAINER_ID --user 0 --cwd /home/ubuntu/maas/ -- make install-dependencies 
-        lxc exec maas-coverage-tester-$CONTAINER_ID --user 1000 --cwd /home/ubuntu/maas/ -- make build
-        lxc exec maas-coverage-tester-$CONTAINER_ID --user 1000 --cwd /home/ubuntu/maas/ -- sh -c ". .ve/bin/activate && pip install coverage gevent"
+        make install-dependencies 
+        make build
+        sh -c ". .ve/bin/activate && pip install coverage gevent"
     - name: Region coverage
-      run: lxc exec maas-coverage-tester-$CONTAINER_ID --user 1000 --cwd /home/ubuntu/maas/ -- bin/test.region --with-coverage --cover-xml --cover-xml-file=./coverage-region.xml
+      run: bin/test.region --with-coverage --cover-xml --cover-xml-file=./coverage-region.xml
     - name: Rack coverage
-      run: lxc exec maas-coverage-tester-$CONTAINER_ID --user 1000 --cwd /home/ubuntu/maas/ -- bin/test.rack --with-coverage --cover-xml --cover-xml-file=./coverage-rack.xml
+      run: bin/test.rack --with-coverage --cover-xml --cover-xml-file=./coverage-rack.xml
     - name: pytest coverage
-      run: lxc exec maas-coverage-tester-$CONTAINER_ID --user 1000 --cwd /home/ubuntu/maas/ -- sh -c ". .ve/bin/activate && coverage run -a --source=. --concurrency=gevent --data-file=./coverage-pytest -m pytest && coverage xml -i --data-file coverage-pytest" 
-    - name: Copy artifacts
-      run: |
-        lxc file pull -r maas-coverage-tester-$CONTAINER_ID/home/ubuntu/maas/coverage.xml $TMPDIR
-        lxc file pull -r maas-coverage-tester-$CONTAINER_ID/home/ubuntu/maas/coverage-region.xml $TMPDIR
-        lxc file pull -r maas-coverage-tester-$CONTAINER_ID/home/ubuntu/maas/coverage-rack.xml $TMPDIR        
+      run: sh -c ". .ve/bin/activate && coverage run -a --source=. --concurrency=gevent --data-file=./coverage-pytest -m pytest && coverage xml -i --data-file coverage-pytest" 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
       with:
         flags: smart-tests
         verbose: true
-        directory: ${{ env.TMPDIR }}
+        directory: .
         files: coverage.xml, coverage-region.xml, coverage-rack.xml
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-    - name: cleanup
-      if: always()
-      run: |
-        lxc delete -f maas-coverage-tester-$CONTAINER_ID
-        rm -rf $TMPDIR

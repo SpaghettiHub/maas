@@ -56,6 +56,7 @@ import (
 
 	"maas.io/core/src/maasagent/internal/apiclient"
 	"maas.io/core/src/maasagent/internal/cache"
+	"maas.io/core/src/maasagent/internal/cluster"
 	"maas.io/core/src/maasagent/internal/dhcp"
 	"maas.io/core/src/maasagent/internal/httpproxy"
 	"maas.io/core/src/maasagent/internal/power"
@@ -88,7 +89,10 @@ type config struct {
 		Enabled          bool   `yaml:"enabled"`
 	} `yaml:"tracing"`
 	DNSResolver struct {
-		CacheSize int64 `yaml:"cache_size"`
+		CacheSize    int64         `yaml:"cache_size"`
+		ConnPoolSize int           `yaml:"connection_pool_size"`
+		DialTimeout  time.Duration `yaml:"dial_timeout"`
+		UDPPktSize   uint16        `yaml:"udp_packet_size"`
 	} `yaml:"dns_resolver"`
 	Metrics struct {
 		Enabled bool `yaml:"enabled"`
@@ -407,7 +411,7 @@ func Run() int {
 	// TODO: make this configurable based on the config parameters
 	//nolint:govet // false positive
 	if err := setupMetrics(&meterProvider, mux); err != nil {
-		log.Error().Err(err).Msg("Cannot fetch cluster certificate")
+		log.Error().Err(err).Msg("Cannot setup metrics")
 		return 1
 	}
 
@@ -486,13 +490,30 @@ func Run() int {
 		return 1
 	}
 
-	resolverCache, err := resolver.NewCache(cfg.DNSResolver.CacheSize)
+	resolverCache, err := resolver.NewCache(
+		cfg.DNSResolver.CacheSize,
+		resolver.WithCacheMetrics(meterProvider.Meter("resolver")),
+	)
 	if err != nil {
 		log.Error().Err(err).Msg("Resolver cache initialisation error")
 		return 1
 	}
 
-	resolverHandler := resolver.NewRecursiveHandler(resolverCache)
+	resolverHandler := resolver.NewRecursiveHandler(
+		resolverCache,
+		resolver.WithConnPoolSize(cfg.DNSResolver.ConnPoolSize),
+		resolver.WithDialTimeout(cfg.DNSResolver.DialTimeout),
+		resolver.WithUDPSize(cfg.DNSResolver.UDPPktSize),
+		resolver.WithHandlerMetrics(meterProvider.Meter("resolver")),
+	)
+
+	clusterService, err := cluster.NewClusterService(cfg.SystemID,
+		cluster.WithMetricMeter(meterProvider.Meter("cluster")),
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("Clustering initialisation error")
+		return 1
+	}
 
 	powerService := power.NewPowerService(cfg.SystemID, &workerPool)
 	httpProxyService := httpproxy.NewHTTPProxyService(runDir, httpProxyCache)
@@ -501,6 +522,7 @@ func Run() int {
 
 	workerPool = *worker.NewWorkerPool(cfg.SystemID, temporalClient,
 		worker.WithMainWorkerTaskQueueSuffix("agent:main"),
+		worker.WithConfigurator(clusterService),
 		worker.WithConfigurator(powerService),
 		worker.WithConfigurator(httpProxyService),
 		worker.WithConfigurator(dhcpService),
@@ -552,6 +574,11 @@ func Run() int {
 		log.Err(err).Msg("Workflow configure-agent failed")
 		return 1
 	}
+
+	// TODO: simplify the logic of service initialisation and error handling
+	go func() {
+		fatal <- clusterService.Error()
+	}()
 
 	go func() {
 		fatal <- workerPool.Error()

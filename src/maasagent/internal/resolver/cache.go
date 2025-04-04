@@ -37,17 +37,23 @@ type cacheEntry struct {
 	CreatedAt time.Time
 }
 
+// Expired calculates if an entry has reached its TTL
 func (c *cacheEntry) Expired(ts time.Time) bool {
 	ttl := c.RR.Header().Ttl
 
 	return ts.Sub(c.CreatedAt) >= time.Duration(ttl)*time.Second
 }
 
+type CacheOption func(*cache)
+
 type cache struct {
-	cache *lru.Cache[string, *cacheEntry]
+	cache    *lru.Cache[string, *cacheEntry]
+	stats    *cacheStats
+	maxCount int64
 }
 
-func NewCache(size int64) (Cache, error) {
+// NewCache provides a constructor for an in-memory DNS cache
+func NewCache(size int64, options ...CacheOption) (Cache, error) {
 	maxNumRecords := defaultCacheRecordCap
 
 	if size != 0 {
@@ -62,28 +68,45 @@ func NewCache(size int64) (Cache, error) {
 		return nil, err
 	}
 
-	return &cache{
-		cache: lruCache,
-	}, nil
+	c := &cache{
+		cache:    lruCache,
+		stats:    &cacheStats{},
+		maxCount: int64(maxNumRecords),
+	}
+
+	for _, option := range options {
+		option(c)
+	}
+
+	return c, nil
 }
 
+// Get fetches a record for the given name and type if one is present
+// in the cache, returns false if one is absent or expired
 func (c *cache) Get(name string, rrtype uint16) (dns.RR, bool) {
 	key := c.key(name, rrtype)
 
 	entry, ok := c.cache.Get(key)
 	if !ok {
+		c.stats.misses.Add(1)
+
 		return nil, ok
 	}
 
 	if entry.Expired(time.Now()) {
 		_ = c.cache.Remove(key)
 
+		c.stats.expirations.Add(1)
+
 		return nil, false
 	}
+
+	c.stats.hits.Add(1)
 
 	return entry.RR, ok
 }
 
+// Set inserts a record into the cache
 func (c *cache) Set(rr dns.RR) {
 	hdr := rr.Header()
 	key := c.key(hdr.Name, hdr.Rrtype)
@@ -92,8 +115,11 @@ func (c *cache) Set(rr dns.RR) {
 		RR:        rr,
 		CreatedAt: time.Now(),
 	})
+
+	c.stats.size.Add(1)
 }
 
+// key generates the key for a record in the cache
 func (c *cache) key(name string, rrtype uint16) string {
 	return name + "_" + dns.TypeToString[rrtype]
 }

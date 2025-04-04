@@ -11,32 +11,11 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v3
-      with:
-        ref: "refs/pull/${{ github.event.number }}/merge"
-        fetch-depth: 0
-    - name: Set short sha variable
-      id: vars
-      run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-    - name: create lxd container
-      run: lxc launch ubuntu:22.04 maas-ci-tester-${{ steps.vars.outputs.sha_short }}
-    - name: Sleep 10 seconds and wait for container to get up
-      run: sleep 10 
-    - name: Set proxy
-      run: lxc exec maas-ci-tester-${{ steps.vars.outputs.sha_short }} --user 0 -- sh -c "echo 'Acquire::http::Proxy \"http://172.0.2.15:3129\";' | sudo tee /etc/apt/apt.conf.d/99proxy"
-    - name: Copy repository to lxd container
-      run: |
-        lxc file push -r ./ maas-ci-tester-${{ steps.vars.outputs.sha_short }}/home/ubuntu > /dev/null
-        lxc exec maas-ci-tester-${{ steps.vars.outputs.sha_short }} --cwd /home/ubuntu --user 0 -- chown -R ubuntu:ubuntu maas
     - name: Install make
-      run: lxc exec maas-ci-tester-${{ steps.vars.outputs.sha_short }} --user 0 -- sh -c "apt-get update && apt-get install make" 
-    - name: Configure git repo
-      run: lxc exec maas-ci-tester-${{ steps.vars.outputs.sha_short }} --user 0 -- git config --global --add safe.directory /home/ubuntu/maas
+      run: sudo apt-get update && sudo apt-get install make
     - name: Install deps
-      run: lxc exec maas-ci-tester-${{ steps.vars.outputs.sha_short }} --user 0 --cwd /home/ubuntu/maas/ -- make install-dependencies
+      run: make install-dependencies
     - name: Build
-      run: lxc exec maas-ci-tester-${{ steps.vars.outputs.sha_short }} --user 1000 --cwd /home/ubuntu/maas/ -- make
+      run: make
     - name: Run Tests
-      run: lxc exec maas-ci-tester-${{ steps.vars.outputs.sha_short }} --user 1000 --cwd /home/ubuntu/maas/ -- make test
-    - name: cleanup
-      if: always()
-      run: lxc delete -f maas-ci-tester-${{ steps.vars.outputs.sha_short }}
+      run: make test

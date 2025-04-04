@@ -34,13 +34,9 @@ var (
 	ErrInvalidBindIP = errors.New("provided bind value is not a valid IP")
 )
 
-var (
-	RackBindActive = true // public to be able to overriden by the compiler for testing
-)
-
 type Handler interface {
 	dns.Handler
-	SetUpstreams(string, []string) error
+	SetUpstreams(*systemConfig, []string) error
 	ClearExpiredSessions()
 	Close() error
 }
@@ -63,7 +59,6 @@ type ResolverServiceOption func(*ResolverService)
 
 type GetResolverConfigParam struct {
 	SystemID string `json:"system_id"`
-	UseBind  bool   `json:"use_bind"`
 }
 
 type GetResolverConfigResult struct {
@@ -72,6 +67,7 @@ type GetResolverConfigResult struct {
 	Enabled          bool     `json:"enabled"`
 }
 
+// NewResolverService provides a constructor for the resolver's Service
 func NewResolverService(handler Handler, options ...ResolverServiceOption) *ResolverService {
 	s := &ResolverService{
 		handler:        handler,
@@ -87,6 +83,7 @@ func NewResolverService(handler Handler, options ...ResolverServiceOption) *Reso
 	return s
 }
 
+// WithResolvConf sets the path to read resolv.conf from
 func WithResolvConf(path string) ResolverServiceOption {
 	return func(s *ResolverService) {
 		s.resolvConfPath = path
@@ -116,7 +113,7 @@ func (s *ResolverService) configure(ctx tworkflow.Context, systemID string) erro
 			},
 		),
 		"get-resolver-config",
-		GetResolverConfigParam{SystemID: systemID, UseBind: RackBindActive},
+		GetResolverConfigParam{SystemID: systemID},
 	).Get(ctx, &resolverConfigResult); err != nil {
 		return err
 	}
@@ -137,8 +134,13 @@ func (s *ResolverService) configure(ctx tworkflow.Context, systemID string) erro
 	s.bindIPs = resolverConfigResult.BindIPs
 
 	if err := workflow.RunAsLocalActivity(ctx, func(ctx context.Context) error {
+		cfg, err := parseResolvConf(s.resolvConfPath)
+		if err != nil {
+			return err
+		}
+
 		if err := s.handler.SetUpstreams(
-			s.resolvConfPath,
+			cfg,
 			s.authoritativeServers,
 		); err != nil {
 			return err
@@ -218,6 +220,8 @@ func (s *ResolverService) Error() error {
 	return <-s.fatal
 }
 
+// sessionGC provides a sweep on a ticker to cleanup any sessions that were not expired
+// by the time its last query had finished
 func (s *ResolverService) sessionGC() {
 	for range s.sessionTicker.C {
 		s.handler.ClearExpiredSessions()
