@@ -18,7 +18,7 @@ from maasserver.models import (
     Subnet,
     UnknownInterface,
 )
-from maasserver.utils.orm import transactional
+from maasserver.utils.orm import transactional, get_one
 from provisioningserver.logger import LegacyLogger
 from provisioningserver.utils.network import coerce_to_valid_hostname
 from provisioningserver.utils.twisted import synchronous
@@ -193,12 +193,12 @@ def update_lease(
         if sip is None:
             # XXX: There shouldn't be more than one StaticIPAddress
             #      record here, but it can happen be due to bug 1817305.
-            sip = StaticIPAddress.objects.filter(
+            sip = get_one(StaticIPAddress.objects.filter(
                 alloc_type=IPADDRESS_TYPE.DISCOVERED,
                 ip=None,
                 subnet=subnet,
                 interface__in=interfaces,
-            ).first()
+            ))
             if sip is None:
                 sip = StaticIPAddress.objects.create(
                     alloc_type=IPADDRESS_TYPE.DISCOVERED,
