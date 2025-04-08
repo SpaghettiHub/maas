@@ -1,12 +1,12 @@
-name: Integration tests
+name: Continuous delivery
 
 on:
-  pull_request_target:
-    types: [ labeled ]
+  push:
+    branches:
+      - master
 
 jobs:
   snap:
-    if: ${{ github.event.label.name == 'test' }}
     runs-on: [self-hosted, large-runner] 
     steps:
     - name: Checkout
@@ -22,7 +22,6 @@ jobs:
     - name: test
       run: TYPE=snap /tmp/r00tabot-runner-config/pipeline/execute.sh --maas_dir $PWD
   deb:
-    if: ${{ github.event.label.name == 'test' }}
     runs-on: [self-hosted, large-runner] 
     steps:
     - name: Checkout
