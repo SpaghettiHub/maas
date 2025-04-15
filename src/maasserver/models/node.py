@@ -161,7 +161,6 @@ from maasserver.rpc import (
     getClientFor,
     getClientFromIdentifiers,
 )
-from maasserver.server_address import get_maas_facing_server_addresses
 from maasserver.storage_layouts import (
     get_storage_layout_for_node,
     MIN_BOOT_PARTITION_SIZE,
@@ -3287,6 +3286,9 @@ class Node(CleanSave, TimestampedModel):
             ):
                 can_be_started = False
                 can_be_stopped = False
+            elif self.is_dpu:
+                can_be_started = True
+                can_be_stopped = False
             else:
                 can_be_started = True
                 can_be_stopped = True
@@ -3911,7 +3913,7 @@ class Node(CleanSave, TimestampedModel):
         # place an action in the power registry which is not needed and can
         # block a following deploy action. See bug 1453954 for an example of
         # the issue this will cause.
-        if self.power_state != POWER_STATE.OFF:
+        if self.power_state != POWER_STATE.OFF and not self.is_dpu:
             try:
                 # Node.stop() has synchronous and asynchronous parts, so catch
                 # exceptions arising synchronously, and chain callbacks to the
@@ -3932,7 +3934,9 @@ class Node(CleanSave, TimestampedModel):
                 )
                 raise
 
-        if self.power_state == POWER_STATE.OFF:
+        if self.is_dpu:
+            finalize_release = True
+        elif self.power_state == POWER_STATE.OFF:
             # The node is already powered off; we can deallocate all attached
             # resources and mark the node READY without delay.
             finalize_release = True
@@ -5780,11 +5784,12 @@ class Node(CleanSave, TimestampedModel):
             )
             cidrs = subnets.values_list("cidr", flat=True)
             my_address_families = {IPNetwork(cidr).version for cidr in cidrs}
+            rack_subnets = Subnet.objects.filter(
+                staticipaddress__interface__node_config_id=boot_primary_rack_controller.current_config_id,
+            )
+            rack_cidrs = rack_subnets.values_list("cidr", flat=True)
             rack_address_families = {
-                4 if addr.is_ipv4_mapped() else addr.version
-                for addr in get_maas_facing_server_addresses(
-                    boot_primary_rack_controller
-                )
+                IPNetwork(cidr).version for cidr in rack_cidrs
             }
             if my_address_families & rack_address_families == set():
                 # Node doesn't have any IP addresses in common with the rack
@@ -5995,6 +6000,7 @@ class Node(CleanSave, TimestampedModel):
                             driver_type=str(power_info.power_type),
                             driver_opts=dict(power_info.power_parameters),
                             task_queue=task_queue,
+                            is_dpu=self.is_dpu,
                         ),
                         ephemeral_deploy=bool(self.ephemeral_deploy),
                         can_set_boot_order=bool(power_info.can_set_boot_order),
@@ -6299,7 +6305,11 @@ class Node(CleanSave, TimestampedModel):
         return d
 
     def _power_control_node(
-        self, defer, power_method_name, power_info, order=None
+        self,
+        defer,
+        power_method_name,
+        power_info,
+        order=None,
     ):
         # Check if the BMC is accessible. If not we need to do some work to
         # make sure we can determine which rack controller can power
@@ -6393,6 +6403,7 @@ class Node(CleanSave, TimestampedModel):
                         power_method_name.replace("_", "-"),
                         self,
                         power_info,
+                        self.is_dpu,
                     ),
                 )
 
@@ -6603,6 +6614,7 @@ class Node(CleanSave, TimestampedModel):
             if self.previous_status in (NODE_STATUS.READY, NODE_STATUS.BROKEN):
                 self._stop(user)
             elif self.previous_status == NODE_STATUS.DEPLOYED:
+                # TODO: Power reset when DPU?
                 self._power_cycle()
         except Exception as error:
             self.update_status(old_status)
