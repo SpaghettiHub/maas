@@ -12,6 +12,8 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
       with:
+        ref: "refs/pull/${{ github.event.number }}/merge"
+        fetch-depth: 0        
         submodules: 'true'
     - name: Clone test repo
       run: |
@@ -28,6 +30,8 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
       with:
+        ref: "refs/pull/${{ github.event.number }}/merge"
+        fetch-depth: 0        
         submodules: 'true'
     - name: Clone test repo
       run: |
