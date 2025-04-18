@@ -16,7 +16,10 @@ jobs:
       if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     - name: Checkout
       if: github.event.label.name == 'coverage'
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
+      with:
+        ref: "refs/pull/${{ github.event.number }}/merge"
+        fetch-depth: 0        
     - name: Setup proxy
       run: echo "Acquire::http::Proxy \"http://172.0.2.161:8000\";" | sudo tee /etc/apt/apt.conf.d/00proxy
     - name: Install make
