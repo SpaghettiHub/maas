@@ -22,8 +22,8 @@ jobs:
     - name: Install deps
       run: |
         make install-dependencies 
-        make build
-        sh -c ". .ve/bin/activate && pip install coverage gevent"
+        make
+        sh -c ". .ve/bin/activate && pip install coverage gevent && deactivate"
     - name: Region coverage
       run: bin/test.region --with-coverage --cover-xml --cover-xml-file=./coverage-region.xml
     - name: Rack coverage
