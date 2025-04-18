@@ -290,3 +290,16 @@ class TestAsyncVaultManager:
         )
         with pytest.raises(VaultAuthenticationException):
             await manager.delete(path="mypath")
+
+    @pytest.mark.asyncio
+    async def test_close(self, async_vault_client_default_mock: Mock) -> None:
+        manager = AsyncVaultManager(
+            vault_api_client=async_vault_client_default_mock,
+            role_id="role_id",
+            secret_id="secret_id",
+            secrets_base_path="base_path",
+            secrets_mount="mount",
+        )
+
+        await manager.close()
+        async_vault_client_default_mock.close.assert_called_once()
