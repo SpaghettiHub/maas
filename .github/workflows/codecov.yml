@@ -17,6 +17,8 @@ jobs:
     - name: Checkout
       if: github.event.label.name == 'coverage'
       uses: actions/checkout@v3
+    - name: Setup proxy
+      run: echo "Acquire::http::Proxy \"http://172.0.2.161:8000\";" | sudo tee /etc/apt/apt.conf.d/00proxy
     - name: Install make
       run: sudo apt-get update && sudo apt-get install make 
     - name: Install deps
