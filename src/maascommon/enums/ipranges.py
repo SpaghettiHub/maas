@@ -12,3 +12,23 @@ class IPRangeType(str, Enum):
 
     def __str__(self):
         return str(self.value)
+
+
+class IPRangePurpose(str, Enum):
+    """Well-known purpose types for IP ranges."""
+
+    UNUSED = "unused"
+    GATEWAY_IP = "gateway-ip"
+    RESERVED = "reserved"
+    DYNAMIC = "dynamic"
+    PROPOSED_DYNAMIC = "proposed-dynamic"
+    UNMANAGED = "unmanaged"
+    ASSIGNED_IP = "assigned-ip"
+    DNS_SERVER = "dns-server"
+    EXCLUDED = "excluded"
+    NEIGHBOUR = "neighbour"
+    RFC_4291 = "rfc-4291-2.6.1"
+    UNKNOWN = "unknown"
+
+    def __str__(self) -> str:
+        return str(self.value)

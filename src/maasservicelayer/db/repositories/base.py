@@ -1,12 +1,11 @@
 #  Copyright 2024-2025 Canonical Ltd.  This software is licensed under the
 #  GNU Affero General Public License version 3 (see the file LICENSE).
+
 from abc import ABC, abstractmethod
 import ipaddress
-from ipaddress import IPv4Address, IPv6Address
 from operator import eq
 from typing import Any, Generic, List, Sequence, TypeVar
 
-from netaddr import IPAddress
 import psycopg2.extensions
 import psycopg2.extras
 from sqlalchemy import (
@@ -53,14 +52,6 @@ class MultipleResultsException(Exception):
 T = TypeVar("T", bound=MaasBaseModel)
 
 
-def psycopg2_ipaddress_adapter(ip: IPv4Address | IPv6Address):
-    return psycopg2.extensions.AsIs(repr(ip.exploded))
-
-
-def psycopg2_netaddr_adapter(ip: IPAddress):
-    return psycopg2.extensions.AsIs(repr(str(ip)))
-
-
 def cast_ip(s, cur):
     if s is None:
         return None
@@ -97,6 +88,9 @@ class Repository(ABC):  # noqa: B024
            - `asyncpg` automatically converts PostgreSQL `INET` and `CIDR`
              types to `ipaddress.IPv4Address`, `ipaddress.IPv6Address`,
              `ipaddress.IPv4Network`, or `ipaddress.IPv6Network`.
+             NOTE: this behaviour has been modified and now it converts
+             `INET` to `netaddr.IPAddress` and `CIDR` to `netaddr.IPNetwork`.
+             See src/maasservicelayer/db/__init__.py.
            - `psycopg2`, by default, returns these types as plain strings.
 
         Important:

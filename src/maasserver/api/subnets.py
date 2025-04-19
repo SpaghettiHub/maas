@@ -12,6 +12,7 @@ from maasserver.exceptions import MAASAPIValidationError
 from maasserver.forms.subnet import SubnetForm
 from maasserver.models import Space, Subnet
 from maasserver.permissions import NodePermission
+from maasserver.sqlalchemy import service_layer
 from provisioningserver.utils.network import IPRangeStatistics
 
 DISPLAYED_SUBNET_FIELDS = (
@@ -328,12 +329,9 @@ class SubnetHandler(OperationsHandler):
         @error-example "not-found"
             No Subnet matches the given query.
         """
-        subnet = Subnet.objects.get_subnet_or_404(
-            id, request.user, NodePermission.view
-        )
-        return subnet.get_ipranges_not_in_use().render_json(
-            include_purpose=False
-        )
+        return service_layer.services.v3subnet_utilization.get_free_ipranges(
+            id
+        ).render_json(include_purpose=False)
 
     @operation(idempotent=True)
     def statistics(self, request, id):
