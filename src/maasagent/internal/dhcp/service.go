@@ -222,6 +222,7 @@ func (s *DHCPService) ConfigurationActivities() map[string]any {
 		// This activity should be called to force DHCP configuration update.
 		"apply-dhcp-config-via-file":  s.configureViaFile,
 		"apply-dhcp-config-via-omapi": s.configureViaOMAPI,
+		"set-active-interfaces":       s.setActiveInterfaces,
 		"restart-dhcp-service":        s.restartService,
 	}
 }
@@ -539,6 +540,10 @@ func (s *DHCPService) configureViaFile(ctx context.Context) error {
 	s.running.Store(runningV4 || runningV6)
 
 	return nil
+}
+
+func (s *DHCPService) setActiveInterfaces(ctx context.Context, param SetActiveInterfacesParam) error {
+	// TODO setup DHCP server on each interface
 }
 
 func (s *DHCPService) restartService(ctx context.Context) error {
