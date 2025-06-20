@@ -15,7 +15,6 @@ from maasserver.enum import (
     BOOT_RESOURCE_TYPE,
     NODE_STATUS,
 )
-from maasserver.import_images.boot_image_mapping import BootImageMapping
 from maasserver.import_images.testing.factory import (
     make_image_spec,
     set_resource,
@@ -45,6 +44,7 @@ from maasserver.websockets.base import (
 )
 from maasserver.websockets.handlers import bootresource
 from maasserver.websockets.handlers.bootresource import BootResourceHandler
+from maasservicelayer.utils.images.boot_image_mapping import BootImageMapping
 from provisioningserver.config import DEFAULT_IMAGES_URL, DEFAULT_KEYRINGS_PATH
 from provisioningserver.events import EVENT_TYPES
 

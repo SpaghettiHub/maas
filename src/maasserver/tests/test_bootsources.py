@@ -22,11 +22,6 @@ from maasserver.components import (
     register_persistent_error,
 )
 from maasserver.enum import COMPONENT
-from maasserver.import_images import (
-    download_descriptions as download_descriptions_module,
-)
-from maasserver.import_images.boot_image_mapping import BootImageMapping
-from maasserver.import_images.helpers import ImageSpec
 from maasserver.models import (
     BootSource,
     BootSourceCache,
@@ -42,6 +37,8 @@ from maasserver.testing.testcase import (
 from maasserver.tests.test_bootresources import SimplestreamsEnvFixture
 from maasserver.utils import get_maas_user_agent
 from maasserver.utils.orm import reload_object
+from maasservicelayer.utils.images.boot_image_mapping import BootImageMapping
+from maasservicelayer.utils.images.helpers import ImageSpec
 from maastesting.djangotestcase import count_queries
 from provisioningserver.config import DEFAULT_IMAGES_URL
 
@@ -577,17 +574,19 @@ class TestBadConnectionHandling(MAASTransactionServerTestCase):
         super().setUp()
         self.useFixture(SimplestreamsEnvFixture())
 
-    def test_catches_connection_errors_and_sets_component_error(self):
+    @patch("maasserver.bootsources.download_all_image_descriptions")
+    def test_catches_connection_errors_and_sets_component_error(
+        self,
+        boot_sources_fetch_mock: MagicMock,
+    ) -> None:
         sources = [
             factory.make_BootSource(keyring_data=b"1234") for _ in range(3)
         ]
-        download_image_descriptions = self.patch(
-            download_descriptions_module, "download_image_descriptions"
-        )
+
         error_text_one = factory.make_name("<error1>")
         error_text_two = factory.make_name("<error2>")
         # Make two of the downloads fail.
-        download_image_descriptions.side_effect = [
+        boot_sources_fetch_mock.side_effect = [
             ConnectionError(error_text_one),
             BootImageMapping(),
             IOError(error_text_two),
@@ -604,15 +603,17 @@ class TestBadConnectionHandling(MAASTransactionServerTestCase):
         actual_error = get_persistent_error(COMPONENT.REGION_IMAGE_IMPORT)
         self.assertEqual(expected_error, actual_error)
 
-    def test_clears_component_error_when_successful(self):
+    @patch("maasserver.bootsources.download_all_image_descriptions")
+    def test_clears_component_error_when_successful(
+        self,
+        boot_sources_fetch_mock: MagicMock,
+    ) -> None:
         register_persistent_error(
             COMPONENT.REGION_IMAGE_IMPORT, factory.make_string()
         )
         [factory.make_BootSource(keyring_data=b"1234") for _ in range(3)]
-        download_image_descriptions = self.patch(
-            download_descriptions_module, "download_image_descriptions"
-        )
+
         # Make all of the downloads successful.
-        download_image_descriptions.return_value = BootImageMapping()
+        boot_sources_fetch_mock.return_value = BootImageMapping()
         cache_boot_sources()
         self.assertIsNone(get_persistent_error(COMPONENT.REGION_IMAGE_IMPORT))
