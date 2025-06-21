@@ -15,10 +15,10 @@ from simplestreams.util import (
     products_exdata,
 )
 
-from maasserver.import_images.helpers import (
+from maasserver.import_images.helpers import maaslog
+from maasservicelayer.utils.images.helpers import (
     get_os_from_product,
     get_signing_policy,
-    maaslog,
 )
 from provisioningserver.logger import LegacyLogger
 

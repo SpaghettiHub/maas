@@ -407,8 +407,10 @@ def cache_boot_sources():
             [source] = write_all_keyrings(keyrings_path, [source])
             try:
                 user_agent = yield deferToDatabase(get_maas_user_agent)
-                descriptions = download_all_image_descriptions(
-                    [source], user_agent=user_agent
+                descriptions = yield deferToDatabase(
+                    download_all_image_descriptions,
+                    [source],
+                    user_agent=user_agent,
                 )
             except (OSError, ConnectionError) as error:
                 msg = "Failed to import images from %s: %s" % (

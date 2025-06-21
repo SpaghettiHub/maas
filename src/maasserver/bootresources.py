@@ -58,11 +58,6 @@ from maasserver.eventloop import services
 from maasserver.import_images.download_descriptions import (
     download_all_image_descriptions,
     image_passes_filter,
-    validate_product,
-)
-from maasserver.import_images.helpers import (
-    get_os_from_product,
-    get_signing_policy,
 )
 from maasserver.import_images.keyrings import write_all_keyrings
 from maasserver.import_images.product_mapping import map_products
@@ -101,6 +96,11 @@ from maasserver.workflow import (
     execute_workflow,
     REGION_TASK_QUEUE,
 )
+from maasservicelayer.utils.images.helpers import (
+    get_os_from_product,
+    get_signing_policy,
+)
+from maasservicelayer.utils.images.repo_dumper import validate_product
 from maastemporalworker.workflow.bootresource import (
     DOWNLOAD_TIMEOUT,
     ResourceDownloadParam,
