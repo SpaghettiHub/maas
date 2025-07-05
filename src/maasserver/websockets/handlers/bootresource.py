@@ -13,6 +13,7 @@ from django.db.models import Q
 from twisted.internet.defer import Deferred
 
 from maascommon.osystem import OperatingSystemRegistry
+from maascommon.utils.fs import tempdir
 from maasserver.audit import create_audit_event
 from maasserver.bootresources import (
     import_resources,
@@ -33,7 +34,6 @@ from maasserver.import_images.download_descriptions import (
     download_all_image_descriptions,
     image_passes_filter,
 )
-from maasserver.import_images.keyrings import write_all_keyrings
 from maasserver.models import (
     BootResource,
     BootSource,
@@ -43,7 +43,6 @@ from maasserver.models import (
     Node,
 )
 from maasserver.models.bootresourcefile import BootResourceFile
-from maasserver.utils import get_maas_user_agent
 from maasserver.utils.converters import human_readable_bytes
 from maasserver.utils.orm import transactional
 from maasserver.utils.osystems import (
@@ -57,10 +56,10 @@ from maasserver.websockets.base import (
     HandlerError,
     HandlerValidationError,
 )
+from maasservicelayer.utils.images.keyrings import write_all_keyrings
 from provisioningserver.config import DEFAULT_IMAGES_URL, DEFAULT_KEYRINGS_PATH
 from provisioningserver.events import EVENT_TYPES
 from provisioningserver.logger import LegacyLogger
-from provisioningserver.utils.fs import tempdir
 from provisioningserver.utils.twisted import asynchronous, callOut, FOREVER
 
 log = LegacyLogger()
@@ -949,9 +948,7 @@ class BootResourceHandler(Handler):
         with tempdir("keyrings") as keyrings_path:
             [source] = write_all_keyrings(keyrings_path, [source])
             try:
-                descriptions = download_all_image_descriptions(
-                    [source], user_agent=get_maas_user_agent()
-                )
+                descriptions = download_all_image_descriptions([source])
             except Exception as error:
                 raise HandlerError(str(error))  # noqa: B904
         items = list(descriptions.items())
