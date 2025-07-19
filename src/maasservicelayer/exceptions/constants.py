@@ -26,6 +26,10 @@ CANNOT_DELETE_FABRIC_WITH_CONNECTED_INTERFACE_VIOLATION_TYPE = (
     "CannotDeleteFabricWithConnectedInterfacesViolation"
 )
 
+# Files
+MISSING_FILE_FILENAME_VIOLATION_TYPE = "MissingFileFilenameViolationType"
+
+
 # Generic
 UNIQUE_CONSTRAINT_VIOLATION_TYPE = "UniqueConstraintViolation"
 ETAG_PRECONDITION_VIOLATION_TYPE = "EtagPreconditionViolation"
