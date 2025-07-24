@@ -52,6 +52,21 @@ class MaasTimestampedBaseModel(MaasBaseModel):
         return m.hexdigest()
 
 
+class Unset:
+    """Sentinel object"""
+
+    def __eq__(self, other):
+        return other.__class__ is self.__class__
+
+    def __repr__(self):
+        return "Unset"
+
+
+UNSET = Unset()
+
+FieldType = TypeVar("FieldType")
+
+
 class ResourceBuilder(BaseModel):
     """
     The base class for all the builders.
@@ -81,18 +96,15 @@ class ResourceBuilder(BaseModel):
         }
         return field_dict
 
+    def safe_get(self, field: FieldType | Unset) -> FieldType:
+        """Safely access a field.
 
-class Unset:
-    """Sentinel object"""
+        Will raise a reference error if you try to access a field that is Unset.
+        """
+        if isinstance(field, Unset):
+            raise ReferenceError("The field you tried to access is Unset.")
+        return field
 
-    def __eq__(self, other):
-        return other.__class__ is self.__class__
-
-    def __repr__(self):
-        return "Unset"
-
-
-UNSET = Unset()
 
 BaseModelT = TypeVar("BaseModelT", bound=MaasBaseModel)
 
