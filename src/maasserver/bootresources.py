@@ -33,8 +33,18 @@ from twisted.internet import reactor
 from twisted.internet.defer import Deferred, inlineCallbacks
 from twisted.python.failure import Failure
 
-from maascommon.constants import IMPORT_RESOURCES_SERVICE_PERIOD
+from maascommon.constants import (
+    BOOTLOADERS_DIR,
+    IMPORT_RESOURCES_SERVICE_PERIOD,
+)
 from maascommon.utils.fs import tempdir
+from maascommon.workflows.bootresource import (
+    DOWNLOAD_TIMEOUT,
+    ResourceDownloadParam,
+    SpaceRequirementParam,
+    SYNC_BOOTRESOURCES_WORKFLOW_NAME,
+    SyncRequestParam,
+)
 from maasserver import locks
 from maasserver.bootsources import (
     cache_boot_sources,
@@ -78,10 +88,7 @@ from maasserver.utils import (
     get_maas_user_agent,
     synchronised,
 )
-from maasserver.utils.bootresource import (
-    BOOTLOADERS_DIR,
-    get_bootresource_store_path,
-)
+from maasserver.utils.bootresource import get_bootresource_store_path
 from maasserver.utils.converters import human_readable_bytes
 from maasserver.utils.dblocks import DatabaseLockNotHeld
 from maasserver.utils.orm import (
@@ -102,13 +109,6 @@ from maasservicelayer.utils.images.helpers import (
 )
 from maasservicelayer.utils.images.keyrings import write_all_keyrings
 from maasservicelayer.utils.images.repo_dumper import validate_product
-from maastemporalworker.workflow.bootresource import (
-    DOWNLOAD_TIMEOUT,
-    ResourceDownloadParam,
-    SpaceRequirementParam,
-    SYNC_BOOTRESOURCES_WORKFLOW_NAME,
-    SyncRequestParam,
-)
 from provisioningserver.auth import get_maas_user_gpghome
 from provisioningserver.config import is_dev_environment
 from provisioningserver.events import EVENT_TYPES
