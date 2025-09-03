@@ -189,7 +189,7 @@ class TestVlansService:
         )
         mock_temporal.register_or_update_workflow_call.assert_called_once_with(
             CONFIGURE_DHCP_WORKFLOW_NAME,
-            ConfigureDHCPParam(vlan_ids=[vlan.id]),
+            ConfigureDHCPParam(system_ids=[], vlan_ids=[vlan.id]),
             parameter_merge_func=merge_configure_dhcp_param,
             wait=False,
         )
