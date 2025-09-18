@@ -19,6 +19,7 @@ from maasapiserver.v3.api.public.models.responses.boot_source_selections import 
 from maasapiserver.v3.api.public.models.responses.boot_sources import (
     BootSourceResponse,
     BootSourcesListResponse,
+    UISourceAvailableImageListResponse,
 )
 from maasapiserver.v3.constants import V3_API_PREFIX
 from maasservicelayer.db.filters import QuerySpec
@@ -35,10 +36,12 @@ from maasservicelayer.exceptions.constants import (
     UNIQUE_CONSTRAINT_VIOLATION_TYPE,
 )
 from maasservicelayer.models.base import ListResult
+from maasservicelayer.models.bootsourcecache import BootSourceCache
 from maasservicelayer.models.bootsources import BootSource
 from maasservicelayer.models.bootsourceselections import BootSourceSelection
 from maasservicelayer.services import ServiceCollectionV3
 from maasservicelayer.services.boot_sources import BootSourcesService
+from maasservicelayer.services.bootsourcecache import BootSourceCacheService
 from maasservicelayer.services.bootsourceselections import (
     BootSourceSelectionsService,
 )
@@ -93,6 +96,10 @@ class TestBootSourcesApi(ApiCommonTests):
             Endpoint(method="GET", path=self.BASE_PATH),
             Endpoint(method="GET", path=f"{self.BASE_PATH}/1"),
             Endpoint(method="POST", path=f"{self.BASE_PATH}:fetch"),
+            Endpoint(
+                method="GET", path=f"{self.BASE_PATH}/1/available_images"
+            ),
+            Endpoint(method="GET", path=f"{V3_API_PREFIX}/available_images"),
         ]
 
     @pytest.fixture
@@ -359,6 +366,148 @@ class TestBootSourcesApi(ApiCommonTests):
             keyring_path=None,
             keyring_data=expected_bytes,
         )
+
+    async def test_get_all_available_images_200(
+        self,
+        services_mock: ServiceCollectionV3,
+        mocked_api_client_user: AsyncClient,
+    ) -> None:
+        boot_source_id = 1
+
+        services_mock.boot_source_cache = Mock(BootSourceCacheService)
+        services_mock.boot_source_cache.get_many.return_value = [
+            BootSourceCache(
+                id=1,
+                os="Ubuntu",
+                release="Noble",
+                arch="amd64",
+                subarch="generic",
+                label="boot-source-1",
+                boot_source_id=boot_source_id,
+                extra={},
+            ),
+            BootSourceCache(
+                id=2,
+                os="Ubuntu",
+                release="Plucky",
+                arch="amd64",
+                subarch="generic",
+                label="boot-source-2",
+                boot_source_id=boot_source_id,
+                extra={},
+            ),
+        ]
+
+        services_mock.boot_sources = Mock(BootSourcesService)
+        services_mock.boot_sources.get_by_id.side_effect = [
+            TEST_BOOTSOURCE_1,
+            TEST_BOOTSOURCE_2,
+        ]
+
+        response = await mocked_api_client_user.get(
+            url=f"{V3_API_PREFIX}/available_images",
+        )
+
+        assert response.status_code == 200
+
+        sources_response = UISourceAvailableImageListResponse(
+            **response.json()
+        )
+
+        assert len(sources_response.items) == 2
+
+        assert sources_response.items[0].source_id == TEST_BOOTSOURCE_1.id
+        assert sources_response.items[1].source_id == TEST_BOOTSOURCE_2.id
+
+    async def test_get_all_available_images_200_empty_when_no_sources(
+        self,
+        services_mock: ServiceCollectionV3,
+        mocked_api_client_user: AsyncClient,
+    ) -> None:
+        services_mock.boot_source_cache = Mock(BootSourceCacheService)
+        services_mock.boot_source_cache.get_many.return_value = []
+
+        services_mock.boot_sources = Mock(BootSourcesService)
+        services_mock.boot_sources.get_by_id.side_effect = []
+
+        response = await mocked_api_client_user.get(
+            url=f"{V3_API_PREFIX}/available_images",
+        )
+
+        assert response.status_code == 200
+
+        sources_response = UISourceAvailableImageListResponse(
+            **response.json()
+        )
+
+        assert len(sources_response.items) == 0
+
+    async def test_get_available_images_for_boot_source_200(
+        self,
+        services_mock: ServiceCollectionV3,
+        mocked_api_client_user: AsyncClient,
+    ) -> None:
+        boot_source_id = 1
+
+        services_mock.boot_sources = Mock(BootSourcesService)
+        services_mock.boot_sources.get_by_id.return_value = TEST_BOOTSOURCE_1
+
+        services_mock.boot_source_cache = Mock(BootSourceCacheService)
+        services_mock.boot_source_cache.get_many.return_value = [
+            BootSourceCache(
+                id=1,
+                os="Ubuntu",
+                release="Noble",
+                arch="amd64",
+                subarch="generic",
+                label="boot-source-1",
+                boot_source_id=boot_source_id,
+                extra={},
+            ),
+            BootSourceCache(
+                id=2,
+                os="Ubuntu",
+                release="Plucky",
+                arch="amd64",
+                subarch="generic",
+                label="boot-source-2",
+                boot_source_id=boot_source_id,
+                extra={},
+            ),
+        ]
+
+        response = await mocked_api_client_user.get(
+            url=f"{self.BASE_PATH}/{boot_source_id}/available_images",
+        )
+
+        assert response.status_code == 200
+
+        sources_response = UISourceAvailableImageListResponse(
+            **response.json()
+        )
+
+        assert len(sources_response.items) == 2
+
+    async def test_get_available_images_for_boot_source_404(
+        self,
+        services_mock: ServiceCollectionV3,
+        mocked_api_client_user: AsyncClient,
+    ) -> None:
+        services_mock.boot_sources = Mock(BootSourcesService)
+        services_mock.boot_sources.get_by_id.side_effect = NotFoundException(
+            details=[
+                BaseExceptionDetail(
+                    type=UNEXISTING_RESOURCE_VIOLATION_TYPE,
+                    message="Resource with such identifiers does not exist.",
+                )
+            ]
+        )
+
+        response = await mocked_api_client_user.get(
+            url=f"{self.BASE_PATH}/1/available_images",
+        )
+
+        assert response.status_code == 404
 
 
 class TestBootSourceSelectionsApi(ApiCommonTests):

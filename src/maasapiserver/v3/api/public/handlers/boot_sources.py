@@ -30,11 +30,16 @@ from maasapiserver.v3.api.public.models.responses.boot_sources import (
     BootSourcesListResponse,
     SourceAvailableImageListResponse,
     SourceAvailableImageResponse,
+    UISourceAvailableImageListResponse,
+    UISourceAvailableImageResponse,
 )
 from maasapiserver.v3.auth.base import check_permissions
 from maasapiserver.v3.constants import V3_API_PREFIX
 from maasservicelayer.auth.jwt import UserRole
 from maasservicelayer.db.filters import QuerySpec
+from maasservicelayer.db.repositories.bootsourcecache import (
+    BootSourceCacheClauseFactory,
+)
 from maasservicelayer.db.repositories.bootsources import (
     BootSourcesClauseFactory,
 )
@@ -459,3 +464,84 @@ class BootSourcesHandler(Handler):
             etag_if_match=etag_if_match,
         )
         return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+    @handler(
+        path="/available_images",
+        methods=["GET"],
+        tags=TAGS,
+        responses={
+            200: {"model": UISourceAvailableImageListResponse},
+            404: {"model": NotFoundBodyResponse},
+        },
+        response_model_exclude_none=True,
+        status_code=200,
+        dependencies=[
+            Depends(check_permissions(required_roles={UserRole.USER}))
+        ],
+    )
+    async def get_all_available_images(
+        self,
+        services: ServiceCollectionV3 = Depends(services),  # noqa: B008
+    ) -> UISourceAvailableImageListResponse:
+        boot_source_cache_entries = await services.boot_source_cache.get_many(
+            query=QuerySpec(),
+        )
+        if not boot_source_cache_entries:
+            return UISourceAvailableImageListResponse(items=[])
+
+        items: list[UISourceAvailableImageResponse] = []
+        for boot_source_cache_entry in boot_source_cache_entries:
+            boot_source = await services.boot_sources.get_by_id(
+                boot_source_cache_entry.boot_source_id
+            )
+            assert boot_source is not None
+
+            items.append(
+                UISourceAvailableImageResponse.from_model(
+                    boot_source=boot_source,
+                    boot_source_cache=boot_source_cache_entry,
+                )
+            )
+
+        return UISourceAvailableImageListResponse(items=items)
+
+    @handler(
+        path="/boot_sources/{boot_source_id}/available_images",
+        methods=["GET"],
+        tags=TAGS,
+        responses={
+            200: {"model": UISourceAvailableImageListResponse},
+            404: {"model": NotFoundBodyResponse},
+        },
+        response_model_exclude_none=True,
+        status_code=200,
+        dependencies=[
+            Depends(check_permissions(required_roles={UserRole.USER}))
+        ],
+    )
+    async def get_available_images_for_boot_source(
+        self,
+        boot_source_id: int,
+        services: ServiceCollectionV3 = Depends(services),  # noqa: B008
+    ) -> UISourceAvailableImageListResponse:
+        boot_source = await services.boot_sources.get_by_id(boot_source_id)
+        if not boot_source:
+            raise NotFoundException()
+
+        boot_source_cache_entries = await services.boot_source_cache.get_many(
+            query=QuerySpec(
+                where=BootSourceCacheClauseFactory.with_boot_source_id(
+                    boot_source_id
+                ),
+            ),
+        )
+
+        return UISourceAvailableImageListResponse(
+            items=[
+                UISourceAvailableImageResponse.from_model(
+                    boot_source=boot_source,
+                    boot_source_cache=boot_source_cache_entry,
+                )
+                for boot_source_cache_entry in boot_source_cache_entries
+            ]
+        )

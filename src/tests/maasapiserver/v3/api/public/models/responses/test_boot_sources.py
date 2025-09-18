@@ -6,8 +6,10 @@ import base64
 from maasapiserver.v3.api.public.models.responses.boot_sources import (
     BootSourceResponse,
     SourceAvailableImageResponse,
+    UISourceAvailableImageResponse,
 )
 from maasapiserver.v3.constants import V3_API_PREFIX
+from maasservicelayer.models.bootsourcecache import BootSourceCache
 from maasservicelayer.models.bootsources import (
     BootSource,
     SourceAvailableImage,
@@ -65,3 +67,41 @@ class TestSourceAvailableImageResponse:
         assert image_response.release == image.release
         assert image_response.release_title == image.release_title
         assert image_response.architecture == image.architecture
+
+
+class TestUISourceAvailableImageResponse:
+    def test_from_model(self) -> None:
+        boot_source = BootSource(
+            id=1,
+            created=utcnow(),
+            updated=utcnow(),
+            url="http://example.com/v1/",
+            keyring_filename="/path/to/keyring.gpg",
+            keyring_data="",
+            priority=10,
+            skip_keyring_verification=False,
+        )
+        boot_source_cache = BootSourceCache(
+            id=1,
+            os="Ubuntu",
+            release="Noble",
+            arch="amd64",
+            subarch="generic",
+            label="boot-source-1",
+            boot_source_id=boot_source.id,
+            extra={},
+        )
+
+        image_response = UISourceAvailableImageResponse.from_model(
+            boot_source=boot_source,
+            boot_source_cache=boot_source_cache,
+        )
+
+        assert image_response.kind == "UISourceAvailableImage"
+
+        assert image_response.os == boot_source_cache.os
+        assert image_response.release == boot_source_cache.release
+        assert image_response.architecture == boot_source_cache.arch
+
+        assert image_response.source_id == boot_source.id
+        assert image_response.source_name == boot_source.url
