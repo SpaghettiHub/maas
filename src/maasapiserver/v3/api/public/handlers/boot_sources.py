@@ -26,15 +26,22 @@ from maasapiserver.v3.api.public.models.responses.boot_source_selections import 
     BootSourceSelectionResponse,
 )
 from maasapiserver.v3.api.public.models.responses.boot_sources import (
+    BootSourceAvailableImageListResponse,
+    BootSourceAvailableImageResponse,
     BootSourceResponse,
     BootSourcesListResponse,
     SourceAvailableImageListResponse,
     SourceAvailableImageResponse,
+    UISourceAvailableImageListResponse,
+    UISourceAvailableImageResponse,
 )
 from maasapiserver.v3.auth.base import check_permissions
 from maasapiserver.v3.constants import V3_API_PREFIX
 from maasservicelayer.auth.jwt import UserRole
 from maasservicelayer.db.filters import QuerySpec
+from maasservicelayer.db.repositories.bootsourcecache import (
+    BootSourceCacheClauseFactory,
+)
 from maasservicelayer.db.repositories.bootsources import (
     BootSourcesClauseFactory,
 )
@@ -459,3 +466,93 @@ class BootSourcesHandler(Handler):
             etag_if_match=etag_if_match,
         )
         return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+    @handler(
+        path="/available_images",
+        methods=["GET"],
+        tags=TAGS,
+        responses={
+            200: {"model": UISourceAvailableImageListResponse},
+            404: {"model": NotFoundBodyResponse},
+        },
+        response_model_exclude_none=True,
+        status_code=200,
+        dependencies=[
+            Depends(check_permissions(required_roles={UserRole.USER}))
+        ],
+    )
+    async def get_all_available_images(
+        self,
+        services: ServiceCollectionV3 = Depends(services),  # noqa: B008
+    ) -> UISourceAvailableImageListResponse:
+        boot_source_cache_entries = await services.boot_source_cache.get_many(
+            query=QuerySpec(),
+        )
+
+        items: list[UISourceAvailableImageResponse] = []
+        for boot_source_cache_entry in boot_source_cache_entries:
+            boot_source = await services.boot_sources.get_by_id(
+                boot_source_cache_entry.boot_source_id
+            )
+            assert boot_source is not None
+
+            items.append(
+                UISourceAvailableImageResponse.from_model(
+                    boot_source=boot_source,
+                    boot_source_cache=boot_source_cache_entry,
+                )
+            )
+
+        return UISourceAvailableImageListResponse(items=items)
+
+    @handler(
+        path="/boot_sources/{boot_source_id}/available_images",
+        methods=["GET"],
+        tags=TAGS,
+        responses={
+            200: {"model": BootSourceAvailableImageListResponse},
+            404: {"model": NotFoundBodyResponse},
+        },
+        response_model_exclude_none=True,
+        status_code=200,
+        dependencies=[
+            Depends(check_permissions(required_roles={UserRole.USER}))
+        ],
+    )
+    async def get_boot_source_available_images(
+        self,
+        boot_source_id: int,
+        pagination_params: PaginationParams = Depends(),  # noqa: B008
+        services: ServiceCollectionV3 = Depends(services),  # noqa: B008
+    ) -> BootSourceAvailableImageListResponse:
+        boot_source = await services.boot_sources.get_by_id(boot_source_id)
+        if not boot_source:
+            raise NotFoundException()
+
+        boot_source_cache_entries = await services.boot_source_cache.list(
+            page=pagination_params.page,
+            size=pagination_params.size,
+            query=QuerySpec(
+                where=BootSourceCacheClauseFactory.with_boot_source_id(
+                    boot_source_id
+                ),
+            ),
+        )
+
+        return BootSourceAvailableImageListResponse(
+            items=[
+                BootSourceAvailableImageResponse.from_model(
+                    boot_source_cache=boot_source_cache_entry,
+                )
+                for boot_source_cache_entry in boot_source_cache_entries.items
+            ],
+            next=(
+                f"{V3_API_PREFIX}/boot_sources/{boot_source_id}/available_images?"
+                f"{pagination_params.to_next_href_format()}"
+                if boot_source_cache_entries.has_next(
+                    pagination_params.page, pagination_params.size
+                )
+                else None
+            ),
+            total=boot_source_cache_entries.total,
+        )

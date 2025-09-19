@@ -11,6 +11,7 @@ from maasapiserver.v3.api.public.models.responses.base import (
     HalResponse,
     PaginatedResponse,
 )
+from maasservicelayer.models.bootsourcecache import BootSourceCache
 from maasservicelayer.models.bootsources import (
     BootSource,
     SourceAvailableImage,
@@ -51,12 +52,15 @@ class BootSourcesListResponse(PaginatedResponse[BootSourceResponse]):
     kind = "BootSourcesList"
 
 
-class SourceAvailableImageResponse(BaseModel):
-    kind = "SourceAvailableImage"
+class BaseSourceAvailableImageResponse(BaseModel):
     os: str
     release: str
-    release_title: str
     architecture: str
+
+
+class SourceAvailableImageResponse(BaseSourceAvailableImageResponse):
+    kind = "SourceAvailableImage"
+    release_title: str
 
     @classmethod
     def from_model(
@@ -74,3 +78,49 @@ class SourceAvailableImageResponse(BaseModel):
 class SourceAvailableImageListResponse(BaseModel):
     kind = "SourceAvailableImageList"
     items: list[SourceAvailableImageResponse]
+
+
+class BootSourceAvailableImageResponse(BaseSourceAvailableImageResponse):
+    kind = "BootSourceAvailableImage"
+
+    @classmethod
+    def from_model(
+        cls,
+        boot_source_cache: BootSourceCache,
+    ) -> Self:
+        return cls(
+            os=boot_source_cache.os,
+            release=boot_source_cache.release,
+            architecture=boot_source_cache.arch,
+        )
+
+
+class BootSourceAvailableImageListResponse(
+    PaginatedResponse[BootSourceAvailableImageResponse]
+):
+    kind = "BootSourceAvailableImageList"
+
+
+class UISourceAvailableImageResponse(BaseSourceAvailableImageResponse):
+    kind = "UISourceAvailableImage"
+    source_id: Optional[int]
+    source_name: Optional[str]
+
+    @classmethod
+    def from_model(
+        cls,
+        boot_source: BootSource,
+        boot_source_cache: BootSourceCache,
+    ) -> Self:
+        return cls(
+            os=boot_source_cache.os,
+            release=boot_source_cache.release,
+            architecture=boot_source_cache.arch,
+            source_id=boot_source.id,
+            source_name=boot_source.url,
+        )
+
+
+class UISourceAvailableImageListResponse(BaseModel):
+    kind = "UISourceAvailableImageList"
+    items: list[UISourceAvailableImageResponse]
