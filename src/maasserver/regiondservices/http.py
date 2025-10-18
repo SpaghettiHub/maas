@@ -93,7 +93,9 @@ class RegionHTTPService(Service):
         atomic_write(rendered, target_path, overwrite=True, mode=0o644)
 
         # Configuration for internal apiserver
-        template = load_template("http", "regiond.nginx.stream.conf.template")
+        template = load_template(
+            "http", "regiond.internal.nginx.conf.template"
+        )
         internalapiserver_socket_path = os.getenv(
             "MAAS_INTERNALAPISERVER_HTTP_SOCKET_PATH",
             get_maas_data_path("internalapiserver-http.sock"),
@@ -104,7 +106,7 @@ class RegionHTTPService(Service):
         }
         rendered = template.substitute(environ).encode()
         target_path = Path(
-            compose_http_config_path("regiond.nginx.stream.conf")
+            compose_http_config_path("regiond.internal.nginx.conf")
         )
         target_path.parent.mkdir(parents=True, exist_ok=True)
         atomic_write(rendered, target_path, overwrite=True, mode=0o644)

@@ -4,7 +4,6 @@
 import asyncio
 from functools import partial
 import logging
-import ssl
 
 from django.conf import settings as django_settings
 from fastapi import FastAPI
@@ -39,6 +38,9 @@ from maasapiserver.v3.middlewares.auth import (
     MacaroonAuthenticationProvider,
     V3AuthenticationMiddleware,
 )
+from maasapiserver.v3.middlewares.client_certificate import (
+    RequireClientCertMiddleware,
+)
 from maasapiserver.v3.middlewares.context import ContextMiddleware
 from maasapiserver.v3.middlewares.services import ServicesMiddleware
 from maasservicelayer.db import Database
@@ -46,7 +48,6 @@ from maasservicelayer.db.listeners import PostgresListenersTaskFactory
 from maasservicelayer.db.locks import wait_for_startup
 from maasservicelayer.logging.configure import configure_logging
 from maasservicelayer.services import CacheForServices
-from provisioningserver.certificates import get_maas_cluster_cert_paths
 
 logger = structlog.getLogger()
 
@@ -146,6 +147,7 @@ async def create_app(
         "MAASAPIServer",
         "maasapiserver",
     )
+
     APIv3.register(app.router)
     APIv3UI.register(app.router)
     return app
@@ -157,7 +159,7 @@ async def create_internal_app(
     # In the tests the database is created in the fixture, so we need to inject it here as a parameter.
     db: Database = None,  # pyright: ignore [reportArgumentType]
 ) -> FastAPI:
-    # DO NOT add the authentication middleware. We enable MTLS at uvicorn level.
+    # DO NOT add the authentication middleware. MTLS is handled at Nginx level.
     app = await prepare_app(
         config,
         transaction_middleware_class,
@@ -166,7 +168,14 @@ async def create_internal_app(
         "MAASInternalAPIServer",
         "maasinternalapiserver",
     )
+
+    app.add_middleware(ExceptionMiddleware)
+    app.add_middleware(
+        RequireClientCertMiddleware, header_name="client-cert-cn"
+    )
+
     APIv3Internal.register(app.router)
+
     return app
 
 
@@ -212,16 +221,11 @@ def run(app_config: Config | None = None):
         create_internal_app(config=app_config)
     )
 
-    cert, key, cacerts = get_maas_cluster_cert_paths()  # pyright: ignore [reportGeneralTypeIssues]
     internal_server_config = uvicorn.Config(
         internal_app,
         loop="asyncio",
         proxy_headers=True,
         uds=internal_api_service_socket_path().as_posix(),
-        ssl_keyfile=key,
-        ssl_certfile=cert,
-        ssl_ca_certs=cacerts,
-        ssl_cert_reqs=ssl.CERT_REQUIRED,
         # We configure the logging OUTSIDE the library in order to use our custom json formatter.
         log_config=None,
     )

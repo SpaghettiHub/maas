@@ -75,11 +75,11 @@ class TestRegionHTTPService(
 
         tempdir = self.make_dir()
         nginx_conf = Path(tempdir) / "regiond.nginx.conf"
-        nginx_stream_conf = Path(tempdir) / "regiond.nginx.stream.conf"
+        nginx_internal_conf = Path(tempdir) / "regiond.internal.nginx.conf"
         service = http.RegionHTTPService()
         self.patch(http, "compose_http_config_path").side_effect = [
             str(nginx_conf),
-            str(nginx_stream_conf),
+            str(nginx_internal_conf),
         ]
 
         mock_create_cert_files = self.patch(service, "_create_cert_files")
@@ -101,11 +101,11 @@ class TestRegionHTTPService(
         self.assertIn("ssl_certificate_key key_path;", nginx_config)
         self.assertIn(f"root {boot_resources_dir};", nginx_config)
 
-        nginx_stream_config = nginx_stream_conf.read_text()
-        self.assertIn("listen 5242;", nginx_stream_config)
+        nginx_internal_conf = nginx_internal_conf.read_text()
+        self.assertIn("listen 5242 ssl;", nginx_internal_conf)
         self.assertIn(
-            f"proxy_pass unix:{data_path}/internalapiserver-http.sock;",
-            nginx_stream_config,
+            f"server unix:{data_path}/internalapiserver-http.sock;",
+            nginx_internal_conf,
         )
 
     def test_configure_in_snap(self):
@@ -129,11 +129,11 @@ class TestRegionHTTPService(
 
         tempdir = self.make_dir()
         nginx_conf = Path(tempdir) / "regiond.nginx.conf"
-        nginx_stream_conf = Path(tempdir) / "regiond.nginx.stream.conf"
+        nginx_internal_conf = Path(tempdir) / "regiond.internal.nginx.conf"
         service = http.RegionHTTPService()
         self.patch(http, "compose_http_config_path").side_effect = [
             str(nginx_conf),
-            str(nginx_stream_conf),
+            str(nginx_internal_conf),
         ]
 
         mock_create_cert_files = self.patch(service, "_create_cert_files")
@@ -156,22 +156,22 @@ class TestRegionHTTPService(
         self.assertIn("ssl_certificate_key key_path;", nginx_config)
         self.assertIn(f"root {boot_resources_dir};", nginx_config)
 
-        nginx_stream_config = nginx_stream_conf.read_text()
-        self.assertIn("listen 5242;", nginx_stream_config)
+        nginx_internal_conf = nginx_internal_conf.read_text()
+        self.assertIn("listen 5242 ssl;", nginx_internal_conf)
         self.assertIn(
-            f"proxy_pass unix:{data_path}/internalapiserver-http.sock;",
-            nginx_stream_config,
+            f"server unix:{data_path}/internalapiserver-http.sock;",
+            nginx_internal_conf,
         )
 
     def test_configure_https_also_has_http_server(self):
         cert = get_sample_cert_with_cacerts()
         tempdir = self.make_dir()
         nginx_conf = Path(tempdir) / "regiond.nginx.conf"
-        nginx_stream_conf = Path(tempdir) / "regiond.nginx.stream.conf"
+        nginx_internal_conf = Path(tempdir) / "regiond.internal.nginx.conf"
         service = http.RegionHTTPService()
         self.patch(http, "compose_http_config_path").side_effect = [
             str(nginx_conf),
-            str(nginx_stream_conf),
+            str(nginx_internal_conf),
         ]
 
         mock_create_cert_files = self.patch(service, "_create_cert_files")

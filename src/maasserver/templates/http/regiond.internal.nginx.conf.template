@@ -1,0 +1,21 @@
+# -*- mode: nginx -*-
+
+upstream internalapiserver {
+    server unix:{{internalapiserver_socket_path}};
+}
+
+server {
+    listen [::]:{{http_port}} ssl;
+    listen {{http_port}} ssl;
+
+    ssl_certificate /var/snap/maas/current/certificates/cluster.pem;
+    ssl_certificate_key /var/snap/maas/current/certificates/cluster.key;
+    ssl_client_certificate /var/snap/maas/current/certificates/cacerts.pem;
+    ssl_verify_client optional;
+
+    proxy_set_header Client-Cert-CN $ssl_client_s_dn;
+
+    location / {
+        proxy_pass http://internalapiserver;
+    }
+}

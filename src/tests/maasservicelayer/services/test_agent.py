@@ -7,13 +7,9 @@ import pytest
 
 from maasservicelayer.context import Context
 from maasservicelayer.db.filters import QuerySpec
-from maasservicelayer.db.repositories.agentcertificates import (
-    AgentCertificatesClauseFactory,
-)
 from maasservicelayer.db.repositories.agents import AgentsRepository
 from maasservicelayer.models.agents import Agent
 from maasservicelayer.services import (
-    AgentCertificateService,
     AgentsService,
     ConfigurationsService,
     UsersService,
@@ -42,7 +38,6 @@ class TestAgentsService:
             repository=Mock(AgentsRepository),
             configurations_service=Mock(ConfigurationsService),
             users_service=Mock(UsersService),
-            agentcertificates_service=Mock(AgentCertificateService),
         )
 
         api_client = AsyncMock()
@@ -66,7 +61,6 @@ class TestAgentsService:
             repository=Mock(AgentsRepository),
             configurations_service=configurations_service,
             users_service=users_service,
-            agentcertificates_service=Mock(AgentCertificateService),
         )
 
         apiclient = await agents_service._get_apiclient()
@@ -85,7 +79,6 @@ class TestAgentsService:
             repository=Mock(AgentsRepository),
             configurations_service=configurations_service,
             users_service=users_service,
-            agentcertificates_service=Mock(AgentCertificateService),
             cache=cache,
         )
 
@@ -108,26 +101,18 @@ class TestAgentsService:
         configurations_service.get.return_value = "http://example.com"
         users_service = Mock(UsersService)
         users_service.get_MAAS_user_apikey.return_value = "key:token:secret"
-        agentcertificate_service = Mock(AgentCertificateService)
 
         agents_service = AgentsService(
             context=Context(),
             repository=repository_mock,
             configurations_service=configurations_service,
             users_service=users_service,
-            agentcertificates_service=agentcertificate_service,
         )
 
         query = Mock(QuerySpec)
         await agents_service.delete_one(query)
 
         repository_mock.delete_by_id.assert_called_once_with(id=agent.id)
-
-        agentcertificate_service.delete_many.assert_called_once_with(
-            query=QuerySpec(
-                where=AgentCertificatesClauseFactory.with_agent_id(agent.id)
-            )
-        )
 
     async def test_delete_many(self, test_instance):
         agent1 = test_instance
@@ -142,30 +127,21 @@ class TestAgentsService:
         agents = [agent1, agent2]
 
         repository_mock = Mock(AgentsRepository)
+        repository_mock.get_many.return_value = agents
         repository_mock.delete_many.return_value = agents
         configurations_service = Mock(ConfigurationsService)
         configurations_service.get.return_value = "http://example.com"
         users_service = Mock(UsersService)
         users_service.get_MAAS_user_apikey.return_value = "key:token:secret"
-        agentcertificate_service = Mock(AgentCertificateService)
 
         agents_service = AgentsService(
             context=Context(),
             repository=repository_mock,
             configurations_service=configurations_service,
             users_service=users_service,
-            agentcertificates_service=agentcertificate_service,
         )
 
         query = Mock(QuerySpec)
         await agents_service.delete_many(query)
 
         repository_mock.delete_many.assert_called_once_with(query=query)
-
-        agentcertificate_service.delete_many.assert_called_once_with(
-            query=QuerySpec(
-                where=AgentCertificatesClauseFactory.with_agent_id_in(
-                    [agent1.id, agent2.id]
-                )
-            )
-        )

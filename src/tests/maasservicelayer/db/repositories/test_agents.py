@@ -6,13 +6,36 @@ from sqlalchemy.ext.asyncio import AsyncConnection
 
 from maasservicelayer.builders.agents import AgentBuilder
 from maasservicelayer.context import Context
-from maasservicelayer.db.repositories.agents import AgentsRepository
+from maasservicelayer.db.repositories.agents import (
+    AgentsClauseFactory,
+    AgentsRepository,
+)
 from maasservicelayer.models.agents import Agent
 from tests.fixtures.factories.agents import create_test_agents_entry
 from tests.fixtures.factories.node import create_test_rack_controller_entry
 from tests.fixtures.factories.racks import create_test_rack_entry
 from tests.maasapiserver.fixtures.db import Fixture
 from tests.maasservicelayer.db.repositories.base import RepositoryCommonTests
+
+
+class TestAgentsClauseFactory:
+    def test_with_id(self) -> None:
+        clause = AgentsClauseFactory.with_id(1)
+        assert str(
+            clause.condition.compile(compile_kwargs={"literal_binds": True})
+        ) == ("maasserver_agent.id = 1")
+
+    def with_rack_id(self) -> None:
+        clause = AgentsClauseFactory.with_rack_id(2)
+        assert str(
+            clause.condition.compile(compile_kwargs={"literal_binds": True})
+        ) == ("maasserver_agent.url = 2")
+
+    def with_rack_id_in(self) -> None:
+        clause = AgentsClauseFactory.with_rack_id_in({1, 2})
+        assert str(
+            clause.condition.compile(compile_kwargs={"literal_binds": True})
+        ) == ("maasserver_agent.id IN (1, 2)")
 
 
 class TestAgentsRepository(RepositoryCommonTests[Agent]):

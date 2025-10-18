@@ -14,7 +14,6 @@ class TestAgentResponse:
             id=1,
             created=now,
             updated=now,
-            secret="secrete",
             rack_id=1,
             rackcontroller_id=1,
         )
@@ -23,6 +22,5 @@ class TestAgentResponse:
             self_base_hyperlink=f"{V3_API_PREFIX}/racks",
         )
         assert agent.id == agent_response.id
-        assert agent.secret == agent_response.secret
         assert agent.rack_id == agent_response.rack_id
         assert agent.rackcontroller_id == agent_response.rackcontroller_id
