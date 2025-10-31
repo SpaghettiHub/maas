@@ -199,14 +199,10 @@ class TestBootResourceService:
             ),
         ]
 
-        await service.delete_all_without_sets()
+        await service.delete_all_without_sets(query=QuerySpec())
 
         mock_repository.delete_many.assert_awaited_once_with(
-            query=QuerySpec(
-                where=BootResourceClauseFactory.not_clause(
-                    BootResourceClauseFactory.with_ids({TEST_BOOT_RESOURCE.id})
-                )
-            )
+            query=QuerySpec(where=BootResourceClauseFactory.with_ids(set()))
         )
 
     async def test_delete_all_without_sets_delete_all_boot_resources(
@@ -215,14 +211,15 @@ class TestBootResourceService:
         mock_boot_resource_sets_service: Mock,
         service: BootResourceService,
     ) -> None:
+        mock_repository.get_many.return_value = [TEST_BOOT_RESOURCE]
         mock_boot_resource_sets_service.get_many.return_value = []
 
-        await service.delete_all_without_sets()
+        await service.delete_all_without_sets(query=QuerySpec())
 
         mock_repository.delete_many.assert_awaited_once_with(
             query=QuerySpec(
-                where=BootResourceClauseFactory.not_clause(
-                    BootResourceClauseFactory.with_ids(set())
+                where=BootResourceClauseFactory.with_ids(
+                    {TEST_BOOT_RESOURCE.id}
                 )
             )
         )
