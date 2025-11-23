@@ -24,13 +24,17 @@ class DatabaseLockBase(ABC):  # noqa: B024
         self.objid = objid
 
     async def __aenter__(self):
-        stmt = text(f"SELECT pg_advisory_lock({self.classid}, {self.objid})")
+        stmt = text("SELECT pg_advisory_lock(:classid, :objid)").bindparams(
+            classid=self.classid, objid=self.objid
+        )
         result = (await self.connection.execute(stmt)).one_or_none()
         if not result or result == (False,):
             raise DatabaseLockNotHeld()
 
     async def __aexit__(self, *exc_info):
-        stmt = text(f"SELECT pg_advisory_unlock({self.classid}, {self.objid})")
+        stmt = text("SELECT pg_advisory_unlock(:classid, :objid)").bindparams(
+            classid=self.classid, objid=self.objid
+        )
         result = (await self.connection.execute(stmt)).one_or_none()
         if not result or result == (False,):
             raise DatabaseLockNotHeld()
@@ -42,8 +46,8 @@ class DatabaseLockBase(ABC):  # noqa: B024
         stmt = text(
             "SELECT 1 FROM pg_locks, pg_database"
             " WHERE pg_locks.locktype = 'advisory'"
-            f"   AND pg_locks.classid = {self.classid}"
-            f"   AND pg_locks.objid = {self.objid}"
+            "   AND pg_locks.classid = :classid"
+            "   AND pg_locks.objid = :objid"
             # objsubid is 2 when using the 2-argument version of the
             # pg_advisory_* locking functions.
             "   AND pg_locks.objsubid = 2"
@@ -52,7 +56,7 @@ class DatabaseLockBase(ABC):  # noqa: B024
             # pg_databases to discover the OID of the currrent database.
             "   AND pg_locks.database = pg_database.oid"
             "   AND pg_database.datname = current_database()"
-        )
+        ).bindparams(classid=self.classid, objid=self.objid)
         lock = (await self.connection.execute(stmt)).one_or_none()
         if lock:
             return True

@@ -154,13 +154,13 @@ class DomainsRepository(BaseRepository[Domain]):
         if raw_ttl:
             ttl_clause = """COALESCE(dnsrr.address_ttl, node.address_ttl)"""
         else:
-            ttl_clause = f"""
+            ttl_clause = """
                 COALESCE(
                     dnsrr.address_ttl,
                     dnsrr.ttl,
                     node.address_ttl,
                     node.ttl,
-                    {default_ttl}
+                    :default_ttl
                 )"""
         # And here is the SQL query of doom.  Build up inner selects to get the
         # view of a DNSResource (and Node) that we need, and finally use
@@ -252,17 +252,17 @@ class DomainsRepository(BaseRepository[Domain]):
                 # We need to get all of the entries that are:
                 # - in this domain and have a dnsrr associated, OR
                 # - are USER_RESERVED and have NO fqdn associated at all.
-                sql_query += f""" ((
-                        staticip.alloc_type = {IpAddressType.USER_RESERVED} AND
+                sql_query += """ ((
+                        staticip.alloc_type = :ip_address_type_user_reserved AND
                         dnsrr.fqdn IS NULL AND
                         node.fqdn IS NULL
                     ) OR (
                         dnsrr.fqdn IS NOT NULL AND
                         (
-                            dnsrr.dom2_id = {domain_id} OR
-                            node.dom2_id = {domain_id} OR
-                            dnsrr.domain_id = {domain_id} OR
-                            node.domain_id = {domain_id})))"""
+                            dnsrr.dom2_id = :domain_id OR
+                            node.dom2_id = :domain_id OR
+                            dnsrr.domain_id = :domain_id OR
+                            node.domain_id = :domain_id)))"""
             else:
                 # For domains, we only need answers for the domain we were
                 # given.  These can can possibly come from either the child or
@@ -270,26 +270,30 @@ class DomainsRepository(BaseRepository[Domain]):
                 # found inside of get_hostname_ip_mapping() - we need any
                 # entries that are:
                 # - in this domain and have a dnsrr associated.
-                sql_query += f""" (
+                sql_query += """ (
                     dnsrr.fqdn IS NOT NULL AND
                     (
-                        dnsrr.dom2_id = {domain_id} OR
-                        node.dom2_id = {domain_id} OR
-                        dnsrr.domain_id = {domain_id} OR
-                        node.domain_id = {domain_id}))"""
+                        dnsrr.dom2_id = :domain_id OR
+                        node.dom2_id = :domain_id OR
+                        dnsrr.domain_id = :domain_id OR
+                        node.domain_id = :domain_id))"""
         else:
             # In the subnet map, addresses attached to nodes only map back to
             # the node, since some things don't like multiple PTR RRs in
             # answers from the DNS.
             # Since that is handled in get_hostname_ip_mapping, we exclude
             # anything where the node also has a link to the address.
-            sql_query += f""" ((
+            sql_query += """ ((
                     node.fqdn IS NULL AND dnsrr.fqdn IS NOT NULL
                 ) OR (
-                    staticip.alloc_type = {IpAddressType.USER_RESERVED} AND
+                    staticip.alloc_type = :ip_address_type_user_reserved AND
                     dnsrr.fqdn IS NULL AND
                     node.fqdn IS NULL))"""
-        sql_query = text(sql_query)
+        sql_query = text(sql_query).bindparams(
+            default_ttl=default_ttl,
+            ip_address_type_user_reserved=IpAddressType.USER_RESERVED,
+            domain_id=domain_id if domain_id is not None else None,
+        )
         results = (await self.execute_stmt(sql_query)).all()
         mapping = defaultdict(HostnameIPMapping)
         for result in results:
@@ -357,11 +361,11 @@ class DomainsRepository(BaseRepository[Domain]):
         if raw_ttl:
             ttl_clause = """node.address_ttl"""
         else:
-            ttl_clause = f"""
+            ttl_clause = """
                 COALESCE(
                     node.address_ttl,
                     domain.ttl,
-                    {default_ttl}
+                    :default_ttl
                 )"""
         sql_query = (
             """
@@ -429,13 +433,13 @@ class DomainsRepository(BaseRepository[Domain]):
             # return such nodes addresses in _BOTH_ the parent and the child
             # domains. domain2.name will be non-null if this host's fqdn is the
             # name of a domain in MAAS.
-            sql_query += f"""
+            sql_query += """
             LEFT JOIN maasserver_domain AS domain2 ON
                 /* Pick up another copy of domain looking for instances of
                  * nodes a the top of a domain.
                  */ domain2.name = CONCAT(node.hostname, '.', domain.name)
             WHERE
-                (domain2.id = {domain_id} OR node.domain_id = {domain_id}) AND
+                (domain2.id = :domain_id OR node.domain_id = :domain_id) AND
             """
         else:
             # For subnets, we need ALL the names, so that we can correctly
@@ -505,7 +509,7 @@ class DomainsRepository(BaseRepository[Domain]):
         )
         if domain_id is not None:
             # This logic is similar to the logic in sql_query above.
-            iface_sql_query += f"""
+            iface_sql_query += """
             LEFT JOIN maasserver_domain AS domain2 ON
                 /* Pick up another copy of domain looking for instances of
                  * the name as the top of a domain.
@@ -513,7 +517,7 @@ class DomainsRepository(BaseRepository[Domain]):
                 domain2.name = CONCAT(
                     interface.name, '.', node.hostname, '.', domain.name)
             WHERE
-                (domain2.id = {domain_id} OR node.domain_id = {domain_id}) AND
+                (domain2.id = :domain_id OR node.domain_id = :domain_id) AND
             """
         else:
             # For subnets, we need ALL the names, so that we can correctly
@@ -544,7 +548,10 @@ class DomainsRepository(BaseRepository[Domain]):
             {hostname: True for hostname in mapping.keys()},
         )
         assigned_ips = defaultdict(bool)
-        sql_query = text(sql_query)
+        sql_query = text(sql_query).bindparams(
+            default_ttl=default_ttl,
+            domain_id=domain_id if domain_id is not None else None,
+        )
         results = (await self.execute_stmt(sql_query)).all()
         # The records from the query provide, for each hostname (after
         # stripping domain), the boot and non-boot interface ip address in ipv4
@@ -574,7 +581,10 @@ class DomainsRepository(BaseRepository[Domain]):
         # Next, get all the addresses, on all the interfaces, and add the ones
         # that are not already present on the FQDN as $IFACE.$FQDN.  Exclude
         # any discovered addresses once there are any non-discovered addresses.
-        iface_sql_query = text(iface_sql_query)
+        iface_sql_query = text(iface_sql_query).bindparams(
+            default_ttl=default_ttl,
+            domain_id=domain_id if domain_id is not None else None,
+        )
         results = (await self.execute_stmt(iface_sql_query)).all()
         for result in results:
             result = InterfaceMappingResult(**result._asdict())
@@ -617,13 +627,13 @@ class DomainsRepository(BaseRepository[Domain]):
         if raw_ttl:
             ttl_clause = """dnsdata.ttl"""
         else:
-            ttl_clause = f"""
+            ttl_clause = """
                 COALESCE(
                     dnsdata.ttl,
                     domain.ttl,
-                    {default_ttl}
+                    :default_ttl
                 )"""
-        sql_query = f"""
+        sql_query = """
             SELECT
                 dnsresource.id AS dnsresource_id,
                 dnsresource.name AS name,
@@ -632,7 +642,7 @@ class DomainsRepository(BaseRepository[Domain]):
                 node.node_type AS node_type,
                 node.user_id AS user_id,
                 dnsdata.id AS dnsdata_id,
-                {ttl_clause} AS ttl,
+                """ + ttl_clause + """ AS ttl,
                 dnsdata.rrtype AS rrtype,
                 dnsdata.rrdata AS rrdata,
                 node.id AS node_id /* added in 2025 */
@@ -688,7 +698,7 @@ class DomainsRepository(BaseRepository[Domain]):
                  * wins, and we drop the CNAME until the node no longer has the
                  * same name.
                  */
-                (dnsresource.domain_id = {domain.id} OR node.fqdn IS NOT NULL) AND
+                (dnsresource.domain_id = :domain_id OR node.fqdn IS NOT NULL) AND
                 (dnsdata.rrtype != 'CNAME' OR node.fqdn IS NULL)
             ORDER BY
                 dnsresource.name,
@@ -699,7 +709,10 @@ class DomainsRepository(BaseRepository[Domain]):
         # no node exists with the same name, in order to make sure that we do
         # not spill CNAME and other data.
         mapping = defaultdict(HostnameRRsetMapping)
-        sql_query = text(sql_query)
+        sql_query = text(sql_query).bindparams(
+            default_ttl=default_ttl,
+            domain_id=domain.id,
+        )
         results = (await self.execute_stmt(sql_query)).all()
         for row in results:
             row = DnsDataMappingQueryResult(**row._asdict())
