@@ -5,13 +5,17 @@
 
 from django.core.exceptions import ValidationError
 
-from maasserver.models import BootSource, BootSourceSelection, Config
+from maasserver.models import BootSource, Config
+from maasserver.models.bootsourceselection import (
+    BootSourceSelection,
+    BootSourceSelectionNew,
+)
 from maasserver.models.signals import bootsources
 from maasserver.testing.factory import factory
 from maasserver.testing.testcase import MAASServerTestCase
 
 
-class TestBootSourceSelection(MAASServerTestCase):
+class TestBootSourceSelectionLegacy(MAASServerTestCase):
     """Tests for the `BootSourceSelection` model."""
 
     def setUp(self):
@@ -29,15 +33,19 @@ class TestBootSourceSelection(MAASServerTestCase):
             boot_source=boot_source,
             os="ubuntu",
             release="trusty",
-            arch="i386",
+            arches=["i386"],
+            subarches=["generic"],
+            labels=["release"],
         )
         selection.save()
         self.assertEqual(
-            ("ubuntu", "trusty", "i386"),
+            ("ubuntu", "trusty", ["i386"], ["generic"], ["release"]),
             (
                 selection.os,
                 selection.release,
-                selection.arch,
+                selection.arches,
+                selection.subarches,
+                selection.labels,
             ),
         )
 
@@ -60,7 +68,9 @@ class TestBootSourceSelection(MAASServerTestCase):
         expected = {
             "os": boot_source_selection.os,
             "release": boot_source_selection.release,
-            "arch": boot_source_selection.arch,
+            "arches": boot_source_selection.arches,
+            "subarches": boot_source_selection.subarches,
+            "labels": boot_source_selection.labels,
         }
         self.assertEqual(expected, boot_source_selection.to_dict())
 
@@ -82,3 +92,21 @@ class TestBootSourceSelection(MAASServerTestCase):
         )
         with self.assertRaisesRegex(ValidationError, expected):
             boot_source_selection.delete()
+
+    def test_force_delete_deletes_selection(self):
+        boot_source_selection_legacy = factory.make_BootSourceSelection()
+        boot_source_selection_new = factory.make_BootSourceSelectionNew(
+            legacy_selection=boot_source_selection_legacy
+        )
+
+        boot_source_selection_legacy.force_delete()
+        self.assertFalse(
+            BootSourceSelection.objects.filter(
+                id=boot_source_selection_legacy.id
+            ).exists()
+        )
+        self.assertFalse(
+            BootSourceSelectionNew.objects.filter(
+                id=boot_source_selection_new.id
+            ).exists()
+        )

@@ -1,4 +1,4 @@
-# Copyright 2014-2025 Canonical Ltd.  This software is licensed under the
+# Copyright 2014-2016 Canonical Ltd.  This software is licensed under the
 # GNU Affero General Public License version 3 (see the file LICENSE).
 
 """Tests for `BootSource`."""
@@ -57,16 +57,6 @@ class TestBootSource(MAASServerTestCase):
         )
         self.assertRaises(ValidationError, boot_source.clean)
 
-    def test_keyring_data_and_filename_can_be_unset_if_stream_is_unsigned(
-        self,
-    ):
-        boot_source = BootSource(
-            url="http://example.com/streams/v1/index.json",
-            keyring_filename="",
-            keyring_data=b"",
-        )
-        boot_source.save()
-
     def test_to_dict_returns_dict(self):
         boot_source = factory.make_BootSource(
             keyring_data=b"123445", keyring_filename=""
@@ -116,14 +106,15 @@ class TestBootSource(MAASServerTestCase):
             boot_source=boot_source
         )
         bootloaders = []
-        bootloader_type = factory.make_name("bootloader-type")
-        factory.make_BootSourceCache(
-            boot_source=boot_source,
-            bootloader_type=bootloader_type,
-            release=bootloader_type,
-            arch=boot_source_selection.arch,
-        )
-        bootloaders.append(bootloader_type)
+        for arch in boot_source_selection.arches:
+            bootloader_type = factory.make_name("bootloader-type")
+            factory.make_BootSourceCache(
+                boot_source=boot_source,
+                bootloader_type=bootloader_type,
+                release=bootloader_type,
+                arch=arch,
+            )
+            bootloaders.append(bootloader_type)
         self.assertCountEqual(
             [
                 selection["release"]
