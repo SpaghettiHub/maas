@@ -341,11 +341,11 @@ class OAuth2Client:
         headers = {}
         if access_token:
             headers["Authorization"] = f"Bearer {access_token}"
-        response = await self.client.get(url=url, headers=headers)
+        response = await self.client.get(url=url, headers=headers)  # pyright: ignore[reportAttributeAccessIssue]
         response.raise_for_status()
         return response.json()
 
     async def _revoke_token(self, url: str, token: str) -> None:
         data = {"token": token, "token_type_hint": "refresh_token"}
-        response = await self.client.post(url=url, data=data)
+        response = await self.client.post(url=url, data=data)  # pyright: ignore[reportAttributeAccessIssue]
         response.raise_for_status()
