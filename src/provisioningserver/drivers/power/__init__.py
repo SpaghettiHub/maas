@@ -228,6 +228,10 @@ class PowerDriverBase(metaclass=ABCMeta):
         """
         raise NotImplementedError()
 
+    def details(self, system_id, context):
+        """Retrieve machine details."""
+        raise NotImplementedError()
+
     def get_schema(self, detect_missing_packages=True):
         """Returns the JSON schema for the driver.
 

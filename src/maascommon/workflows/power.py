@@ -10,6 +10,7 @@ POWER_ON_WORKFLOW_NAME = "power-on"
 POWER_CYCLE_WORKFLOW_NAME = "power-cycle"
 POWER_OFF_WORKFLOW_NAME = "power-off"
 POWER_QUERY_WORKFLOW_NAME = "power-query"
+POWER_DETAILS_WORKFLOW_NAME = "power-details"
 POWER_MANY_WORKFLOW_NAME = "power-many"
 POWER_RESET_WORKFLOW_NAME = "power-reset"
 
@@ -20,6 +21,7 @@ class PowerAction(Enum):
     POWER_OFF = POWER_OFF_WORKFLOW_NAME
     POWER_CYCLE = POWER_CYCLE_WORKFLOW_NAME
     POWER_QUERY = POWER_QUERY_WORKFLOW_NAME
+    POWER_DETAILS = POWER_DETAILS_WORKFLOW_NAME
     POWER_RESET = POWER_RESET_WORKFLOW_NAME
 
 
@@ -42,16 +44,12 @@ class PowerOnParam(PowerParam):
     Parameters required by the PowerOn workflow
     """
 
-    pass
-
 
 @dataclass
 class PowerCycleParam(PowerParam):
     """
     Parameters required by the PowerCycle workflow
     """
-
-    pass
 
 
 @dataclass
@@ -61,16 +59,12 @@ class PowerQueryParam(PowerParam):
     Parameters required by the PowerQuery workflow
     """
 
-    pass
-
 
 @dataclass
 class PowerOffParam(PowerParam):
     """
     Parameters required by the PowerOff workflow
     """
-
-    pass
 
 
 @dataclass
@@ -89,4 +83,11 @@ class PowerManyParam:
 class PowerResetParam(PowerParam):
     """
     Parameters required by the PowerReset workflow
+    """
+
+
+@dataclass
+class DetailsParam(PowerParam):
+    """
+    Parameters required by the PowerDetails workflow
     """

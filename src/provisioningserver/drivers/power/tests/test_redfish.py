@@ -1048,3 +1048,75 @@ class TestRedfishPowerDriver(MAASTestCase):
         mock_power.assert_called_once_with(
             "GracefulRestart", url, node_id, headers
         )
+
+    @inlineCallbacks
+    def test_details_returns_chassis_info(self):
+        driver = RedfishPowerDriver()
+        system_id = factory.make_name("system_id")
+        context = make_context()
+        url = driver.get_url(context)
+        headers = driver.make_auth_headers(**context)
+        node_id = b"1"
+
+        mock_redfish_context = self.patch(driver, "process_redfish_context")
+        mock_redfish_context.return_value = (url, node_id, headers)
+
+        chassis_members = {
+            "Members": [
+                {"@odata.id": "/redfish/v1/Chassis/1"},
+                {"@odata.id": "redfish/v1/Chassis/2"},
+                {},
+            ]
+        }
+        chassis_one = {
+            "Manufacturer": "Dell",
+            "Model": "PowerEdge R630",
+            "ChassisType": "RackMount",
+        }
+        chassis_two = {"Manufacturer": "HPE"}
+
+        mock_redfish_request = self.patch(driver, "redfish_request")
+        mock_redfish_request.side_effect = [
+            (chassis_members, None),
+            (chassis_one, None),
+            (chassis_two, None),
+        ]
+
+        results = yield driver.details(system_id, context)
+
+        self.assertEqual(
+            [
+                {
+                    "manufacturer": "Dell",
+                    "model": "PowerEdge R630",
+                    "chassis_type": "RackMount",
+                },
+                {
+                    "manufacturer": "HPE",
+                    "model": "unknown",
+                    "chassis_type": "unknown",
+                },
+            ],
+            results,
+        )
+
+        self.assertEqual(b"GET", mock_redfish_request.mock_calls[0].args[0])
+        self.assertTrue(
+            mock_redfish_request.mock_calls[0]
+            .args[1]
+            .endswith(b"/redfish/v1/Chassis")
+        )
+
+        self.assertEqual(b"GET", mock_redfish_request.mock_calls[1].args[0])
+        self.assertTrue(
+            mock_redfish_request.mock_calls[1]
+            .args[1]
+            .endswith(b"/redfish/v1/Chassis/1")
+        )
+
+        self.assertEqual(b"GET", mock_redfish_request.mock_calls[2].args[0])
+        self.assertTrue(
+            mock_redfish_request.mock_calls[2]
+            .args[1]
+            .endswith(b"/redfish/v1/Chassis/2")
+        )

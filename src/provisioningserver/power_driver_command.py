@@ -2,6 +2,7 @@
 # GNU Affero General Public License version 3 (see the file LICENSE).
 
 import argparse
+import json
 import sys
 from textwrap import dedent
 
@@ -69,7 +70,7 @@ def add_arguments(parser):
     parser.add_argument(
         "command",
         help="Power driver command.",
-        choices=["status", "on", "cycle", "off", "reset"],
+        choices=["status", "on", "cycle", "off", "reset", "details"],
     )
     parser.add_argument(
         "--is-dpu",
@@ -106,6 +107,10 @@ async def _run(reactor, args, driver_registry=PowerDriverRegistry):
         if hasattr(args, "order"):
             order = args.order.split(",")
         await driver.set_boot_order(None, context, order)
+    elif command == "details":
+        result = await driver.details(None, context)
+        print(json.dumps({"details": result}))
+        return result
     elif args.is_dpu:
         if command in ["on", "cycle", "reset"]:
             await driver.reset(None, context)

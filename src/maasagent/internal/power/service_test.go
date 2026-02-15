@@ -388,6 +388,79 @@ func TestPowerReset(t *testing.T) {
 	assert.Equal(t, expectedResult.State, res.State)
 }
 
+func TestDetails(t *testing.T) {
+	param := DetailsParam{
+		PowerParam: PowerParam{
+			DriverOpts: map[string]any{
+				"power_address": "0.0.0.0",
+				"power_user":    "maas",
+				"power_pass":    "maas",
+			},
+			DriverType: "Redfish",
+		},
+	}
+
+	// Define the arguments expect the `maas.power` command to be called with
+	expectedArgs := append([]string{"details", param.DriverType}, fmtPowerOpts(param.DriverOpts)...)
+
+	expectedResult := DetailsResult{
+		Details: []Details{
+			{
+				Manufacturer: "Dell",
+				Model:        "PowerEdge R630",
+				ChassisType:  "RackMount",
+			},
+			{
+				Manufacturer: "HPE",
+				Model:        "ProLiant DL360",
+				ChassisType:  "RackMount",
+			},
+		},
+	}
+
+	jsonOutput := `{"details":[{"manufacturer":"Dell","model":"PowerEdge R630","chassis_type":"RackMount"},{"manufacturer":"HPE","model":"ProLiant DL360","chassis_type":"RackMount"}]}`
+
+	// Override the factories defined in service.go with mocks
+	var mockedPowerProc testPowerProc
+
+	procFactory = func(_ context.Context, stdout, _ *bytes.Buffer, name string, arg ...string) powerProc {
+		mockedPowerProc = testPowerProc{
+			name: name,
+			arg:  arg,
+		}
+
+		stdout.WriteString(jsonOutput)
+
+		return mockedPowerProc
+	}
+
+	pathFactory = func(_ string) (string, error) {
+		return expectedMAASCLIName, nil
+	}
+
+	ps := PowerService{}
+
+	// Setup the environment to test a temporal activity with
+	testSuite := &testsuite.WorkflowTestSuite{}
+	env := testSuite.NewTestActivityEnvironment()
+	env.RegisterActivity(ps.Details)
+
+	// Run the activity/test
+	val, err := env.ExecuteActivity(ps.Details, param)
+
+	// Ensure the powerCommand was called correctly
+	assert.Equal(t, expectedMAASCLIName, mockedPowerProc.name)
+	assert.ElementsMatch(t, expectedArgs, mockedPowerProc.arg)
+
+	// Ensure the power command returns the anticipated state, without error
+	assert.NoError(t, err)
+
+	var res DetailsResult
+
+	assert.NoError(t, val.Get(&res))
+	assert.Equal(t, expectedResult, res)
+}
+
 func TestPowerOnDPU(t *testing.T) {
 	// Setup a redfish power on activity input
 	param := PowerOnParam{

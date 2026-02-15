@@ -12,7 +12,7 @@ from os.path import basename, join
 from typing import Callable
 
 from twisted.internet import reactor
-from twisted.internet.defer import inlineCallbacks, succeed
+from twisted.internet.defer import inlineCallbacks, returnValue, succeed
 from twisted.web.client import (
     Agent,
     FileBodyProducer,
@@ -459,6 +459,50 @@ class RedfishPowerDriver(RedfishPowerDriverBase):
                     node_id,
                 )
                 return POWER_STATE.ERROR
+
+    @asynchronous
+    @inlineCallbacks
+    def details(self, system_id, context):
+        """Retrieve machine details."""
+        url, node_id, headers = yield self.process_redfish_context(context)
+        uri = join(url, b"redfish/v1/Chassis")
+        response, _ = yield self.redfish_request(b"GET", uri, headers)
+        members = response.get("Members", [])
+
+        results = []
+        for member in members:
+            member_uri_str = member.get("@odata.id")
+            if not member_uri_str:
+                continue
+
+            member_uri_bytes = member_uri_str.encode("utf-8")
+            if member_uri_bytes.startswith(b"/"):
+                member_uri_bytes = member_uri_bytes[1:]
+
+            target_uri = join(url, member_uri_bytes)
+            try:
+                chassis_info, _ = yield self.redfish_request(
+                    b"GET", target_uri, headers
+                )
+            except Exception as e:
+                maaslog.warning(
+                    "Failed to fetch chassis info at %s: %s",
+                    target_uri.decode("utf-8", errors="replace"),
+                    e,
+                )
+                continue
+
+            results.append(
+                {
+                    "manufacturer": chassis_info.get(
+                        "Manufacturer", "unknown"
+                    ),
+                    "model": chassis_info.get("Model", "unknown"),
+                    "chassis_type": chassis_info.get("ChassisType", "unknown"),
+                }
+            )
+
+        returnValue(results)
 
     @asynchronous
     @inlineCallbacks

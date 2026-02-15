@@ -139,6 +139,7 @@ func (s *PowerService) configure(ctx tworkflow.Context, systemID string) error {
 		"power-query":    s.PowerQuery,
 		"power-cycle":    s.PowerCycle,
 		"power-reset":    s.PowerReset,
+		"power-details":  s.Details,
 		"set-boot-order": s.SetBootOrder,
 	}
 
@@ -230,6 +231,23 @@ type PowerResetResult struct {
 	State string `json:"state"`
 }
 
+// DetailsParam is the activity parameter for getting the host details
+type DetailsParam struct {
+	PowerParam
+}
+
+// Details is the result of single detail
+type Details struct {
+	Manufacturer string `json:"manufacturer"`
+	Model        string `json:"model"`
+	ChassisType  string `json:"chassis_type"`
+}
+
+// DetailsResult is the result of details action
+type DetailsResult struct {
+	Details []Details `json:"details"`
+}
+
 func (s *PowerService) PowerOn(ctx context.Context, param PowerOnParam) (*PowerOnResult, error) {
 	out, err := powerCommand(ctx, "on", param.IsDPU, param.DriverType, param.DriverOpts)
 	if err != nil {
@@ -297,6 +315,20 @@ func (s *PowerService) PowerReset(ctx context.Context, param PowerResetParam) (*
 	}
 
 	return &PowerResetResult{State: out}, nil
+}
+
+func (s *PowerService) Details(ctx context.Context, param DetailsParam) (*DetailsResult, error) {
+	out, err := powerCommand(ctx, "details", param.IsDPU, param.DriverType, param.DriverOpts)
+	if err != nil {
+		return nil, err
+	}
+
+	var res DetailsResult
+	if err := json.Unmarshal([]byte(out), &res); err != nil {
+		return nil, err
+	}
+
+	return &res, nil
 }
 
 type SetBootOrderParam struct {
