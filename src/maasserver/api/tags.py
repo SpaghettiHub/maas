@@ -1,4 +1,4 @@
-# Copyright 2014-2022 Canonical Ltd.  This software is licensed under the
+# Copyright 2014-2026 Canonical Ltd.  This software is licensed under the
 # GNU Affero General Public License version 3 (see the file LICENSE).
 
 """API handlers: `Tag`."""
@@ -20,6 +20,7 @@ from maasserver.api.utils import (
     get_list_from_dict_or_multidict,
 )
 from maasserver.audit import create_audit_event
+from maasserver.authorization import can_edit_global_entities
 from maasserver.enum import ENDPOINT
 from maasserver.exceptions import MAASAPIValidationError, Unauthorized
 from maasserver.forms import TagForm
@@ -62,7 +63,7 @@ def check_rack_controller_access(request, rack_controller):
 
 def get_tag_or_404(name, user, to_edit=False):
     """Fetch a Tag by name or raise an Http404 exception."""
-    if to_edit and not user.is_superuser:
+    if to_edit and not can_edit_global_entities(user):
         raise PermissionDenied()
     return get_object_or_404(Tag, name=name)
 
@@ -385,7 +386,7 @@ class TagHandler(OperationsHandler):
         @error-example "not-found"
             No Tag matches the given query.
         """
-        if not request.user.is_superuser:
+        if not can_edit_global_entities(request.user):
             raise PermissionDenied()
 
         tag = get_tag_or_404(name=name, user=request.user)
@@ -459,7 +460,7 @@ class TagsHandler(OperationsHandler):
         @error-example "no-perms"
             No content
         """
-        if not request.user.is_superuser:
+        if not can_edit_global_entities(request.user):
             raise PermissionDenied()
 
         form = TagForm(request.data)

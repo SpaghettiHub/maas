@@ -1,4 +1,4 @@
-# Copyright 2016-2020 Canonical Ltd.  This software is licensed under the
+# Copyright 2016-2026 Canonical Ltd.  This software is licensed under the
 # GNU Affero General Public License version 3 (see the file LICENSE).
 
 """API handlers: `Pod`."""
@@ -9,7 +9,7 @@ from formencode.validators import String
 from piston3.utils import rc
 
 from maasserver.api.support import (
-    admin_method,
+    admin_write_global_entities_method,
     deprecated,
     operation,
     OperationsHandler,
@@ -115,7 +115,7 @@ class VmHostHandler(OperationsHandler):
         # object has more data associated with it.
         return {"system_id": system_id, "__incomplete__": True}
 
-    @admin_method
+    @admin_write_global_entities_method
     def update(self, request, id):
         """@description-title Update a specific VM host
         @description Update a specific VM host by ID.
@@ -165,7 +165,7 @@ class VmHostHandler(OperationsHandler):
         _try_sync_and_save(pod, request.user)
         return pod
 
-    @admin_method
+    @admin_write_global_entities_method
     def delete(self, request, id):
         """@description-title Deletes a VM host
         @description Deletes a VM host with the given ID.
@@ -196,7 +196,7 @@ class VmHostHandler(OperationsHandler):
         pod.delete_and_wait(decompose=form.cleaned_data["decompose"])
         return rc.DELETED
 
-    @admin_method
+    @admin_write_global_entities_method
     @operation(idempotent=False)
     def refresh(self, request, id):
         """@description-title Refresh a VM host
@@ -222,7 +222,7 @@ class VmHostHandler(OperationsHandler):
         pod = Pod.objects.get_pod_or_404(id, request.user, PodPermission.edit)
         return discover_and_sync_vmhost(pod, request.user)
 
-    @admin_method
+    @admin_write_global_entities_method
     @operation(idempotent=True)
     def parameters(self, request, id):
         """@description-title Obtain VM host parameters
@@ -253,7 +253,7 @@ class VmHostHandler(OperationsHandler):
         pod = Pod.objects.get_pod_or_404(id, request.user, PodPermission.edit)
         return pod.get_power_parameters()
 
-    @admin_method
+    @admin_write_global_entities_method
     @operation(idempotent=False)
     def compose(self, request, id):
         """@description-title Compose a virtual machine on the host.
@@ -351,7 +351,7 @@ class VmHostHandler(OperationsHandler):
         else:
             raise MAASAPIValidationError(form.errors)
 
-    @admin_method
+    @admin_write_global_entities_method
     @operation(idempotent=False)
     def add_tag(self, request, id):
         """@description-title Add a tag to a VM host
@@ -386,7 +386,7 @@ class VmHostHandler(OperationsHandler):
         pod.save()
         return pod
 
-    @admin_method
+    @admin_write_global_entities_method
     @operation(idempotent=False)
     def remove_tag(self, request, id):
         """@description-title Remove a tag from a VM host
@@ -466,7 +466,7 @@ class VmHostsHandler(OperationsHandler):
             "id"
         )
 
-    @admin_method
+    @admin_write_global_entities_method
     def create(self, request):
         """@description-title Create a VM host
         @description Create or discover a new VM host.

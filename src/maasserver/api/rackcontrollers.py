@@ -1,4 +1,4 @@
-# Copyright 2016-2019 Canonical Ltd.  This software is licensed under the
+# Copyright 2016-2026 Canonical Ltd.  This software is licensed under the
 # GNU Affero General Public License version 3 (see the file LICENSE).
 
 
@@ -11,7 +11,10 @@ from maasserver.api.nodes import (
     PowerMixin,
     PowersMixin,
 )
-from maasserver.api.support import admin_method, operation
+from maasserver.api.support import (
+    admin_write_global_entities_method,
+    operation,
+)
 from maasserver.api.utils import get_optional_param
 from maasserver.clusterrpc.driver_parameters import get_all_power_types
 from maasserver.exceptions import MAASAPIValidationError
@@ -122,7 +125,7 @@ class RackControllerHandler(NodeHandler, PowerMixin):
         )
         return rc.DELETED
 
-    @admin_method
+    @admin_write_global_entities_method
     def update(self, request, system_id):
         """@description-title Update a rack controller
         @description Updates a rack controller with the given system_id.
@@ -177,7 +180,7 @@ class RackControllerHandler(NodeHandler, PowerMixin):
         else:
             raise MAASAPIValidationError(form.errors)
 
-    @admin_method
+    @admin_write_global_entities_method
     @operation(idempotent=False)
     def import_boot_images(self, request, system_id):
         """@description-title Import boot images
@@ -201,7 +204,7 @@ class RackControllerHandler(NodeHandler, PowerMixin):
         )
         return rc.ACCEPTED
 
-    @admin_method
+    @admin_write_global_entities_method
     @operation(idempotent=True)
     def list_boot_images(self, request, system_id):
         """@description-title List available boot images
@@ -259,7 +262,7 @@ class RackControllersHandler(NodesHandler, PowersMixin):
     api_doc_section_name = "RackControllers"
     base_model = RackController
 
-    @admin_method
+    @admin_write_global_entities_method
     @operation(idempotent=False)
     def import_boot_images(self, request):
         """@description-title Import boot images on all rack controllers
@@ -270,7 +273,7 @@ class RackControllersHandler(NodesHandler, PowersMixin):
         """
         return rc.ACCEPTED
 
-    @admin_method
+    @admin_write_global_entities_method
     @operation(idempotent=True)
     def describe_power_types(self, request):
         """@description-title Get power information from rack controllers

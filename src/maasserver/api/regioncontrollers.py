@@ -1,4 +1,4 @@
-# Copyright 2016-2019 Canonical Ltd.  This software is licensed under the
+# Copyright 2016-2026 Canonical Ltd.  This software is licensed under the
 # GNU Affero General Public License version 3 (see the file LICENSE).
 
 
@@ -6,7 +6,7 @@ from formencode.validators import StringBool
 from piston3.utils import rc
 
 from maasserver.api.nodes import NodeHandler, NodesHandler
-from maasserver.api.support import admin_method
+from maasserver.api.support import admin_write_global_entities_method
 from maasserver.api.utils import get_optional_param
 from maasserver.exceptions import MAASAPIValidationError
 from maasserver.forms import ControllerForm
@@ -111,7 +111,7 @@ class RegionControllerHandler(NodeHandler):
         )
         return rc.DELETED
 
-    @admin_method
+    @admin_write_global_entities_method
     def update(self, request, system_id):
         """@description-title Update a region controller
         @description Updates a region controller with the given system_id.

@@ -1,12 +1,17 @@
-# Copyright 2014-2016 Canonical Ltd.  This software is licensed under the
+# Copyright 2014-2026 Canonical Ltd.  This software is licensed under the
 # GNU Affero General Public License version 3 (see the file LICENSE).
 
 """API handlers: `LicenseKey`."""
 
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
 from piston3.utils import rc
 
-from maasserver.api.support import OperationsHandler
+from maasserver.api.support import OperationsHandler, UNAUTHORIZED_MESSAGE
+from maasserver.authorization import (
+    can_edit_license_keys,
+    can_view_license_keys,
+)
 from maasserver.exceptions import MAASAPIValidationError
 from maasserver.forms import LicenseKeyForm
 from maasserver.models import LicenseKey
@@ -30,6 +35,9 @@ class LicenseKeysHandler(OperationsHandler):
         @success-example "success-json" [exkey=license-keys-placeholder]
         placeholder text
         """
+        if not can_view_license_keys(request.user):
+            raise PermissionDenied(UNAUTHORIZED_MESSAGE)
+
         return LicenseKey.objects.all().order_by("osystem", "distro_series")
 
     def create(self, request):
@@ -51,6 +59,9 @@ class LicenseKeysHandler(OperationsHandler):
         @success-example "success-json" [exkey=license-keys-placeholder]
         placeholder text
         """
+        if not can_edit_license_keys(request.user):
+            raise PermissionDenied(UNAUTHORIZED_MESSAGE)
+
         # If the user provides no parametes to the create command, then
         # django will make the request.data=None. This will cause the form
         # to be valid, not returning all the missing fields.
@@ -118,6 +129,9 @@ class LicenseKeyHandler(OperationsHandler):
         @error-example "not-found"
             Unknown API endpoint: /MAAS/api/2.0/license-key/windows/win2012/.
         """
+        if not can_view_license_keys(request.user):
+            raise PermissionDenied(UNAUTHORIZED_MESSAGE)
+
         return get_object_or_404(
             LicenseKey, osystem=osystem, distro_series=distro_series
         )
@@ -148,6 +162,9 @@ class LicenseKeyHandler(OperationsHandler):
         @error-example "not-found"
             Unknown API endpoint: /MAAS/api/2.0/license-key/windows/win2012/.
         """
+        if not can_edit_license_keys(request.user):
+            raise PermissionDenied(UNAUTHORIZED_MESSAGE)
+
         license_key = get_object_or_404(
             LicenseKey, osystem=osystem, distro_series=distro_series
         )
@@ -178,6 +195,9 @@ class LicenseKeyHandler(OperationsHandler):
         @error-example "not-found"
             Unknown API endpoint: /MAAS/api/2.0/license-key/windows/win2012/.
         """
+        if not can_edit_license_keys(request.user):
+            raise PermissionDenied(UNAUTHORIZED_MESSAGE)
+
         license_key = get_one(
             LicenseKey.objects.filter(
                 osystem=osystem, distro_series=distro_series

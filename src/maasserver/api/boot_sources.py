@@ -1,4 +1,4 @@
-# Copyright 2014-2016 Canonical Ltd.  This software is licensed under the
+# Copyright 2014-2026 Canonical Ltd.  This software is licensed under the
 # GNU Affero General Public License version 3 (see the file LICENSE).
 
 """API handlers: `BootSource`."""
@@ -6,6 +6,7 @@
 from base64 import b64encode
 import http.client
 
+from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from piston3.emitters import JSONEmitter
@@ -13,8 +14,12 @@ from piston3.handler import typemapper
 from piston3.utils import rc
 
 from maascommon.logging.security import CREATED, DELETED, UPDATED
-from maasserver.api.support import OperationsHandler
+from maasserver.api.support import OperationsHandler, UNAUTHORIZED_MESSAGE
 from maasserver.audit import create_audit_event
+from maasserver.authorization import (
+    can_edit_boot_entities,
+    can_view_boot_entities,
+)
 from maasserver.enum import ENDPOINT
 from maasserver.exceptions import MAASAPIValidationError
 from maasserver.forms import BootSourceForm
@@ -57,6 +62,9 @@ class BootSourceHandler(OperationsHandler):
         @error-example "not-found"
             No BootSource matches the given query.
         """
+        if not can_view_boot_entities(request.user):
+            raise PermissionDenied(UNAUTHORIZED_MESSAGE)
+
         return get_object_or_404(BootSource, id=id)
 
     def update(self, request, id):
@@ -85,6 +93,9 @@ class BootSourceHandler(OperationsHandler):
             No BootSource matches the given query.
 
         """
+        if not can_edit_boot_entities(request.user):
+            raise PermissionDenied(UNAUTHORIZED_MESSAGE)
+
         boot_source = get_object_or_404(BootSource, id=id)
         old_url = boot_source.url
         form = BootSourceForm(
@@ -121,6 +132,9 @@ class BootSourceHandler(OperationsHandler):
         @error-example "not-found"
             No BootSource matches the given query.
         """
+        if not can_edit_boot_entities(request.user):
+            raise PermissionDenied(UNAUTHORIZED_MESSAGE)
+
         boot_source = get_object_or_404(BootSource, id=id)
         boot_source.delete()
         create_audit_event(
@@ -167,6 +181,9 @@ class BootSourcesHandler(OperationsHandler):
         @success-example "success-json" [exkey=boot-sources-read] placeholder
         text
         """
+        if not can_view_boot_entities(request.user):
+            raise PermissionDenied(UNAUTHORIZED_MESSAGE)
+
         return BootSource.objects.all()
 
     def create(self, request):
@@ -189,6 +206,9 @@ class BootSourcesHandler(OperationsHandler):
         @success-example "success-json" [exkey=boot-sources-create] placeholder
         text
         """
+        if not can_edit_boot_entities(request.user):
+            raise PermissionDenied(UNAUTHORIZED_MESSAGE)
+
         form = BootSourceForm(data=request.data, files=request.FILES)
         if form.is_valid():
             boot_source = form.save()

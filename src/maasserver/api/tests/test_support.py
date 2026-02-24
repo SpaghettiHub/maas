@@ -1,4 +1,4 @@
-# Copyright 2013-2016 Canonical Ltd.  This software is licensed under the
+# Copyright 2013-2026 Canonical Ltd.  This software is licensed under the
 # GNU Affero General Public License version 3 (see the file LICENSE).
 
 
@@ -12,7 +12,7 @@ from piston3.authentication import NoAuthentication
 
 from maasserver.api.doc import get_api_description
 from maasserver.api.support import (
-    admin_method,
+    admin_write_global_entities_method,
     AdminRestrictedResource,
     deprecated,
     Emitter,
@@ -153,7 +153,7 @@ class TestAdminMethodDecorator(MAASServerTestCase):
         request = FakeRequest(user=factory.make_User())
         mock = Mock()
 
-        @admin_method
+        @admin_write_global_entities_method
         def api_method(self, request):
             return mock()
 
@@ -166,7 +166,7 @@ class TestAdminMethodDecorator(MAASServerTestCase):
         return_value = factory.make_name("return")
         mock = Mock(return_value=return_value)
 
-        @admin_method
+        @admin_write_global_entities_method
         def api_method(self, request):
             return mock()
 

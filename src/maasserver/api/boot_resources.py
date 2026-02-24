@@ -1,4 +1,4 @@
-# Copyright 2014-2025 Canonical Ltd.  This software is licensed under the
+# Copyright 2014-2026 Canonical Ltd.  This software is licensed under the
 # GNU Affero General Public License version 3 (see the file LICENSE).
 
 """API handlers: `BootResouce`."""
@@ -12,6 +12,7 @@ __all__ = [
 import http.client
 
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -25,7 +26,13 @@ from maascommon.workflows.bootresource import (
     SYNC_BOOTRESOURCES_WORKFLOW_NAME,
     SyncRequestParam,
 )
-from maasserver.api.support import admin_method, operation, OperationsHandler
+from maasserver.api.support import (
+    admin_write_global_entities_method,
+    operation,
+    OperationsHandler,
+    UNAUTHORIZED_MESSAGE,
+)
+from maasserver.authorization import can_edit_boot_entities
 from maasserver.bootresources import (
     import_resources,
     is_import_resources_running,
@@ -197,7 +204,6 @@ class BootResourcesHandler(OperationsHandler):
             status=int(http.client.OK),
         )
 
-    @admin_method
     def create(self, request):
         """@description-title Create a new boot resource
         @description Creates a new boot resource. The file upload must be done
@@ -233,6 +239,9 @@ class BootResourcesHandler(OperationsHandler):
         # If the user provides no parameters to the create command, then
         # django will treat the form as valid, and so it won't actually
         # validate any of the data.
+        if not can_edit_boot_entities(request.user):
+            raise PermissionDenied(UNAUTHORIZED_MESSAGE)
+
         data = request.data.copy()
         if data is None:
             data = {}
@@ -252,7 +261,6 @@ class BootResourcesHandler(OperationsHandler):
             status=int(http.client.CREATED),
         )
 
-    @admin_method
     @operation(idempotent=False, exported_as="import")
     def import_resources(self, request):
         """@description-title Import boot resources
@@ -262,13 +270,16 @@ class BootResourcesHandler(OperationsHandler):
         @success (content) "success-content"
             Import of boot resources started
         """
+        if not can_edit_boot_entities(request.user):
+            raise PermissionDenied(UNAUTHORIZED_MESSAGE)
+
         import_resources()
         return HttpResponse(
             "Import of boot resources started",
             content_type=("text/plain; charset=%s" % settings.DEFAULT_CHARSET),
         )
 
-    @admin_method
+    @admin_write_global_entities_method
     @operation(idempotent=False)
     def stop_import(self, request):
         """@description-title Stop import boot resources
@@ -278,6 +289,9 @@ class BootResourcesHandler(OperationsHandler):
         @success (content) "success-content"
             Import of boot resources is being stopped.
         """
+        if not can_edit_boot_entities(request.user):
+            raise PermissionDenied(UNAUTHORIZED_MESSAGE)
+
         stop_import_resources()
         return HttpResponse(
             "Import of boot resources is being stopped",
@@ -341,7 +355,6 @@ class BootResourceHandler(OperationsHandler):
             status=int(http.client.OK),
         )
 
-    @admin_method
     def delete(self, request, id):
         """@description-title Delete a boot resource
         @description Delete a boot resource by id.
@@ -355,6 +368,9 @@ class BootResourceHandler(OperationsHandler):
         @error-example "not-found"
             No BootResource matches the given query.
         """
+        if not can_edit_boot_entities(request.user):
+            raise PermissionDenied(UNAUTHORIZED_MESSAGE)
+
         resource = BootResource.objects.get(id=id)
         if resource is not None:
             BootResourceFile.objects.filestore_remove_resource(resource)
@@ -376,7 +392,6 @@ class BootResourceFileUploadHandler(OperationsHandler):
     api_doc_section_name = "Boot resource file upload"
     read = create = delete = None
 
-    @admin_method
     def update(self, request, resource_id, id):
         """@description-title Upload chunk of boot resource file.
         @description Uploads a chunk of boot resource file
@@ -391,6 +406,9 @@ class BootResourceFileUploadHandler(OperationsHandler):
         @error (http-status-code) "403" 403
         @error (content) "forbidden" The user tried to upload to a boot resource of wrong type.
         """
+        if not can_edit_boot_entities(request.user):
+            raise PermissionDenied(UNAUTHORIZED_MESSAGE)
+
         resource = get_object_or_404(BootResource, id=resource_id)
         rfile = get_object_or_404(BootResourceFile, id=id)
         size = int(request.headers.get("content-length", "0"))

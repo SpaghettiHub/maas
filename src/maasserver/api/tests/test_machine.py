@@ -1,10 +1,10 @@
-# Copyright 2015-2025 Canonical Ltd.  This software is licensed under the
+# Copyright 2015-2026 Canonical Ltd.  This software is licensed under the
 # GNU Affero General Public License version 3 (see the file LICENSE).
 from base64 import b64encode
 import http.client
 import logging
 from random import choice
-from unittest.mock import ANY, Mock
+from unittest.mock import ANY, MagicMock, Mock
 
 from django.conf import settings
 from django.core.serializers import json
@@ -60,7 +60,7 @@ from maasserver.testing.api import (
 )
 from maasserver.testing.architecture import make_usable_architecture
 from maasserver.testing.factory import factory
-from maasserver.testing.fixtures import RBACEnabled
+from maasserver.testing.fixtures import OpenFGAMock, RBACEnabled
 from maasserver.testing.orm import reload_objects
 from maasserver.testing.osystems import make_usable_osystem
 from maasserver.testing.testcase import MAASServerTestCase
@@ -4274,3 +4274,59 @@ class TestExitRescueMode(APITransactionTestCase.ForUser):
         self.assertEqual(
             NODE_STATUS.EXITING_RESCUE_MODE, reload_object(machine).status
         )
+
+
+class TestMachineHandlerOpenFGAIntegration(APITestCase.ForUser):
+    auto_mock_openfga = False
+
+    def setUp(self):
+        super().setUp()
+        self.openfga_client = MagicMock()
+        self.useFixture(OpenFGAMock(client=self.openfga_client))
+        self.machines_url = reverse("machines_handler")
+
+    def test_commission_succees_if_edit_access(self):
+        self.patch(node_module.Node, "_start").return_value = defer.succeed(
+            None
+        )
+
+        p = factory.make_ResourcePool()
+        self.openfga_client.can_edit_machines_in_pool.return_value = True
+
+        machine = factory.make_Node(
+            status=NODE_STATUS.READY,
+            owner=factory.make_User(),
+            power_state=POWER_STATE.OFF,
+            interface=True,
+            pool=p,
+        )
+
+        machine_uri = reverse("machine_handler", args=[machine.system_id])
+
+        response = self.client.post(machine_uri, {"op": "commission"})
+        self.assertEqual(http.client.OK, response.status_code)
+        self.assertEqual(
+            NODE_STATUS.COMMISSIONING, reload_object(machine).status
+        )
+
+    def test_commission_403(self):
+        self.patch(node_module.Node, "_start").return_value = defer.succeed(
+            None
+        )
+
+        p = factory.make_ResourcePool()
+        self.openfga_client.can_edit_machines_in_pool.return_value = False
+
+        machine = factory.make_Node(
+            status=NODE_STATUS.READY,
+            owner=factory.make_User(),
+            power_state=POWER_STATE.OFF,
+            interface=True,
+            pool=p,
+        )
+
+        machine_uri = reverse("machine_handler", args=[machine.system_id])
+
+        response = self.client.post(machine_uri, {"op": "commission"})
+        self.assertEqual(http.client.FORBIDDEN, response.status_code)
+        self.assertEqual(NODE_STATUS.READY, reload_object(machine).status)

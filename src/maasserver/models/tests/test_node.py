@@ -1,4 +1,4 @@
-# Copyright 2012-2025 Canonical Ltd.  This software is licensed under the
+# Copyright 2012-2026 Canonical Ltd.  This software is licensed under the
 # GNU Affero General Public License version 3 (see the file LICENSE).
 
 import base64
@@ -142,6 +142,7 @@ from maasserver.testing.eventloop import (
     RunningEventLoopFixture,
 )
 from maasserver.testing.factory import factory, RANDOM
+from maasserver.testing.fixtures import OpenFGAMock
 from maasserver.testing.testcase import (
     MAASServerTestCase,
     MAASTransactionServerTestCase,
@@ -13098,3 +13099,131 @@ class TestNodeClone__Prefetches(MAASServerTestCase):
 
         with post_commit_hooks:
             destination.set_networking_configuration_from_node(source)
+
+
+class TestNodeOpenFGAIntegration(MAASServerTestCase):
+    auto_mock_openfga = False
+
+    scenarios = (
+        # view Permissions
+        (
+            "view_other_denied",
+            {
+                "fga_method": "can_view_machines_in_pool",
+                "fga_return": False,
+                "owned_by_user": False,
+                "permission": NodePermission.view,
+                "expected_success": False,
+            },
+        ),
+        (
+            "view_owned_allowed",
+            {
+                "fga_method": "can_view_machines_in_pool",
+                "fga_return": False,
+                "owned_by_user": True,
+                "permission": NodePermission.view,
+                "expected_success": True,
+            },
+        ),
+        (
+            "view_other_allowed_by_fga",
+            {
+                "fga_method": "can_view_machines_in_pool",
+                "fga_return": True,
+                "owned_by_user": False,
+                "permission": NodePermission.view,
+                "expected_success": True,
+            },
+        ),
+        # edit Permissions
+        (
+            "edit_other_denied",
+            {
+                "fga_method": "can_edit_machines_in_pool",
+                "fga_return": False,
+                "owned_by_user": False,
+                "permission": NodePermission.edit,
+                "expected_success": False,
+            },
+        ),
+        (
+            "edit_owned_allowed",
+            {
+                "fga_method": "can_edit_machines_in_pool",
+                "fga_return": False,
+                "owned_by_user": True,
+                "permission": NodePermission.edit,
+                "expected_success": True,
+            },
+        ),
+        (
+            "edit_other_allowed_by_fga",
+            {
+                "fga_method": "can_edit_machines_in_pool",
+                "fga_return": True,
+                "owned_by_user": False,
+                "permission": NodePermission.edit,
+                "expected_success": True,
+            },
+        ),
+        # admin Permissions
+        (
+            "admin_other_denied",
+            {
+                "fga_method": "can_edit_machines_in_pool",
+                "fga_return": False,
+                "owned_by_user": False,
+                "permission": NodePermission.admin,
+                "expected_success": False,
+            },
+        ),
+        (
+            "admin_owned_denied",
+            {
+                "fga_method": "can_edit_machines_in_pool",
+                "fga_return": False,
+                "owned_by_user": True,
+                "permission": NodePermission.admin,
+                "expected_success": False,
+            },
+        ),
+        (
+            "admin_allowed_by_fga",
+            {
+                "fga_method": "can_edit_machines_in_pool",
+                "fga_return": True,
+                "owned_by_user": False,
+                "permission": NodePermission.admin,
+                "expected_success": True,
+            },
+        ),
+    )
+
+    def setUp(self):
+        super().setUp()
+        self.openfga_client = MagicMock()
+        self.useFixture(OpenFGAMock(client=self.openfga_client))
+
+    def test_node_access_logic(self):
+        getattr(
+            self.openfga_client, self.fga_method
+        ).return_value = self.fga_return
+
+        user = factory.make_User()
+        owner = user if self.owned_by_user else factory.make_User()
+        node = factory.make_Node(owner=owner)
+
+        if self.expected_success:
+            result = Node.objects.get_node_or_404(
+                node.system_id, user, self.permission
+            )
+            self.assertEqual(node, result)
+        else:
+            self.assertRaises(
+                PermissionDenied,
+                Node.objects.get_node_or_404,
+                node.system_id,
+                user,
+                self.permission,
+            )

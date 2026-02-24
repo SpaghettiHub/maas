@@ -1,4 +1,4 @@
-# Copyright 2014-2025 Canonical Ltd.  This software is licensed under the
+# Copyright 2014-2026 Canonical Ltd.  This software is licensed under the
 # GNU Affero General Public License version 3 (see the file LICENSE).
 
 """Tests for the `Boot Resources` API."""
@@ -8,6 +8,7 @@ import http.client
 from io import BytesIO
 import random
 from typing import Iterable
+from unittest.mock import MagicMock
 
 from django.urls import reverse
 
@@ -33,6 +34,7 @@ from maasserver.models.node import RegionController
 from maasserver.testing.api import APITestCase
 from maasserver.testing.architecture import make_usable_architecture
 from maasserver.testing.factory import factory
+from maasserver.testing.fixtures import OpenFGAMock
 from maasserver.utils.converters import json_load_bytes
 from maasserver.utils.orm import reload_object
 from maastemporalworker.worker import REGION_TASK_QUEUE
@@ -614,3 +616,33 @@ class TestBootResourceFileUploadAPI(APITestCase.ForUser):
             )
         self.assertEqual(content, self.read_content(rfile))
         mock_filestore.assert_called_once()
+
+
+class TestBootResourceFileUploadAPIOpenFGAIntegration(APITestCase.ForUser):
+    auto_mock_openfga = False
+
+    def setUp(self):
+        super().setUp()
+        self.openfga_client = MagicMock()
+        self.useFixture(OpenFGAMock(client=self.openfga_client))
+
+    def test_PUT_requires_can_edit_boot_entities(self):
+        self.openfga_client.can_edit_boot_entities.return_value = True
+
+        params = {
+            "name": factory.make_name("name"),
+            "architecture": make_usable_architecture(self),
+            "content": (factory.make_file_upload(content=sample_binary_data)),
+        }
+        response = self.client.post(reverse("boot_resources_handler"), params)
+        self.assertNotEqual(http.client.FORBIDDEN, response.status_code)
+        self.openfga_client.can_edit_boot_entities.assert_called_once()
+
+    def test_stop_import_requires_can_edit_boot_entities(self):
+        self.openfga_client.can_edit_boot_entities.return_value = True
+        self.patch(boot_resources, "stop_import_resources")
+        response = self.client.post(
+            reverse("boot_resources_handler"), {"op": "stop_import"}
+        )
+        self.assertEqual(http.client.OK, response.status_code)
+        self.openfga_client.can_edit_boot_entities.assert_called_once()

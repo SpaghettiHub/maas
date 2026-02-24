@@ -1,14 +1,19 @@
-# Copyright 2014-2016 Canonical Ltd.  This software is licensed under the
+# Copyright 2014-2026 Canonical Ltd.  This software is licensed under the
 # GNU Affero General Public License version 3 (see the file LICENSE).
 
 """API handlers: `BootSourceSelection`"""
 
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
 from piston3.utils import rc
 
 from maascommon.logging.security import CREATED, DELETED
-from maasserver.api.support import OperationsHandler
+from maasserver.api.support import OperationsHandler, UNAUTHORIZED_MESSAGE
 from maasserver.audit import create_audit_event
+from maasserver.authorization import (
+    can_edit_boot_entities,
+    can_view_boot_entities,
+)
 from maasserver.enum import ENDPOINT
 from maasserver.exceptions import MAASAPIValidationError
 from maasserver.forms import BootSourceSelectionForm
@@ -54,6 +59,9 @@ class BootSourceSelectionHandler(OperationsHandler):
         @error-example "not-found"
             No BootSource matches the given query.
         """
+        if not can_view_boot_entities(request.user):
+            raise PermissionDenied(UNAUTHORIZED_MESSAGE)
+
         boot_source = get_object_or_404(BootSource, id=boot_source_id)
         return get_object_or_404(
             BootSourceSelection, boot_source=boot_source, id=id
@@ -93,6 +101,9 @@ class BootSourceSelectionHandler(OperationsHandler):
         @error-example "not-found"
             No BootSource matches the given query.
         """
+        if not can_edit_boot_entities(request.user):
+            raise PermissionDenied(UNAUTHORIZED_MESSAGE)
+
         boot_source = get_object_or_404(BootSource, id=boot_source_id)
         boot_source_selection = get_object_or_404(
             BootSourceSelection, boot_source=boot_source, id=id
@@ -128,6 +139,9 @@ class BootSourceSelectionHandler(OperationsHandler):
             No BootSource matches the given query.
 
         """
+        if not can_edit_boot_entities(request.user):
+            raise PermissionDenied(UNAUTHORIZED_MESSAGE)
+
         boot_source = get_object_or_404(BootSource, id=boot_source_id)
         boot_source_selection = get_object_or_404(
             BootSourceSelection, boot_source=boot_source, id=id
@@ -187,6 +201,9 @@ class BootSourceSelectionsHandler(OperationsHandler):
         @error-example "not-found"
             No BootSource matches the given query.
         """
+        if not can_view_boot_entities(request.user):
+            raise PermissionDenied(UNAUTHORIZED_MESSAGE)
+
         boot_source = get_object_or_404(BootSource, id=boot_source_id)
         return BootSourceSelection.objects.filter(boot_source=boot_source)
 
@@ -223,6 +240,9 @@ class BootSourceSelectionsHandler(OperationsHandler):
             No BootSource matches the given query.
 
         """
+        if not can_edit_boot_entities(request.user):
+            raise PermissionDenied(UNAUTHORIZED_MESSAGE)
+
         boot_source = get_object_or_404(BootSource, id=boot_source_id)
         form = BootSourceSelectionForm(
             data=request.data, boot_source=boot_source

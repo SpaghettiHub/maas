@@ -34,31 +34,7 @@ class OpenFGATupleBuilder(ResourceBuilder):
         )
 
     @classmethod
-    def build_group_can_edit_pool(
-        cls, group_id: str, pool_id: str
-    ) -> "OpenFGATupleBuilder":
-        return OpenFGATupleBuilder(
-            user=f"group:{group_id}#member",
-            user_type="userset",
-            relation="can_edit",
-            object_id=pool_id,
-            object_type="pool",
-        )
-
-    @classmethod
-    def build_group_can_view_pool(
-        cls, group_id: str, pool_id: str
-    ) -> "OpenFGATupleBuilder":
-        return OpenFGATupleBuilder(
-            user=f"group:{group_id}#member",
-            user_type="userset",
-            relation="can_view",
-            object_id=pool_id,
-            object_type="pool",
-        )
-
-    @classmethod
-    def build_group_can_edit_machines(
+    def build_group_can_edit_machines_in_pool(
         cls, group_id: str, pool_id: str
     ) -> "OpenFGATupleBuilder":
         return OpenFGATupleBuilder(
@@ -70,7 +46,31 @@ class OpenFGATupleBuilder(ResourceBuilder):
         )
 
     @classmethod
-    def build_group_can_deploy_machines(
+    def build_group_can_view_machines_in_pool(
+        cls, group_id: str, pool_id: str
+    ) -> "OpenFGATupleBuilder":
+        return OpenFGATupleBuilder(
+            user=f"group:{group_id}#member",
+            user_type="userset",
+            relation="can_view_machines",
+            object_id=pool_id,
+            object_type="pool",
+        )
+
+    @classmethod
+    def build_group_can_view_available_machines_in_pool(
+        cls, group_id: str, pool_id: str
+    ) -> "OpenFGATupleBuilder":
+        return OpenFGATupleBuilder(
+            user=f"group:{group_id}#member",
+            user_type="userset",
+            relation="can_view_available_machines",
+            object_id=pool_id,
+            object_type="pool",
+        )
+
+    @classmethod
+    def build_group_can_deploy_machines_in_pool(
         cls, group_id: str, pool_id: str
     ) -> "OpenFGATupleBuilder":
         return OpenFGATupleBuilder(
@@ -82,31 +82,7 @@ class OpenFGATupleBuilder(ResourceBuilder):
         )
 
     @classmethod
-    def build_group_can_edit_pools(
-        cls, group_id: str
-    ) -> "OpenFGATupleBuilder":
-        return OpenFGATupleBuilder(
-            user=f"group:{group_id}#member",
-            user_type="userset",
-            relation="can_edit_pools",
-            object_id="0",
-            object_type="maas",
-        )
-
-    @classmethod
-    def build_group_can_view_pools(
-        cls, group_id: str
-    ) -> "OpenFGATupleBuilder":
-        return OpenFGATupleBuilder(
-            user=f"group:{group_id}#member",
-            user_type="userset",
-            relation="can_view_pools",
-            object_id="0",
-            object_type="maas",
-        )
-
-    @classmethod
-    def build_group_can_edit_machines_in_pools(
+    def build_group_can_edit_machines(
         cls, group_id: str
     ) -> "OpenFGATupleBuilder":
         return OpenFGATupleBuilder(
@@ -118,7 +94,31 @@ class OpenFGATupleBuilder(ResourceBuilder):
         )
 
     @classmethod
-    def build_group_can_deploy_machines_in_pools(
+    def build_group_can_view_machines(
+        cls, group_id: str
+    ) -> "OpenFGATupleBuilder":
+        return OpenFGATupleBuilder(
+            user=f"group:{group_id}#member",
+            user_type="userset",
+            relation="can_view_machines",
+            object_id="0",
+            object_type="maas",
+        )
+
+    @classmethod
+    def build_group_can_view_available_machines(
+        cls, group_id: str
+    ) -> "OpenFGATupleBuilder":
+        return OpenFGATupleBuilder(
+            user=f"group:{group_id}#member",
+            user_type="userset",
+            relation="can_view_available_machines",
+            object_id="0",
+            object_type="maas",
+        )
+
+    @classmethod
+    def build_group_can_deploy_machines(
         cls, group_id: str
     ) -> "OpenFGATupleBuilder":
         return OpenFGATupleBuilder(
@@ -154,6 +154,30 @@ class OpenFGATupleBuilder(ResourceBuilder):
         )
 
     @classmethod
+    def build_group_can_edit_controllers(
+        cls, group_id: str
+    ) -> "OpenFGATupleBuilder":
+        return OpenFGATupleBuilder(
+            user=f"group:{group_id}#member",
+            user_type="userset",
+            relation="can_edit_controllers",
+            object_id="0",
+            object_type="maas",
+        )
+
+    @classmethod
+    def build_group_can_view_controllers(
+        cls, group_id: str
+    ) -> "OpenFGATupleBuilder":
+        return OpenFGATupleBuilder(
+            user=f"group:{group_id}#member",
+            user_type="userset",
+            relation="can_view_controllers",
+            object_id="0",
+            object_type="maas",
+        )
+
+    @classmethod
     def build_group_can_view_permissions(
         cls, group_id: str
     ) -> "OpenFGATupleBuilder":
@@ -178,6 +202,30 @@ class OpenFGATupleBuilder(ResourceBuilder):
         )
 
     @classmethod
+    def build_group_can_view_boot_entities(
+        cls, group_id: str
+    ) -> "OpenFGATupleBuilder":
+        return OpenFGATupleBuilder(
+            user=f"group:{group_id}#member",
+            user_type="userset",
+            relation="can_view_boot_entities",
+            object_id="0",
+            object_type="maas",
+        )
+
+    @classmethod
+    def build_group_can_edit_boot_entities(
+        cls, group_id: str
+    ) -> "OpenFGATupleBuilder":
+        return OpenFGATupleBuilder(
+            user=f"group:{group_id}#member",
+            user_type="userset",
+            relation="can_edit_boot_entities",
+            object_id="0",
+            object_type="maas",
+        )
+
+    @classmethod
     def build_group_can_view_configurations(
         cls, group_id: str
     ) -> "OpenFGATupleBuilder":
@@ -197,6 +245,78 @@ class OpenFGATupleBuilder(ResourceBuilder):
             user=f"group:{group_id}#member",
             user_type="userset",
             relation="can_edit_configurations",
+            object_id="0",
+            object_type="maas",
+        )
+
+    @classmethod
+    def build_group_can_edit_notifications(
+        cls, group_id: str
+    ) -> "OpenFGATupleBuilder":
+        return OpenFGATupleBuilder(
+            user=f"group:{group_id}#member",
+            user_type="userset",
+            relation="can_edit_notifications",
+            object_id="0",
+            object_type="maas",
+        )
+
+    @classmethod
+    def build_group_can_view_notifications(
+        cls, group_id: str
+    ) -> "OpenFGATupleBuilder":
+        return OpenFGATupleBuilder(
+            user=f"group:{group_id}#member",
+            user_type="userset",
+            relation="can_view_notifications",
+            object_id="0",
+            object_type="maas",
+        )
+
+    @classmethod
+    def build_group_can_edit_license_keys(
+        cls, group_id: str
+    ) -> "OpenFGATupleBuilder":
+        return OpenFGATupleBuilder(
+            user=f"group:{group_id}#member",
+            user_type="userset",
+            relation="can_edit_license_keys",
+            object_id="0",
+            object_type="maas",
+        )
+
+    @classmethod
+    def build_group_can_view_license_keys(
+        cls, group_id: str
+    ) -> "OpenFGATupleBuilder":
+        return OpenFGATupleBuilder(
+            user=f"group:{group_id}#member",
+            user_type="userset",
+            relation="can_view_license_keys",
+            object_id="0",
+            object_type="maas",
+        )
+
+    @classmethod
+    def build_group_can_view_devices(
+        cls, group_id: str
+    ) -> "OpenFGATupleBuilder":
+        return OpenFGATupleBuilder(
+            user=f"group:{group_id}#member",
+            user_type="userset",
+            relation="can_view_devices",
+            object_id="0",
+            object_type="maas",
+        )
+
+    @classmethod
+    def build_group_can_view_ipaddresses(
+        cls, group_id: str
+    ) -> "OpenFGATupleBuilder":
+        return OpenFGATupleBuilder(
+            user=f"group:{group_id}#member",
+            user_type="userset",
+            relation="can_view_ipaddresses",
             object_id="0",
             object_type="maas",
         )

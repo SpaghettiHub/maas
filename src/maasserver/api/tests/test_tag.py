@@ -1,4 +1,4 @@
-# Copyright 2013-2022 Canonical Ltd.  This software is licensed under the
+# Copyright 2013-2026 Canonical Ltd.  This software is licensed under the
 # GNU Affero General Public License version 3 (see the file LICENSE).
 
 import http.client
@@ -163,12 +163,12 @@ class TestTagAPI(APITestCase.ForUser):
 
     def test_GET_nodes_returns_nodes(self):
         tag = factory.make_Tag()
-        machine = factory.make_Node()
-        device = factory.make_Device()
+        machine = factory.make_Node(owner=self.user)
+        device = factory.make_Device(owner=self.user)
         rack = factory.make_RackController()
         region = factory.make_RegionController()
         # Create a second node that isn't tagged.
-        factory.make_Node()
+        factory.make_Node(owner=self.user)
         machine.tags.add(tag)
         device.tags.add(tag)
         rack.tags.add(tag)
@@ -285,12 +285,12 @@ class TestTagAPI(APITestCase.ForUser):
 
     def test_GET_devices_returns_devices(self):
         tag = factory.make_Tag()
-        machine = factory.make_Node()
-        device = factory.make_Device()
+        machine = factory.make_Node(owner=self.user)
+        device = factory.make_Device(owner=self.user)
         rack = factory.make_RackController()
         region = factory.make_RegionController()
         # Create a second node that isn't tagged.
-        factory.make_Node()
+        factory.make_Node(owner=self.user)
         machine.tags.add(tag)
         device.tags.add(tag)
         rack.tags.add(tag)
@@ -308,14 +308,14 @@ class TestTagAPI(APITestCase.ForUser):
     def test_GET_devices_query_count(self):
         tag = factory.make_Tag()
         for _ in range(3):
-            device = factory.make_Device()
+            device = factory.make_Device(owner=self.user)
             device.tags.add(tag)
         num_queries1, response1 = count_queries(
             self.client.get, self.get_tag_uri(tag), {"op": "devices"}
         )
 
         for _ in range(3):
-            device = factory.make_Device()
+            device = factory.make_Device(owner=self.user)
             device.tags.add(tag)
         num_queries2, response2 = count_queries(
             self.client.get, self.get_tag_uri(tag), {"op": "devices"}
