@@ -8,10 +8,14 @@ from starlette import status
 
 from maasapiserver.common.api.base import Handler, handler
 from maasapiserver.common.api.models.responses.errors import (
+    BadRequestBodyResponse,
     ConflictBodyResponse,
     NotFoundBodyResponse,
 )
 from maasapiserver.v3.api import services
+from maasapiserver.v3.api.public.models.requests.entitlements import (
+    EntitlementRequest,
+)
 from maasapiserver.v3.api.public.models.requests.query import PaginationParams
 from maasapiserver.v3.api.public.models.requests.usergroup_members import (
     UserGroupMemberRequest,
@@ -21,6 +25,9 @@ from maasapiserver.v3.api.public.models.requests.usergroups import (
 )
 from maasapiserver.v3.api.public.models.responses.base import (
     OPENAPI_ETAG_HEADER,
+)
+from maasapiserver.v3.api.public.models.responses.entitlements import (
+    EntitlementResponse,
 )
 from maasapiserver.v3.api.public.models.responses.usergroup_members import (
     UserGroupMemberResponse,
@@ -34,6 +41,7 @@ from maasapiserver.v3.auth.base import check_permissions
 from maasapiserver.v3.constants import V3_API_PREFIX
 from maasservicelayer.auth.jwt import UserRole
 from maasservicelayer.exceptions.catalog import (
+    BadRequestException,
     BaseExceptionDetail,
     ConflictException,
     NotFoundException,
@@ -43,6 +51,10 @@ from maasservicelayer.exceptions.constants import (
     USER_ALREADY_IN_GROUP,
 )
 from maasservicelayer.services import ServiceCollectionV3
+from maasservicelayer.services.openfga_tuples import (
+    EntitlementsBuilderFactory,
+    UndefinedEntitlementError,
+)
 from maasservicelayer.services.usergroups import (
     UserAlreadyInGroup,
     UserGroupNotFound,
@@ -332,3 +344,88 @@ class UserGroupsHandler(Handler):
 
         await services.usergroups.remove_user_from_group(group_id, user_id)
         return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+    # Entitlement endpoints
+
+    @handler(
+        path="/groups/{group_id}/entitlements",
+        methods=["POST"],
+        tags=TAGS,
+        responses={
+            200: {
+                "model": EntitlementResponse,
+            },
+            400: {"model": BadRequestBodyResponse},
+            404: {"model": NotFoundBodyResponse},
+        },
+        response_model_exclude_none=True,
+        status_code=200,
+        dependencies=[
+            Depends(check_permissions(required_roles={UserRole.ADMIN}))
+        ],
+    )
+    async def add_group_entitlement(
+        self,
+        group_id: int,
+        entitlement_request: EntitlementRequest,
+        services: ServiceCollectionV3 = Depends(services),  # noqa: B008
+    ) -> EntitlementResponse:
+        group = await services.usergroups.get_by_id(group_id)
+        if not group:
+            raise NotFoundException()
+
+        resource_type = entitlement_request.resource_type
+        resource_id = entitlement_request.resource_id
+        entitlement = entitlement_request.entitlement
+
+        if resource_type not in EntitlementsBuilderFactory.FACTORIES:
+            raise BadRequestException(
+                details=[
+                    BaseExceptionDetail(
+                        type=INVALID_ARGUMENT_VIOLATION_TYPE,
+                        message=f"Resource type '{resource_type}' is not supported. "
+                        f"Supported types: {', '.join(EntitlementsBuilderFactory.FACTORIES.keys())}.",
+                    )
+                ]
+            )
+
+        if resource_type == "pool":
+            pool = await services.resource_pools.get_by_id(resource_id)
+            if not pool:
+                raise NotFoundException(
+                    details=[
+                        BaseExceptionDetail(
+                            type=INVALID_ARGUMENT_VIOLATION_TYPE,
+                            message=f"ResourcePool with id {resource_id} not found.",
+                        )
+                    ]
+                )
+        elif resource_type == "maas":
+            # For MAAS entitlements, the resource_id must be 0 since the entitlement applies to all of MAAS.
+            if resource_id != 0:
+                raise BadRequestException(
+                    details=[
+                        BaseExceptionDetail(
+                            type=INVALID_ARGUMENT_VIOLATION_TYPE,
+                            message="For 'maas' resource type, resource_id must be 0.",
+                        )
+                    ]
+                )
+
+        try:
+            openfga_tuple = await services.openfga_tuples.upsert(
+                EntitlementsBuilderFactory.build_openfga_tuple(
+                    group_id, entitlement, resource_type, resource_id
+                )
+            )
+        except UndefinedEntitlementError as err:
+            raise BadRequestException(
+                details=[
+                    BaseExceptionDetail(
+                        type=INVALID_ARGUMENT_VIOLATION_TYPE,
+                        message=str(err),
+                    )
+                ]
+            ) from err
+
+        return EntitlementResponse.from_model(openfga_tuple)

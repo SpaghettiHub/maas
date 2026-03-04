@@ -17,6 +17,10 @@ from maasserver.exceptions import (
 )
 from maasserver.sqlalchemy import service_layer
 from maasservicelayer.builders.usergroups import UserGroupBuilder
+from maasservicelayer.services.openfga_tuples import (
+    EntitlementsBuilderFactory,
+    UndefinedEntitlementError,
+)
 from maasservicelayer.services.usergroups import (
     UserAlreadyInGroup,
     UserGroupNotFound,
@@ -206,6 +210,72 @@ class UserGroupHandler(OperationsHandler):
             int(id), user.id
         )
         return rc.DELETED
+
+    @operation(idempotent=False)
+    @check_permission("can_edit_identities")
+    def add_entitlement(self, request, id):
+        """@description Adds an entitlement to a user group.
+        @param (url-string) "{id}" [required=true] A group ID.
+        @param (string) "resource_type" [required=true] The resource type
+            ('maas' or 'pool').
+        @param (int) "resource_id" [required=true] The resource ID. Must
+            be 0 for 'maas' type.
+        @param (string) "entitlement" [required=true] The entitlement name.
+
+        @success (http-status-code) "server_success" 200
+
+        @error (http-status-code) "400" 400
+        @error (content) "badrequest" Invalid request parameters.
+        @error (http-status-code) "404" 404
+        @error (content) "notfound" The group or resource is not found.
+        """
+        group = service_layer.services.usergroups.get_by_id(int(id))
+        if group is None:
+            raise MAASAPINotFound(f"UserGroup with id {id} not found.")
+
+        resource_type = request.data.get("resource_type")
+        if not resource_type:
+            raise MAASAPIBadRequest("resource_type is required.")
+
+        resource_id_str = request.data.get("resource_id")
+        if resource_id_str is None:
+            raise MAASAPIBadRequest("resource_id is required.")
+        try:
+            resource_id = int(resource_id_str)
+        except (ValueError, TypeError) as err:
+            raise MAASAPIBadRequest("resource_id must be an integer.") from err
+
+        entitlement = request.data.get("entitlement")
+        if not entitlement:
+            raise MAASAPIBadRequest("entitlement is required.")
+
+        if resource_type not in EntitlementsBuilderFactory.FACTORIES:
+            raise MAASAPIBadRequest(
+                f"Resource type '{resource_type}' is not supported. "
+                f"Supported types: {', '.join(EntitlementsBuilderFactory.FACTORIES.keys())}."
+            )
+
+        if resource_type == "pool":
+            pool = service_layer.services.resource_pools.get_by_id(resource_id)
+            if pool is None:
+                raise MAASAPINotFound(
+                    f"ResourcePool with id {resource_id} not found."
+                )
+        elif resource_type == "maas":
+            if resource_id != 0:
+                raise MAASAPIBadRequest(
+                    "resource_id must be 0 for 'maas' type."
+                )
+
+        try:
+            service_layer.services.openfga_tuples.upsert(
+                EntitlementsBuilderFactory.build_openfga_tuple(
+                    int(id), entitlement, resource_type, resource_id
+                )
+            )
+        except UndefinedEntitlementError as err:
+            raise MAASAPIBadRequest(str(err)) from err
+        return rc.ALL_OK
 
 
 class UserGroupsHandler(OperationsHandler):
