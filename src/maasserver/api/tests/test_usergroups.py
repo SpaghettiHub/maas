@@ -488,6 +488,141 @@ class TestUserGroupAPI(APITestCase.ForUser):
         usernames = {m["username"] for m in parsed}
         self.assertNotIn(member.username, usernames)
 
+    # Entitlement endpoints
+    def test_add_entitlement_requires_admin(self):
+        group = factory.make_Usergroup()
+
+        response = self.client.post(
+            reverse("usergroup_handler", args=[group.id]),
+            {
+                "op": "add_entitlement",
+                "resource_type": "maas",
+                "resource_id": "0",
+                "entitlement": "can_edit_machines",
+            },
+        )
+        self.assertEqual(
+            http.client.FORBIDDEN, response.status_code, response.content
+        )
+
+    def test_add_entitlement_maas(self):
+        self.become_admin()
+        group = factory.make_Usergroup()
+
+        response = self.client.post(
+            reverse("usergroup_handler", args=[group.id]),
+            {
+                "op": "add_entitlement",
+                "resource_type": "maas",
+                "resource_id": "0",
+                "entitlement": "can_edit_machines",
+            },
+        )
+        self.assertEqual(
+            http.client.OK, response.status_code, response.content
+        )
+
+    def test_add_entitlement_pool(self):
+        self.become_admin()
+        group = factory.make_Usergroup()
+        pool = factory.make_ResourcePool()
+
+        response = self.client.post(
+            reverse("usergroup_handler", args=[group.id]),
+            {
+                "op": "add_entitlement",
+                "resource_type": "pool",
+                "resource_id": pool.id,
+                "entitlement": "can_edit_machines",
+            },
+        )
+        self.assertEqual(
+            http.client.OK, response.status_code, response.content
+        )
+
+    def test_add_entitlement_group_not_found(self):
+        self.become_admin()
+        response = self.client.post(
+            reverse("usergroup_handler", args=[99999]),
+            {
+                "op": "add_entitlement",
+                "resource_type": "maas",
+                "resource_id": 0,
+                "entitlement": "can_edit_machines",
+            },
+        )
+        self.assertEqual(
+            http.client.NOT_FOUND, response.status_code, response.content
+        )
+
+    def test_add_entitlement_invalid_resource_type(self):
+        self.become_admin()
+        group = factory.make_Usergroup()
+
+        response = self.client.post(
+            reverse("usergroup_handler", args=[group.id]),
+            {
+                "op": "add_entitlement",
+                "resource_type": "invalid",
+                "resource_id": 0,
+                "entitlement": "can_edit_machines",
+            },
+        )
+        self.assertEqual(
+            http.client.BAD_REQUEST, response.status_code, response.content
+        )
+
+    def test_add_entitlement_pool_not_found(self):
+        self.become_admin()
+        group = factory.make_Usergroup()
+
+        response = self.client.post(
+            reverse("usergroup_handler", args=[group.id]),
+            {
+                "op": "add_entitlement",
+                "resource_type": "pool",
+                "resource_id": 99999,
+                "entitlement": "can_edit_machines",
+            },
+        )
+        self.assertEqual(
+            http.client.NOT_FOUND, response.status_code, response.content
+        )
+
+    def test_add_entitlement_maas_invalid(self):
+        self.become_admin()
+        group = factory.make_Usergroup()
+
+        response = self.client.post(
+            reverse("usergroup_handler", args=[group.id]),
+            {
+                "op": "add_entitlement",
+                "resource_type": "maas",
+                "resource_id": -1,  # must be 0 for maas
+                "entitlement": "can_edit_machines",
+            },
+        )
+        self.assertEqual(
+            http.client.BAD_REQUEST, response.status_code, response.content
+        )
+
+    def test_add_entitlement_invalid_entitlement_name(self):
+        self.become_admin()
+        group = factory.make_Usergroup()
+
+        response = self.client.post(
+            reverse("usergroup_handler", args=[group.id]),
+            {
+                "op": "add_entitlement",
+                "resource_type": "maas",
+                "resource_id": 0,
+                "entitlement": "nonexistent",
+            },
+        )
+        self.assertEqual(
+            http.client.BAD_REQUEST, response.status_code, response.content
+        )
+
 
 class TestUserGroupsOpenFGAIntegration(OpenFGAMockMixin, APITestCase.ForUser):
     def _create_group_as_admin(self, name, description="test"):
