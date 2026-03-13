@@ -234,7 +234,6 @@ class TestDNSResourceRepository(RepositoryCommonTests[DNSResource]):
             fixture, domain, sip, name="host2"
         )
 
-        # Unlink the IP from all DNS resources
         await repository_instance.unlink_ip_from_all_dnsresources(sip["id"])
 
         # Verify both DNS resources no longer have this IP
