@@ -1052,6 +1052,14 @@ class MAASUrlConfig(Config[Optional[str]]):
     value: Optional[str] = Field(default=default, description=description)
 
 
+class MAASControllerURLConfig(Config[Optional[str]]):
+    is_public: ClassVar[bool] = False
+    name: ClassVar[str] = "maas_controller_url"
+    default: ClassVar[Optional[str]] = "http://localhost:5242"
+    description: ClassVar[str] = ""
+    value: Optional[str] = Field(default=default, description=description)
+
+
 class NetworkDiscoveryConfig(Config[Optional[NetworkDiscoveryEnum]]):
     is_public: ClassVar[bool] = False
     name: ClassVar[str] = "network_discovery"
