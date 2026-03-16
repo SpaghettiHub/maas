@@ -20,19 +20,54 @@ def get_agent_config_path():
 
 
 @dataclass
+class HTTPProxyCache:
+    dir: str
+    size: int
+
+
+@dataclass
 class HTTPProxyConfiguration:
-    cache_size: int
-    cache_dir: str
+    cache: HTTPProxyCache
+
+
+@dataclass
+class TemporalConfiguration:
+    host: str
+    port: int
+    encryption_key: str
+
+
+@dataclass
+class LogConfiguration:
+    level: str
+
+
+@dataclass
+class Services:
+    http_proxy: HTTPProxyConfiguration
+
+
+@dataclass
+class Observability:
+    logging: LogConfiguration
+
+
+@dataclass
+class TLS:
+    key_file: str
+    cert_file: str
+    ca_file: str
 
 
 @dataclass
 class Configuration:
     maas_uuid: str
     system_id: str
-    secret: str
-    controllers: list[str]
-    httpproxy: HTTPProxyConfiguration
-    log_level: str
+    controller: str
+    temporal: TemporalConfiguration
+    services: Services
+    observability: Observability
+    tls: TLS
 
 
 @synchronous
