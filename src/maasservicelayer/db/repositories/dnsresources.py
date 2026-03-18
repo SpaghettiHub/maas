@@ -3,7 +3,7 @@
 
 from typing import List, Optional, Type
 
-from sqlalchemy import delete, insert, select, Table
+from sqlalchemy import delete, func, insert, select, Table
 from sqlalchemy.sql.operators import eq
 
 from maascommon.enums.ipaddress import IpAddressType
@@ -120,6 +120,20 @@ class DNSResourceRepository(BaseRepository[DNSResource]):
 
         await self.execute_stmt(stmt)
 
+    async def unlink_ip_from_all_dnsresources(
+        self, staticipaddress_id: int
+    ) -> None:
+        """Remove all DNS resource associations for a specific IP address.
+
+        Args:
+            staticipaddress_id: The ID of the IP address to unlink
+        """
+        stmt = delete(DNSResourceIPAddressTable).where(
+            DNSResourceIPAddressTable.c.staticipaddress_id
+            == staticipaddress_id
+        )
+        await self.execute_stmt(stmt)
+
     async def get_dnsdata_for_dnsresource(
         self, dnsrr_id: int
     ) -> list[DNSData]:
@@ -132,3 +146,107 @@ class DNSResourceRepository(BaseRepository[DNSResource]):
         result = (await self.execute_stmt(stmt)).all()
 
         return [DNSData(**r._asdict()) for r in result]
+
+    async def get_dnsresources_for_ip(
+        self, ip: StaticIPAddress
+    ) -> List[DNSResource]:
+        """Get all DNS resources linked to a specific IP address.
+
+        Args:
+            ip: The StaticIPAddress to find DNS resources for
+
+        Returns:
+            List of DNSResource objects linked to this IP
+        """
+        stmt = (
+            select(DNSResourceTable)
+            .select_from(DNSResourceTable)
+            .join(
+                DNSResourceIPAddressTable,
+                DNSResourceIPAddressTable.c.dnsresource_id
+                == DNSResourceTable.c.id,
+            )
+            .filter(
+                DNSResourceIPAddressTable.c.staticipaddress_id == ip.id,
+            )
+        )
+
+        result = (await self.execute_stmt(stmt)).all()
+        return [DNSResource(**row._asdict()) for row in result]
+
+    async def get_ip_counts_for_dnsresources(
+        self, dnsresource_ids: list[int]
+    ) -> dict[int, int]:
+        """Get IP address counts for multiple DNS resources in a single query.
+
+        Args:
+            dnsresource_ids: List of DNS resource IDs to check
+
+        Returns:
+            Dictionary mapping dnsresource_id to count of linked IP addresses
+        """
+        if not dnsresource_ids:
+            return {}
+
+        stmt = (
+            select(
+                DNSResourceIPAddressTable.c.dnsresource_id,
+                func.count(
+                    DNSResourceIPAddressTable.c.staticipaddress_id
+                ).label("ip_count"),
+            )
+            .where(
+                DNSResourceIPAddressTable.c.dnsresource_id.in_(dnsresource_ids)
+            )
+            .group_by(DNSResourceIPAddressTable.c.dnsresource_id)
+        )
+
+        result = (await self.execute_stmt(stmt)).all()
+        return {row.dnsresource_id: row.ip_count for row in result}
+
+    async def get_dnsdata_counts_for_dnsresources(
+        self, dnsresource_ids: list[int]
+    ) -> dict[int, int]:
+        """Get DNS data record counts for multiple DNS resources in a single query.
+
+        Args:
+            dnsresource_ids: List of DNS resource IDs to check
+
+        Returns:
+            Dictionary mapping dnsresource_id to count of DNS data records
+        """
+        if not dnsresource_ids:
+            return {}
+
+        stmt = (
+            select(
+                DNSDataTable.c.dnsresource_id,
+                func.count(DNSDataTable.c.id).label("dnsdata_count"),
+            )
+            .where(DNSDataTable.c.dnsresource_id.in_(dnsresource_ids))
+            .group_by(DNSDataTable.c.dnsresource_id)
+        )
+
+        result = (await self.execute_stmt(stmt)).all()
+        return {row.dnsresource_id: row.dnsdata_count for row in result}
+
+    async def delete_many_by_ids(self, ids: list[int]) -> list[DNSResource]:
+        """Delete multiple DNS resources by their IDs in a single query.
+
+        Args:
+            ids: List of DNS resource IDs to delete
+
+        Returns:
+            List of deleted DNSResource objects
+        """
+        if not ids:
+            return []
+
+        stmt = (
+            delete(DNSResourceTable)
+            .where(DNSResourceTable.c.id.in_(ids))
+            .returning(DNSResourceTable)
+        )
+
+        result = (await self.execute_stmt(stmt)).all()
+        return [DNSResource(**row._asdict()) for row in result]
