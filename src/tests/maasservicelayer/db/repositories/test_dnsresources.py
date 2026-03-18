@@ -261,9 +261,7 @@ class TestDNSResourceRepository(RepositoryCommonTests[DNSResource]):
             await create_test_staticipaddress_entry(fixture, subnet=subnet)
         )[0]
 
-        dnsresource = await create_test_dnsresource_entry(
-            fixture, domain, sip
-        )
+        dnsresource = await create_test_dnsresource_entry(fixture, domain, sip)
 
         result = await repository_instance.get_dnsresources_without_ips(
             [dnsresource.id]
