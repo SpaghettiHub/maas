@@ -27,6 +27,10 @@ class DNSResourceClauseFactory(ClauseFactory):
         return Clause(condition=eq(DNSResourceTable.c.id, id))
 
     @classmethod
+    def with_ids(cls, ids: list[int]) -> Clause:
+        return Clause(condition=DNSResourceTable.c.id.in_(ids))
+
+    @classmethod
     def with_name(cls, name: str) -> Clause:
         return Clause(condition=eq(DNSResourceTable.c.name, name))
 
@@ -235,24 +239,3 @@ class DNSResourceRepository(BaseRepository[DNSResource]):
             for dnsresource_id in dnsresource_ids
             if dnsresource_id not in dnsresources_with_dnsdata
         ]
-
-    async def delete_many_by_ids(self, ids: List[int]) -> List[DNSResource]:
-        """Delete multiple DNS resources by their IDs in a single query.
-
-        Args:
-            ids: List of DNS resource IDs to delete
-
-        Returns:
-            List of deleted DNSResource objects
-        """
-        if not ids:
-            return []
-
-        stmt = (
-            delete(DNSResourceTable)
-            .where(DNSResourceTable.c.id.in_(ids))
-            .returning(DNSResourceTable)
-        )
-
-        result = (await self.execute_stmt(stmt)).all()
-        return [DNSResource(**row._asdict()) for row in result]
