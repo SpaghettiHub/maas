@@ -245,3 +245,106 @@ class TestDNSResourceRepository(RepositoryCommonTests[DNSResource]):
         )
         assert len(remaining1) == 0
         assert len(remaining2) == 0
+
+    async def test_get_dnsresources_without_ips_empty_list(
+        self, repository_instance: DNSResourceRepository
+    ) -> None:
+        result = await repository_instance.get_dnsresources_without_ips([])
+        assert result == []
+
+    async def test_get_dnsresources_without_ips_resource_has_ip(
+        self, repository_instance: DNSResourceRepository, fixture: Fixture
+    ) -> None:
+        subnet = await create_test_subnet_entry(fixture)
+        domain = await create_test_domain_entry(fixture)
+        sip = (
+            await create_test_staticipaddress_entry(fixture, subnet=subnet)
+        )[0]
+
+        dnsresource = await create_test_dnsresource_entry(
+            fixture, domain, sip
+        )
+
+        result = await repository_instance.get_dnsresources_without_ips(
+            [dnsresource.id]
+        )
+        assert result == []
+
+    async def test_get_dnsresources_without_ips_resource_has_no_ip(
+        self, repository_instance: DNSResourceRepository, fixture: Fixture
+    ) -> None:
+        domain = await create_test_domain_entry(fixture)
+        dnsresource = await create_test_dnsresource_entry(fixture, domain)
+
+        result = await repository_instance.get_dnsresources_without_ips(
+            [dnsresource.id]
+        )
+        assert result == [dnsresource.id]
+
+    async def test_get_dnsresources_without_ips_mixed(
+        self, repository_instance: DNSResourceRepository, fixture: Fixture
+    ) -> None:
+        subnet = await create_test_subnet_entry(fixture)
+        domain = await create_test_domain_entry(fixture)
+        sip = (
+            await create_test_staticipaddress_entry(fixture, subnet=subnet)
+        )[0]
+
+        dnsresource_with_ip = await create_test_dnsresource_entry(
+            fixture, domain, sip, name="with-ip"
+        )
+        dnsresource_without_ip = await create_test_dnsresource_entry(
+            fixture, domain, name="without-ip"
+        )
+
+        result = await repository_instance.get_dnsresources_without_ips(
+            [dnsresource_with_ip.id, dnsresource_without_ip.id]
+        )
+        assert result == [dnsresource_without_ip.id]
+
+    async def test_get_dnsresources_without_dnsdata_empty_list(
+        self, repository_instance: DNSResourceRepository
+    ) -> None:
+        result = await repository_instance.get_dnsresources_without_dnsdata([])
+        assert result == []
+
+    async def test_get_dnsresources_without_dnsdata_resource_has_dnsdata(
+        self, repository_instance: DNSResourceRepository, fixture: Fixture
+    ) -> None:
+        domain = await create_test_domain_entry(fixture)
+        dnsresource = await create_test_dnsresource_entry(fixture, domain)
+        await create_test_dnsdata_entry(fixture, dnsresource)
+
+        result = await repository_instance.get_dnsresources_without_dnsdata(
+            [dnsresource.id]
+        )
+        assert result == []
+
+    async def test_get_dnsresources_without_dnsdata_resource_has_no_dnsdata(
+        self, repository_instance: DNSResourceRepository, fixture: Fixture
+    ) -> None:
+        domain = await create_test_domain_entry(fixture)
+        dnsresource = await create_test_dnsresource_entry(fixture, domain)
+
+        result = await repository_instance.get_dnsresources_without_dnsdata(
+            [dnsresource.id]
+        )
+        assert result == [dnsresource.id]
+
+    async def test_get_dnsresources_without_dnsdata_mixed(
+        self, repository_instance: DNSResourceRepository, fixture: Fixture
+    ) -> None:
+        domain = await create_test_domain_entry(fixture)
+        dnsresource_with_data = await create_test_dnsresource_entry(
+            fixture, domain, name="with-data"
+        )
+        await create_test_dnsdata_entry(fixture, dnsresource_with_data)
+
+        dnsresource_without_data = await create_test_dnsresource_entry(
+            fixture, domain, name="without-data"
+        )
+
+        result = await repository_instance.get_dnsresources_without_dnsdata(
+            [dnsresource_with_data.id, dnsresource_without_data.id]
+        )
+        assert result == [dnsresource_without_data.id]
