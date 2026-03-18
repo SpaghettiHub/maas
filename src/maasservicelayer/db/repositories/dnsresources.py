@@ -3,7 +3,7 @@
 
 from typing import List, Optional, Type
 
-from sqlalchemy import delete, func, insert, select, Table
+from sqlalchemy import delete, insert, select, Table
 from sqlalchemy.sql.operators import eq
 
 from maascommon.enums.ipaddress import IpAddressType
@@ -174,63 +174,69 @@ class DNSResourceRepository(BaseRepository[DNSResource]):
         result = (await self.execute_stmt(stmt)).all()
         return [DNSResource(**row._asdict()) for row in result]
 
-    async def get_ip_counts_for_dnsresources(
-        self, dnsresource_ids: list[int]
-    ) -> dict[int, int]:
-        """Get IP address counts for multiple DNS resources in a single query.
+    async def get_dnsresources_without_ips(
+        self, dnsresource_ids: List[int]
+    ) -> List[int]:
+        """Get DNS resources that have no associated IP addresses.
 
         Args:
             dnsresource_ids: List of DNS resource IDs to check
 
         Returns:
-            Dictionary mapping dnsresource_id to count of linked IP addresses
+            List of dnsresource IDs that have no associated IPs
         """
         if not dnsresource_ids:
-            return {}
+            return []
 
         stmt = (
             select(
                 DNSResourceIPAddressTable.c.dnsresource_id,
-                func.count(
-                    DNSResourceIPAddressTable.c.staticipaddress_id
-                ).label("ip_count"),
             )
             .where(
                 DNSResourceIPAddressTable.c.dnsresource_id.in_(dnsresource_ids)
             )
-            .group_by(DNSResourceIPAddressTable.c.dnsresource_id)
+            .distinct()
         )
 
         result = (await self.execute_stmt(stmt)).all()
-        return {row.dnsresource_id: row.ip_count for row in result}
+        dnsresources_with_ips = {row.dnsresource_id for row in result}
+        return [
+            dnsresource_id
+            for dnsresource_id in dnsresource_ids
+            if dnsresource_id not in dnsresources_with_ips
+        ]
 
-    async def get_dnsdata_counts_for_dnsresources(
-        self, dnsresource_ids: list[int]
-    ) -> dict[int, int]:
-        """Get DNS data record counts for multiple DNS resources in a single query.
+    async def get_dnsresources_without_dnsdata(
+        self, dnsresource_ids: List[int]
+    ) -> List[int]:
+        """Get DNS resources that have no DNS data records.
 
         Args:
             dnsresource_ids: List of DNS resource IDs to check
 
         Returns:
-            Dictionary mapping dnsresource_id to count of DNS data records
+            List of dnsresource IDs that have no DNS data records
         """
         if not dnsresource_ids:
-            return {}
+            return []
 
         stmt = (
             select(
                 DNSDataTable.c.dnsresource_id,
-                func.count(DNSDataTable.c.id).label("dnsdata_count"),
             )
             .where(DNSDataTable.c.dnsresource_id.in_(dnsresource_ids))
-            .group_by(DNSDataTable.c.dnsresource_id)
+            .distinct()
         )
 
         result = (await self.execute_stmt(stmt)).all()
-        return {row.dnsresource_id: row.dnsdata_count for row in result}
+        dnsresources_with_dnsdata = {row.dnsresource_id for row in result}
+        return [
+            dnsresource_id
+            for dnsresource_id in dnsresource_ids
+            if dnsresource_id not in dnsresources_with_dnsdata
+        ]
 
-    async def delete_many_by_ids(self, ids: list[int]) -> list[DNSResource]:
+    async def delete_many_by_ids(self, ids: List[int]) -> List[DNSResource]:
         """Delete multiple DNS resources by their IDs in a single query.
 
         Args:
