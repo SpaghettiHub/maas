@@ -47,10 +47,8 @@ class DNSResourcesQuerySet(QuerySet):
             yield from self._generate_synthetic_rrdata(domain)
 
     def _generate_synthetic_rrdata(self, domain):
-        user_id = None if self._user_filter is None else self._user_filter.id
         rrdata = service_layer.services.domains.render_json_for_related_rrdata(
             domain_id=domain.id,
-            user_id=user_id,
             include_dnsdata=False,
             as_dict=True,
         )

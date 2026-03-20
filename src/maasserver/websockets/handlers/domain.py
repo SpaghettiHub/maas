@@ -51,7 +51,7 @@ class DomainHandler(TimestampedModelHandler, AdminOnlyMixin):
 
     def dehydrate(self, domain, data, for_list=False):
         rrsets = service_layer.services.domains.render_json_for_related_rrdata(
-            domain_id=domain.id, user_id=self.user.id
+            domain_id=domain.id,
         )
         if not for_list:
             data["rrsets"] = rrsets
